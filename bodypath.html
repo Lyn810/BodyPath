@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BodyPath - 身體地圖</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #FAF7F4; color: #2C2C2C; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .animate-slide-up { animation: slide-up 0.3s ease-out; }
+        @keyframes breath-red { 0%, 100% { transform: scale(1); opacity: 0.6; } 50% { transform: scale(1.4); opacity: 1; } }
+        .record-dot { animation: breath-red 2.5s infinite ease-in-out; }
+        
+        /* 隱藏右下角浮水印的裁切技巧 */
+        .watermark-crop {
+            clip-path: inset(0 2% 2% 0); /* 裁切掉右側與下方 2% 的邊緣來遮蓋浮水印 */
+        }
+    </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // 直接指定您的圖片檔案名稱
+    const BODY_IMAGE_PATH = "body_front.png"; 
+
+    // --- 最終精確座標 ---
+    const CALIBRATED_PARTS = [
+        { id: 'top_head', name: '頭頂', top: '8.5%', left: '50%' },
+        { id: 'forehead', name: '前額', top: '13.5%', left: '50%' },
+        { id: 'l_cheek', name: '左臉頰', top: '17.5%', left: '47.2%' },
+        { id: 'r_cheek', name: '右臉頰', top: '17.5%', left: '52.8%' },
+        { id: 'chin', name: '下巴', top: '21.5%', left: '50%' },
+        { id: 'l_neck', name: '左頸側', top: '24.5%', left: '47.8%' },
+        { id: 'r_neck', name: '右頸側', top: '24.5%', left: '52.2%' },
+        { id: 'l_shoulder', name: '左肩', top: '27.5%', left: '42.2%' },
+        { id: 'r_shoulder', name: '右肩', top: '27.5%', left: '57.8%' },
+        { id: 'l_upper_arm', name: '左上臂', top: '36.0%', left: '41.0%' },
+        { id: 'r_upper_arm', name: '右上臂', top: '36.0%', left: '59.0%' },
+        { id: 'l_forearm', name: '左前臂', top: '47.0%', left: '40.0%' },
+        { id: 'r_forearm', name: '右前臂', top: '47.0%', left: '60.0%' },
+        { id: 'chest_center', name: '胸口', top: '31.5%', left: '50.0%' },
+        { id: 'l_chest', name: '左胸側', top: '32.5%', left: '45.0%' },
+        { id: 'r_chest', name: '右胸側', top: '32.5%', left: '55.0%' },
+        { id: 'upper_abs', name: '上腹部', top: '38.5%', left: '50.0%' },
+        { id: 'navel', name: '肚臍', top: '43.5%', left: '50.0%' },
+        { id: 'lower_abs', name: '下腹部', top: '48.5%', left: '50.0%' },
+        { id: 'l_waist', name: '左腰側', top: '42.5%', left: '44.0%' },
+        { id: 'r_waist', name: '右腰側', top: '42.5%', left: '56.0%' },
+        { id: 'l_groin', name: '左鼠蹊', top: '51.5%', left: '47.2%' },
+        { id: 'r_groin', name: '右鼠蹊', top: '51.5%', left: '52.8%' },
+        { id: 'l_thigh', name: '左大腿前側', top: '59.0%', left: '46.0%' },
+        { id: 'r_thigh', name: '右大腿前側', top: '59.0%', left: '54.0%' },
+        { id: 'l_knee', name: '左膝蓋', top: '69.5%', left: '46.2%' },
+        { id: 'r_knee', name: '右膝蓋', top: '69.5%', left: '53.8%' },
+        { id: 'l_calf', name: '左小腿前側', top: '79.5%', left: '46.2%' },
+        { id: 'r_calf', name: '右小腿前側', top: '79.5%', left: '53.8%' },
+        { id: 'l_ankle', name: '左腳踝', top: '86.5%', left: '45.8%' },
+        { id: 'r_ankle', name: '右腳踝', top: '86.5%', left: '54.2%' }
+    ];
+
+    const SYMPTOMS = ['痠', '痛', '麻', '刺', '緊繃'];
+
+    function App() {
+        const [selectedPart, setSelectedPart] = useState(null);
+        const [records, setRecords] = useState(JSON.parse(localStorage.getItem('bodyPath_final_records') || '[]'));
+        const [activeSymptoms, setActiveSymptoms] = useState([]);
+        const [intensity, setIntensity] = useState(50);
+
+        const saveRecord = () => {
+            const newRecord = { 
+                id: Date.now(), 
+                partId: selectedPart.id, 
+                symptoms: activeSymptoms, 
+                intensity 
+            };
+            const updated = [...records, newRecord];
+            setRecords(updated);
+            localStorage.setItem('bodyPath_final_records', JSON.stringify(updated));
+            setSelectedPart(null);
+            setActiveSymptoms([]);
+            setIntensity(50);
+        };
+
+        return (
+            <div className="flex justify-center min-h-screen">
+                <div className="w-full max-w-[430px] bg-white min-h-screen shadow-2xl relative flex flex-col overflow-hidden">
+                    
+                    {/* Header */}
+                    <div className="px-6 py-5 flex justify-between items-center bg-white/95 sticky top-0 z-30 border-b border-[#F0E8E0]">
+                        <button className="text-[#C8A882]"><svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" /></svg></button>
+                        <h1 className="text-sm font-medium tracking-[0.4em] text-[#C8A882]">身體地圖</h1>
+                        <span className="text-[10px] text-gray-300">TODAY</span>
+                    </div>
+
+                    {/* Canvas Area */}
+                    <div className="flex-1 bg-[#FAF7F4] flex flex-col items-center justify-center p-6">
+                        <div className="relative w-full aspect-square bg-white rounded-[3rem] shadow-2xl border-[8px] border-white overflow-hidden">
+                            <div className="relative w-full h-full watermark-crop">
+                                <img src={BODY_IMAGE_PATH} className="w-full h-full object-cover" 
+                                     onError={(e) => { e.target.src="https://via.placeholder.com/800x800/F5E6D8/C8A882?text=Waiting+for+body_front.png"; }} />
+                                
+                                {/* 熱點層 */}
+                                <div className="absolute inset-0">
+                                    {CALIBRATED_PARTS.map(part => {
+                                        const isRecorded = records.some(r => r.partId === part.id);
+                                        return (
+                                            <button 
+                                                key={part.id} 
+                                                onClick={() => setSelectedPart(part)}
+                                                style={{ top: part.top, left: part.left }}
+                                                className="absolute w-8 h-8 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-10 group"
+                                            >
+                                                {/* 低透明度實心白圓點 */}
+                                                <div className={`w-2 h-2 rounded-full transition-all duration-500 ${isRecorded ? 'bg-red-400 record-dot shadow-lg shadow-red-200' : 'bg-white/40 group-hover:bg-white/90 group-hover:scale-150 shadow-sm'}`} />
+                                                
+                                                {/* 單一標籤氣泡 */}
+                                                <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-all transform translate-y-1 group-hover:translate-y-0 pointer-events-none z-20">
+                                                    <div className="bg-[#2C2C2C]/85 backdrop-blur-md text-white text-[10px] px-3 py-1.5 rounded-full shadow-2xl whitespace-nowrap tracking-widest font-light">
+                                                        {part.name}
+                                                    </div>
+                                                    <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-[#2C2C2C]/85 mx-auto"></div>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                        <p className="mt-8 text-[11px] text-[#C8A882]/60 font-light tracking-[0.2em]">輕觸圓點，紀錄那一刻的感受</p>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="px-10 pb-12 pt-4 bg-white/40">
+                        <button className="w-full py-4 bg-[#C8A882] text-white rounded-3xl text-sm font-medium shadow-xl shadow-[#C8A882]/20 active:scale-[0.97] transition-all tracking-[0.3em]">
+                            查看今日身體總結
+                        </button>
+                    </div>
+
+                    {/* Record Modal */}
+                    {selectedPart && (
+                        <div className="absolute inset-0 z-50 flex items-end">
+                            <div className="absolute inset-0 bg-[#2C2C2C]/30 backdrop-blur-[4px]" onClick={() => setSelectedPart(null)} />
+                            <div className="relative w-full bg-white rounded-t-[50px] p-10 space-y-8 animate-slide-up shadow-2xl border-t border-white">
+                                <div className="w-16 h-1.5 bg-[#FAF7F4] rounded-full mx-auto" />
+                                <div className="text-center space-y-1">
+                                    <h3 className="text-xl font-medium text-[#2C2C2C] tracking-[0.2em]">{selectedPart.name}</h3>
+                                    <p className="text-[10px] text-[#C8A882] tracking-widest uppercase">Self-Awareness</p>
+                                </div>
+                                <div className="space-y-4">
+                                    <p className="text-[10px] text-gray-400 tracking-widest uppercase font-medium">不適類型</p>
+                                    <div className="flex flex-wrap gap-3">
+                                        {SYMPTOMS.map(s => (
+                                            <button 
+                                                key={s} 
+                                                onClick={() => setActiveSymptoms(prev => prev.includes(s) ? prev.filter(i => i !== s) : [...prev, s])}
+                                                className={`px-6 py-2.5 rounded-2xl text-xs transition-all border ${activeSymptoms.includes(s) ? 'bg-[#C8A882] text-white border-[#C8A882] shadow-lg shadow-[#C8A882]/30' : 'border-[#F0E8E0] text-gray-400 hover:border-[#C8A882]/30 bg-white'}`}
+                                            >
+                                                {s}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="space-y-4">
+                                    <div className="flex justify-between text-[10px] text-gray-400 tracking-widest uppercase">
+                                        <span>不適強度感</span>
+                                        <span className="text-[#C8A882] font-bold text-sm">{intensity}%</span>
+                                    </div>
+                                    <input type="range" className="w-full h-1.5 bg-[#FAF7F4] rounded-lg appearance-none cursor-pointer accent-[#C8A882]" value={intensity} onChange={e => setIntensity(e.target.value)} />
+                                </div>
+                                <div className="pt-6 flex gap-6">
+                                    <button onClick={() => setSelectedPart(null)} className="flex-1 py-4 text-gray-400 text-sm font-light tracking-widest">取消</button>
+                                    <button onClick={saveRecord} className="flex-[2.5] py-4 bg-[#C8A882] text-white rounded-2xl shadow-2xl shadow-[#C8A882]/40 font-medium tracking-[0.4em]">儲存覺察</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+</script>
+</body>
+</html>
