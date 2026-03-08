@@ -203,16 +203,22 @@
                     style={{ position: 'absolute', top: `${topPct}%`, left: 0, right: 0 }}
                     onClick={e => e.stopPropagation()}
                 >
-                    {/* Header: 類型 + 右上角刪除/編輯/關閉 */}
+                    {/* Header: 日期時段 + 右上角刪除/編輯/關閉 */}
                     <div className="flex justify-between items-start pt-1">
                         <div>
-                            <span className="text-xs text-[#A89080] uppercase tracking-widest font-medium">{cnType}</span>
                             {isEditing ? (
-                                <input type="date" className="block text-base font-medium mt-1" value={edited.date} onChange={e => setEdited({...edited, date: e.target.value})} />
+                                <div className="space-y-2">
+                                    <input type="date" className="block text-base font-medium" value={edited.date} onChange={e => setEdited({...edited, date: e.target.value})} />
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {['上午','下午','晚上','全天','自定義'].map(slot => (
+                                            <button key={slot} onClick={() => setEdited({...edited, timeSlot: slot})} className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${edited.timeSlot === slot ? 'bg-[#C8A882] text-white border-[#C8A882]' : 'text-[#C8A882] border-[#F3E5D8]'}`}>{slot}</button>
+                                        ))}
+                                    </div>
+                                </div>
                             ) : (
-                                <div className="flex items-baseline gap-2 mt-1">
-                                    <h2 className="text-lg font-medium text-[#C8A882] tracking-wide">{record.date}</h2>
-                                    <span className="text-xs text-[#A89080] font-medium">{record.timeSlot}</span>
+                                <div className="flex items-baseline gap-2">
+                                    <h2 className="text-lg font-medium text-[#D1C4B9] tracking-wide">{record.date}</h2>
+                                    <span className="text-xs text-[#D1C4B9] font-medium">{record.timeSlot}</span>
                                 </div>
                             )}
                         </div>
@@ -284,7 +290,7 @@
 
                         {/* 身體語言 */}
                         {record.type !== 'diary' && (
-                            <div className="bg-[#F3E5D8]/40 p-5 rounded-[2rem] border border-[#F3E5D8] space-y-2">
+                            <div className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8] space-y-2">
                                 <p className="text-xs text-[#8D7B6D] uppercase tracking-widest font-medium">身體語言</p>
                                 {isEditing ? (
                                     <textarea value={edited.bodyLanguage} onChange={e => setEdited({...edited, bodyLanguage: e.target.value})} className="w-full bg-transparent text-sm border-none outline-none font-medium text-[#C8A882] h-20 leading-relaxed" />
@@ -324,7 +330,7 @@
                 </header>
 
                 <div className="p-6 bg-[#F3E5D8]/30 rounded-[2.5rem] border border-[#F3E5D8] text-center">
-                    <p className="text-[10px] text-[#C8A882] font-medium tracking-widest uppercase">Self-Care Insight</p>
+                    <p className="text-[10px] text-[#D1C4B9] font-medium tracking-widest uppercase">Self-Care Insight</p>
                     <p className="text-sm text-[#C8A882]/80 leading-relaxed font-medium mt-2 px-2">"這陣子身體的訊息比較頻繁，可以試試看在早晨醒來時，深呼吸三次，感受今天能量的流動。"</p>
                 </div>
 
@@ -410,7 +416,7 @@
                                         <button onClick={() => onToggle(item.label)} className="w-full text-left flex justify-between items-start">
                                             <div className="pr-4">
                                                 <p className={`text-sm font-medium ${act ? 'text-[#C8A882]' : 'text-[#8D7B6D]'}`}>{item.label}</p>
-                                                <p className="text-xs text-[#D1C4B9] leading-tight mt-0.5">{item.sub}</p>
+                                                <p className="text-xs text-[#D1C4B9] font-medium leading-tight mt-0.5">{item.sub}</p>
                                             </div>
                                             {act && <span className="text-[#C8A882]">✓</span>}
                                         </button>
@@ -439,8 +445,8 @@
                         </div>
                     ))}
                     <div className="p-3 border border-dashed border-[#F3E5D8] rounded-2xl flex items-center gap-2">
-                        {customInput && <button onClick={onAddCustom} className="text-sm font-bold text-[#C8A882] shrink-0">+</button>}
                         <input value={customInput} onChange={e => onCustomInput(e.target.value)} placeholder="自定義..." className="flex-1 text-sm font-medium outline-none text-[#C8A882] bg-transparent placeholder-[#C8A882]/40" />
+                        {customInput && <button onClick={onAddCustom} className="text-sm font-bold text-[#C8A882] shrink-0">+</button>}
                     </div>
                 </div>
             </div>
@@ -469,7 +475,7 @@
 
                 {step === 1 && (
                     <div className="space-y-8 animate-fade-in">
-                        <p className="text-sm font-medium text-[#C8A882] tracking-[0.2em] uppercase">在哪個區域？</p>
+                        <p className="text-lg font-medium text-[#C8A882] tracking-[0.2em] uppercase">在哪個區域？</p>
                         <div className="grid grid-cols-2 gap-3">{Object.keys(BODY_STRUCTURE).map(area => (<button key={area} onClick={() => { setData({...data, area}); setStep(2); }} className="p-8 bg-white border border-[#F3E5D8] rounded-[2.5rem] text-sm text-[#C8A882] hover:bg-[#C8A882] hover:text-white transition-all font-medium uppercase tracking-widest">{area}</button>))}</div>
                         <button onClick={() => setStep(0)} className="text-xs text-[#A89080] font-medium uppercase tracking-widest">BACK</button>
                     </div>
@@ -477,11 +483,11 @@
 
                 {step === 2 && (
                     <div className="space-y-6 animate-fade-in">
-                        <h2 className="text-xl font-medium tracking-widest text-[#C8A882] uppercase">{data.area}</h2>
+                        <h2 className="text-lg font-medium tracking-widest text-[#C8A882] uppercase">{data.area}</h2>
                         <div className="grid grid-cols-2 gap-3">
                             {BODY_STRUCTURE[data.area].map(p => (<button key={p} onClick={() => { setData({...data, part: p}); setStep(3); }} className="p-5 bg-white border border-[#F3E5D8] rounded-2xl text-sm text-[#C8A882] hover:bg-[#C8A882] hover:text-white transition-all font-medium uppercase">{p}</button>))}
                             <div className="col-span-2 mt-2 space-y-3">
-                                <input value={data.customInput} onChange={e => setData({...data, customInput: e.target.value})} placeholder="自定義部位" className="w-full bg-[#F3E5D8]/20 p-4 rounded-xl text-center text-sm outline-none border border-[#F3E5D8] text-[#C8A882] font-medium" />
+                                <input value={data.customInput} onChange={e => setData({...data, customInput: e.target.value})} placeholder="自定義部位" className="w-full bg-[#F3E5D8]/20 p-4 rounded-xl text-center text-sm outline-none border border-[#F3E5D8] text-[#C8A882] font-medium placeholder-[#C8A882]/50" />
                                 {data.customInput && <button onClick={() => { setData({...data, part: data.customInput, customInput: ''}); setStep(3); }} className="text-sm font-medium text-[#C8A882] uppercase">使用此位置 →</button>}
                             </div>
                         </div>
@@ -491,7 +497,7 @@
 
                 {step === 3 && (
                     <div className="space-y-8 animate-fade-in">
-                        <h2 className="text-xl font-medium tracking-widest text-[#C8A882] uppercase">{data.part} 的發生位置</h2>
+                        <h2 className="text-lg font-medium tracking-widest text-[#C8A882] uppercase">{data.part} 的發生位置</h2>
                         <div className="grid grid-cols-3 gap-3">
                             {['不分', '左', '右', '上', '中', '下'].map(s => {
                                 const act = data.side.includes(s);
@@ -502,7 +508,7 @@
                             })}
                         </div>
                         <div className="space-y-2">
-                            <input value={data.customSide || ''} onChange={e => setData({...data, customSide: e.target.value})} placeholder="自定義部位" className="w-full bg-[#F3E5D8]/20 p-4 rounded-xl text-center text-sm outline-none border border-[#F3E5D8] text-[#C8A882] font-medium" />
+                            <input value={data.customSide || ''} onChange={e => setData({...data, customSide: e.target.value})} placeholder="自定義位置" className="w-full bg-[#F3E5D8]/20 p-4 rounded-xl text-center text-sm outline-none border border-[#F3E5D8] text-[#C8A882] font-medium placeholder-[#C8A882]/50" />
                             {data.customSide && (
                                 <button onClick={() => {
                                     if (!data.side.includes(data.customSide)) setData({...data, side: [...data.side.filter(x => x !== '不分'), data.customSide], customSide: ''});
@@ -658,8 +664,13 @@
                                         {type === 'body' && <p className="text-sm font-medium text-[#C8A882]">{i.area ? i.area + ' · ' : ''}{i.side ? i.side.join(', ') : ''}{i.part} : {i.sensationData.map(s => s.label).join(', ')}</p>}
                                         {type === 'mood' && <p className="text-sm font-medium text-[#C8A882]">{Object.keys(i.moods).join(', ')}</p>}
                                         {type === 'diary' && <p className="text-sm font-medium text-[#C8A882] truncate">"{i.sentence}"</p>}
-                                        {type === 'lab' && <p className="text-sm font-medium text-[#C8A882]"><span className="opacity-50 font-normal">實驗對策:</span> {i.lab[0]?.action}</p>}
-                                        <p className="text-xs text-[#A89080] tracking-widest uppercase">{i.timeSlot}</p>
+                                        {type === 'lab' && (
+                                            <div className="space-y-1">
+                                                <p className="text-xs text-[#D1C4B9] font-medium uppercase tracking-widest">{i.type === 'body' ? `${i.area ? i.area + ' · ' : ''}${i.side?i.side.join(''):''}${i.part}` : Object.keys(i.moods||{}).join(', ')}</p>
+                                                <p className="text-sm font-medium text-[#C8A882]">對策：{i.lab[0]?.action}</p>
+                                            </div>
+                                        )}
+                                        <p className="text-xs text-[#D1C4B9] font-bold tracking-widest uppercase">{i.timeSlot}</p>
                                     </div>
                                 ))}
                             </div>
@@ -768,7 +779,7 @@
                                 <div key={l.id} className="p-5 bg-[#F3E5D8]/30 rounded-[1.5rem] border border-[#F3E5D8] space-y-3 animate-fade-in">
                                     <div className="flex justify-between items-start">
                                         <p className="text-sm font-medium text-[#C8A882] leading-relaxed flex-1 pr-3">對策：{l.action}</p>
-                                        <button onClick={() => deleteLab(r.id, l.id)} className="text-xs text-[#A89080] border border-[#A89080]/30 rounded-full px-2 py-0.5">✕</button>
+                                        <button onClick={() => deleteLab(r.id, l.id)} className="text-xs text-[#A89080] px-2 py-0.5">✕</button>
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <div className="flex-1 h-2 bg-white border border-[#C8A882]/30 rounded-full overflow-hidden">
