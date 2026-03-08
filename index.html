@@ -210,7 +210,7 @@
                                 <div className="space-y-2">
                                     <input type="date" className="block text-base font-medium" value={edited.date} onChange={e => setEdited({...edited, date: e.target.value})} />
                                     <div className="flex flex-wrap gap-1.5">
-                                        {['上午','下午','晚上','全天','自定義'].map(slot => (
+                                        {['凌晨','上午','下午','晚上','半夜'].map(slot => (
                                             <button key={slot} onClick={() => setEdited({...edited, timeSlot: slot})} className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${edited.timeSlot === slot ? 'bg-[#C8A882] text-white border-[#C8A882]' : 'text-[#C8A882] border-[#F3E5D8]'}`}>{slot}</button>
                                         ))}
                                     </div>
@@ -321,7 +321,7 @@
                 <header className="pt-4 flex justify-between items-center">
                     <div>
                         <h1 className="text-2xl font-light text-[#C8A882] tracking-[0.3em]">BodyPath</h1>
-                        <p className="text-[10px] text-[#D1C4B9] mt-2 tracking-[0.2em] uppercase font-medium">&nbsp;Listening to Life</p>
+                        <p className="text-[10px] text-[#D1C4B9] mt-2 tracking-[0.2em] uppercase font-medium">Listening to Life</p>
                     </div>
                     <div className="flex gap-4">
                         <button onClick={() => setTab('calendar')} className="p-2 border border-[#F3E5D8] rounded-full active:bg-[#F3E5D8]/20 transition-all"><Icon.Calendar /></button>
@@ -339,7 +339,7 @@
                     return (
                         <section key={sec.type} className="space-y-4">
                             <div className="flex justify-between items-center px-1">
-                                <h2 className="text-sm font-medium tracking-[0.2em] text-[#C8A882] uppercase">{sec.label}</h2>
+                                <h2 className="text-sm font-medium tracking-[0.2em] text-[#A89080] uppercase">{sec.label}</h2>
                                 <button onClick={() => setTab(sec.type)} className="text-sm px-4 py-1.5 bg-[#C8A882] text-white rounded-full font-medium transition-transform active:scale-95">開始記錄</button>
                             </div>
                             <div className="space-y-3">
@@ -383,13 +383,13 @@
     function DateTimeStep({ date, timeSlot, customTime, onUpdate, onNext, title }) {
         return (
             <div className="space-y-8 py-6 animate-fade-in">
-                <p className="text-sm font-medium text-[#C8A882] tracking-[0.2em] uppercase text-center">{title}</p>
+                <p className="text-lg font-medium text-[#A89080] tracking-[0.2em] uppercase text-center">{title}</p>
                 <div className="bg-[#F3E5D8]/30 py-4 px-6 rounded-[2rem] border border-[#F3E5D8] text-center">
                     <input type="date" value={date} onChange={e => onUpdate({date: e.target.value})} />
                 </div>
                 <div className="flex flex-wrap gap-2 justify-center">
                     {TIME_SLOTS.map(slot => (
-                        <button key={slot} onClick={() => onUpdate({timeSlot: slot})} className={`px-5 py-2 rounded-full text-xs font-medium transition-all border ${timeSlot === slot ? 'bg-[#C8A882] text-white border-[#C8A882]' : 'bg-white text-[#C8A882] border-[#F3E5D8]'}`}>{slot}</button>
+                        <button key={slot} onClick={() => onUpdate({timeSlot: slot})} className={`px-5 py-2 rounded-full text-xs font-medium transition-all border ${timeSlot === slot ? 'bg-[#C8A882] text-white border-[#C8A882]' : 'bg-white text-[#D1C4B9] border-[#F3E5D8]'}`}>{slot}</button>
                     ))}
                 </div>
                 {timeSlot === '自定義' && <input value={customTime} onChange={e => onUpdate({customTime: e.target.value})} placeholder="填寫具體時間..." className="w-full bg-[#F3E5D8]/10 p-4 rounded-xl text-center text-sm outline-none border border-[#D1C4B9] placeholder-[#A89080]" />}
@@ -406,7 +406,7 @@
                     <div key={group.title} className="space-y-3">
                         <div className="border-l-2 border-[#C8A882] pl-3 py-0.5">
                             <h3 className="text-base font-medium text-[#C8A882] uppercase tracking-widest">{group.title}</h3>
-                            <p className="text-xs text-[#A89080] font-medium leading-relaxed mt-0.5">{group.desc}</p>
+                            <p className="text-xs text-[#D1C4B9] font-medium leading-relaxed mt-0.5">{group.desc}</p>
                         </div>
                         <div className="grid grid-cols-1 gap-3">
                             {group.items.map(item => {
@@ -444,9 +444,9 @@
                             <input type="range" className="w-full" value={selected[k]} onChange={e => onIntensityChange(k, e.target.value)} />
                         </div>
                     ))}
-                    <div className="p-3 border border-dashed border-[#F3E5D8] rounded-2xl flex items-center gap-2">
+                    <div className="p-3 pr-4 border border-dashed border-[#F3E5D8] rounded-2xl flex items-center gap-2">
                         <input value={customInput} onChange={e => onCustomInput(e.target.value)} placeholder="自定義..." className="flex-1 text-sm font-medium outline-none text-[#C8A882] bg-transparent placeholder-[#C8A882]/40" />
-                        {customInput && <button onClick={onAddCustom} className="text-sm font-bold text-[#C8A882] shrink-0">+</button>}
+                        {customInput && <button onClick={onAddCustom} className="text-sm font-bold text-[#C8A882] shrink-0 pr-1">+</button>}
                     </div>
                 </div>
             </div>
@@ -475,15 +475,15 @@
 
                 {step === 1 && (
                     <div className="space-y-8 animate-fade-in">
-                        <p className="text-lg font-medium text-[#C8A882] tracking-[0.2em] uppercase">在哪個區域？</p>
+                        <p className="text-lg font-medium text-[#A89080] tracking-[0.2em] uppercase">在哪個區域？</p>
                         <div className="grid grid-cols-2 gap-3">{Object.keys(BODY_STRUCTURE).map(area => (<button key={area} onClick={() => { setData({...data, area}); setStep(2); }} className="p-8 bg-white border border-[#F3E5D8] rounded-[2.5rem] text-sm text-[#C8A882] hover:bg-[#C8A882] hover:text-white transition-all font-medium uppercase tracking-widest">{area}</button>))}</div>
-                        <button onClick={() => setStep(0)} className="text-xs text-[#A89080] font-medium uppercase tracking-widest">BACK</button>
+                        <button onClick={() => setStep(0)} className="text-xs text-[#D1C4B9] font-medium uppercase tracking-widest">BACK</button>
                     </div>
                 )}
 
                 {step === 2 && (
                     <div className="space-y-6 animate-fade-in">
-                        <h2 className="text-lg font-medium tracking-widest text-[#C8A882] uppercase">{data.area}</h2>
+                        <h2 className="text-lg font-medium tracking-widest text-[#A89080] uppercase">{data.area}</h2>
                         <div className="grid grid-cols-2 gap-3">
                             {BODY_STRUCTURE[data.area].map(p => (<button key={p} onClick={() => { setData({...data, part: p}); setStep(3); }} className="p-5 bg-white border border-[#F3E5D8] rounded-2xl text-sm text-[#C8A882] hover:bg-[#C8A882] hover:text-white transition-all font-medium uppercase">{p}</button>))}
                             <div className="col-span-2 mt-2 space-y-3">
@@ -491,13 +491,13 @@
                                 {data.customInput && <button onClick={() => { setData({...data, part: data.customInput, customInput: ''}); setStep(3); }} className="text-sm font-medium text-[#C8A882] uppercase">使用此位置 →</button>}
                             </div>
                         </div>
-                        <button onClick={() => setStep(1)} className="text-xs text-[#A89080] font-medium uppercase tracking-widest">BACK</button>
+                        <button onClick={() => setStep(1)} className="text-xs text-[#D1C4B9] font-medium uppercase tracking-widest">BACK</button>
                     </div>
                 )}
 
                 {step === 3 && (
                     <div className="space-y-8 animate-fade-in">
-                        <h2 className="text-lg font-medium tracking-widest text-[#C8A882] uppercase">{data.part} 的發生位置</h2>
+                        <h2 className="text-lg font-medium tracking-widest text-[#A89080] uppercase">{data.part} 的發生位置</h2>
                         <div className="grid grid-cols-3 gap-3">
                             {['不分', '左', '右', '上', '中', '下'].map(s => {
                                 const act = data.side.includes(s);
@@ -523,13 +523,13 @@
                             )}
                         </div>
                         <button onClick={() => setStep(4)} disabled={data.side.length === 0} className="w-full py-4 bg-[#C8A882] text-white rounded-2xl font-medium tracking-widest transition-transform active:scale-95 disabled:opacity-30 uppercase">確認位置</button>
-                        <button onClick={() => setStep(2)} className="text-xs text-[#A89080] font-medium uppercase tracking-widest">BACK</button>
+                        <button onClick={() => setStep(2)} className="text-xs text-[#D1C4B9] font-medium uppercase tracking-widest">BACK</button>
                     </div>
                 )}
 
                 {step === 4 && (
                     <div className="space-y-8 animate-fade-in text-left pb-10">
-                        <h2 className="text-lg font-medium tracking-widest text-center text-[#C8A882] uppercase">{data.side.join('')} {data.part} 的感受</h2>
+                        <h2 className="text-lg font-medium tracking-widest text-center text-[#A89080] uppercase">{data.side.join('')} {data.part} 的感受</h2>
                         <SensationSelector
                             groups={SENSATION_GROUPS}
                             selected={data.sensationData}
@@ -545,7 +545,7 @@
                         </div>
                         <div className="space-y-3 mt-6">
                             <button onClick={() => onSave({...data, type: 'body', sensationData: sensationArr})} className="w-full py-5 bg-[#C8A882] text-white rounded-2xl font-medium tracking-widest transition-transform active:scale-95 shadow-lg shadow-[#C8A882]/20" disabled={sensationArr.length === 0}>儲存紀錄</button>
-                            <button onClick={() => setStep(3)} className="w-full py-2 text-xs text-[#A89080] font-medium uppercase tracking-widest text-center">BACK</button>
+                            <button onClick={() => setStep(3)} className="w-full py-2 text-xs text-[#D1C4B9] font-medium uppercase tracking-widest text-center">BACK</button>
                         </div>
                     </div>
                 )}
@@ -587,7 +587,7 @@
                             <textarea value={data.bodyLanguage} onChange={e => setData({...data, bodyLanguage: e.target.value})} placeholder="如果身體會說話，它想告訴你什麼呢？" className="w-full bg-[#FAF7F4] p-5 rounded-3xl text-sm outline-none border border-[#F3E5D8] h-28 leading-relaxed font-medium placeholder-[#C8A882]/30" />
                         </div>
                         <button onClick={() => onSave({ ...data, type: 'mood' })} className="w-full py-5 bg-[#C8A882] text-white rounded-2xl font-medium tracking-widest transition-transform active:scale-95 shadow-lg shadow-[#C8A882]/20" disabled={Object.keys(data.moods).length === 0}>記錄情緒能量</button>
-                        <button onClick={() => setStep(0)} className="w-full py-2 text-xs text-[#A89080] font-medium uppercase tracking-widest text-center">BACK</button>
+                        <button onClick={() => setStep(0)} className="w-full py-2 text-xs text-[#D1C4B9] font-medium uppercase tracking-widest text-center">BACK</button>
                     </div>
                 )}
             </div>
@@ -608,18 +608,18 @@
                     <input type="date" value={date} onChange={e => setDate(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                    <p className="text-sm font-medium text-[#C8A882] uppercase tracking-widest ml-1">對自己的新發現</p>
+                    <p className="text-sm font-medium text-[#A89080] uppercase tracking-widest ml-1">對自己的新發現</p>
                     <div className="bg-[#F3E5D8]/50 rounded-[2.5rem] p-6 border border-[#D1C4B9]">
                         <textarea value={sentence} onChange={e => setSentence(e.target.value)} className="w-full bg-transparent text-[#C8A882] text-sm outline-none h-28 resize-none leading-relaxed font-medium placeholder-[#C8A882]/30" />
                     </div>
                 </div>
                 <div className="space-y-2">
-                    <p className="text-sm font-medium text-[#C8A882] uppercase tracking-widest ml-1">我的真實感受 <span className="text-xs text-[#A89080] normal-case tracking-normal">(選填)</span></p>
+                    <p className="text-sm font-medium text-[#A89080] uppercase tracking-widest ml-1">我的真實感受 <span className="text-xs text-[#D1C4B9] normal-case tracking-normal">(選填)</span></p>
                     <div className="bg-[#F3E5D8]/50 rounded-[2.5rem] p-6 border border-[#D1C4B9]">
                         <textarea value={learning} onChange={e => setLearning(e.target.value)} className="w-full bg-transparent text-[#C8A882] text-sm outline-none h-28 resize-none leading-relaxed font-medium placeholder-[#C8A882]/30" />
                     </div>
                 </div>
-                <button disabled={!sentence} onClick={() => onSave({ type: 'diary', date, sentence, learning, timeSlot: '全天' })} className={`w-full py-5 rounded-[1.5rem] transition-all font-medium tracking-widest shadow-lg ${sentence ? 'bg-[#C8A882] text-white shadow-[#C8A882]/20' : 'bg-[#F3E5D8]/40 text-[#A89080]'}`}>儲存這天的覺察</button>
+                <button disabled={!sentence} onClick={() => onSave({ type: 'diary', date, sentence, learning, timeSlot: '全天' })} className="w-full py-5 rounded-[1.5rem] transition-all font-medium tracking-widest shadow-lg bg-[#C8A882] text-white shadow-[#C8A882]/20 disabled:opacity-30">儲存這天的覺察</button>
             </div>
         );
     }
@@ -660,17 +660,21 @@
                             <div key={type} className="space-y-4 animate-fade-in">
                                 <p className="text-xs font-medium text-[#A89080] tracking-widest uppercase ml-2">— {mapTitle[type]}</p>
                                 {items.map(i => (
-                                    <div key={i.id} onClick={() => onDetail(i)} className="p-6 border border-[#F3E5D8] bg-white rounded-[2rem] space-y-2 cursor-pointer transition-all hover:bg-[#F3E5D8]/10">
-                                        {type === 'body' && <p className="text-sm font-medium text-[#C8A882]">{i.area ? i.area + ' · ' : ''}{i.side ? i.side.join(', ') : ''}{i.part} : {i.sensationData.map(s => s.label).join(', ')}</p>}
-                                        {type === 'mood' && <p className="text-sm font-medium text-[#C8A882]">{Object.keys(i.moods).join(', ')}</p>}
-                                        {type === 'diary' && <p className="text-sm font-medium text-[#C8A882] truncate">"{i.sentence}"</p>}
+                                    <div key={i.id} onClick={() => onDetail(i)} className="p-5 border border-[#F3E5D8] rounded-[1.5rem] bg-white hover:bg-[#F3E5D8]/10 cursor-pointer transition-all">
+                                        {type === 'body' && <h3 className="text-sm font-medium text-[#C8A882] truncate">{i.area ? i.area + ' · ' : ''}{i.side ? i.side.join(', ') : ''}{i.part} : {i.sensationData.map(s => s.label).join(', ')}</h3>}
+                                        {type === 'mood' && <h3 className="text-sm font-medium text-[#C8A882]">{Object.keys(i.moods).join(', ')}</h3>}
+                                        {type === 'diary' && <h3 className="text-sm font-medium text-[#C8A882] truncate">"{i.sentence}"</h3>}
                                         {type === 'lab' && (
                                             <div className="space-y-1">
-                                                <p className="text-xs text-[#D1C4B9] font-medium uppercase tracking-widest">{i.type === 'body' ? `${i.area ? i.area + ' · ' : ''}${i.side?i.side.join(''):''}${i.part}` : Object.keys(i.moods||{}).join(', ')}</p>
-                                                <p className="text-sm font-medium text-[#C8A882]">對策：{i.lab[0]?.action}</p>
+                                                <h3 className="text-sm font-medium text-[#C8A882]">
+                                                    {i.type === 'body'
+                                                        ? `${i.area ? i.area + ' · ' : ''}${i.side?i.side.join(''):''}${i.part} : ${i.sensationData?.map(s=>s.label).join(', ')}`
+                                                        : Object.keys(i.moods||{}).join(', ')}
+                                                </h3>
+                                                <p className="text-xs text-[#A89080] font-medium">對策：{i.lab[0]?.action}{i.lab.length > 1 ? ` 等 ${i.lab.length} 筆` : ''}</p>
                                             </div>
                                         )}
-                                        <p className="text-xs text-[#D1C4B9] font-bold tracking-widest uppercase">{i.timeSlot}</p>
+                                        <p className="text-xs text-[#D1C4B9] uppercase mt-1 tracking-widest font-medium">{i.timeSlot}</p>
                                     </div>
                                 ))}
                             </div>
