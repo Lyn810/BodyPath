@@ -111,7 +111,11 @@
         const [selectedDetail, setSelectedDetail] = useState(null);
         const [detailClickY, setDetailClickY] = useState(null);
 
-        const openDetail = (record, e) => {
+        const switchTab = (newTab) => {
+            setTab(newTab);
+            const main = document.querySelector('main');
+            if (main) main.scrollTop = 0;
+        };
             if (e) {
                 const container = document.querySelector('.app-container');
                 const rect = container ? container.getBoundingClientRect() : { top: 0, height: window.innerHeight };
@@ -148,11 +152,11 @@
             <div className="flex justify-center min-h-screen bg-[#f8f8f8]">
                 <div className="app-container shadow-2xl">
                     <main className="flex-1 overflow-y-auto no-scrollbar pb-24">
-                        {tab === 'home' && <HomePage setTab={setTab} records={records} onMore={setMoreType} onDetail={openDetail} />}
-                        {tab === 'log' && <CategoryLog records={records} type={moreType} onBack={() => setTab('home')} onDetail={openDetail} />}
-                        {tab === 'body' && <BodyRecorder onSave={addRecord} onCancel={() => setTab('home')} />}
-                        {tab === 'mood' && <MoodRecorder onSave={addRecord} onCancel={() => setTab('home')} />}
-                        {tab === 'diary' && <DiaryRecorder onSave={addRecord} onCancel={() => setTab('home')} />}
+                        {tab === 'home' && <HomePage switchTab={switchTab} records={records} onMore={setMoreType} onDetail={openDetail} />}
+                        {tab === 'log' && <CategoryLog records={records} type={moreType} onBack={() => switchTab('home')} onDetail={openDetail} />}
+                        {tab === 'body' && <BodyRecorder onSave={addRecord} onCancel={() => switchTab('home')} />}
+                        {tab === 'mood' && <MoodRecorder onSave={addRecord} onCancel={() => switchTab('home')} />}
+                        {tab === 'diary' && <DiaryRecorder onSave={addRecord} onCancel={() => switchTab('home')} />}
                         {tab === 'lab' && <MiniLab records={records} setRecords={setRecords} />}
                         {tab === 'calendar' && <CalendarPage records={records} onDetail={openDetail} />}
                         {tab === 'trend' && <TrendPage records={records} />}
@@ -161,11 +165,11 @@
                     {selectedDetail && <DetailModal record={selectedDetail} clickY={detailClickY} onClose={() => setSelectedDetail(null)} onUpdate={updateRecord} onDelete={deleteRecord} />}
 
                     <nav className="fixed bottom-0 w-full max-w-[428px] h-20 bg-white border-t border-[#F3E5D8] flex items-center justify-around px-2 z-50">
-                        <NavBtn active={tab === 'home'} onClick={() => {setTab('home'); setMoreType(null);}} label="首頁" icon={<Icon.Home />} />
-                        <NavBtn active={tab === 'body'} onClick={() => setTab('body')} label="身體" icon={<Icon.Body />} />
-                        <NavBtn active={tab === 'mood'} onClick={() => setTab('mood')} label="心情" icon={<Icon.Mood />} />
-                        <NavBtn active={tab === 'diary'} onClick={() => setTab('diary')} label="日記" icon={<Icon.Diary />} />
-                        <NavBtn active={tab === 'lab'} onClick={() => setTab('lab')} label="實驗" icon={<Icon.Lab />} />
+                        <NavBtn active={tab === 'home'} onClick={() => {switchTab('home'); setMoreType(null);}} label="首頁" icon={<Icon.Home />} />
+                        <NavBtn active={tab === 'body'} onClick={() => switchTab('body')} label="身體" icon={<Icon.Body />} />
+                        <NavBtn active={tab === 'mood'} onClick={() => switchTab('mood')} label="心情" icon={<Icon.Mood />} />
+                        <NavBtn active={tab === 'diary'} onClick={() => switchTab('diary')} label="日記" icon={<Icon.Diary />} />
+                        <NavBtn active={tab === 'lab'} onClick={() => switchTab('lab')} label="實驗" icon={<Icon.Lab />} />
                     </nav>
                 </div>
             </div>
@@ -318,8 +322,48 @@
         );
     }
 
-    function HomePage({ setTab, records, onMore, onDetail }) {
+    function HomePage({ switchTab, records, onMore, onDetail }) {
         const sections = [{ type: 'body', label: '身體覺察' }, { type: 'mood', label: '心情能量' }, { type: 'diary', label: '日記隨想' }];
+        const [menuOpen, setMenuOpen] = React.useState(false);
+
+        const exportJSON = () => {
+            const data = localStorage.getItem('bp_v25_all') || '[]';
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `BodyPath_備份_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            setMenuOpen(false);
+        };
+
+        const importJSON = () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    try {
+                        const parsed = JSON.parse(ev.target.result);
+                        if (!Array.isArray(parsed)) throw new Error();
+                        if (window.confirm(`即將匯入 ${parsed.length} 筆紀錄，這會覆蓋目前所有資料，確定嗎？`)) {
+                            localStorage.setItem('bp_v25_all', JSON.stringify(parsed));
+                            window.location.reload();
+                        }
+                    } catch {
+                        alert('檔案格式錯誤，請選擇 BodyPath 匯出的 .json 檔案');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+            setMenuOpen(false);
+        };
+
         return (
             <div className="p-8 space-y-12 animate-fade-in pb-10">
                 <header className="pt-4 flex justify-between items-center">
@@ -327,9 +371,34 @@
                         <h1 className="text-2xl font-light text-[#C8A882] tracking-[0.3em]">BodyPath</h1>
                         <p className="text-[10px] text-[#D1C4B9] mt-2 tracking-[0.2em] uppercase font-medium">Listening to Life</p>
                     </div>
-                    <div className="flex gap-4">
-                        <button onClick={() => setTab('calendar')} className="p-2 border border-[#F3E5D8] rounded-full active:bg-[#F3E5D8]/20 transition-all"><Icon.Calendar /></button>
-                        <button onClick={() => setTab('trend')} className="p-2 border border-[#F3E5D8] rounded-full active:bg-[#F3E5D8]/20 transition-all"><Icon.Trend /></button>
+                    <div className="relative">
+                        <button onClick={() => setMenuOpen(o => !o)} className="p-2 border border-[#F3E5D8] rounded-full active:bg-[#F3E5D8]/20 transition-all flex flex-col gap-[4px] items-center justify-center w-10 h-10">
+                            <span className="block w-4 h-[1.5px] bg-[#C8A882] rounded-full"></span>
+                            <span className="block w-4 h-[1.5px] bg-[#C8A882] rounded-full"></span>
+                            <span className="block w-4 h-[1.5px] bg-[#C8A882] rounded-full"></span>
+                        </button>
+                        {menuOpen && (
+                            <div className="absolute right-0 top-12 w-44 bg-white border border-[#F3E5D8] rounded-[1.5rem] shadow-lg overflow-hidden z-50 animate-fade-in">
+                                <button onClick={() => { switchTab('calendar'); setMenuOpen(false); }} className="w-full px-5 py-3.5 text-left text-sm text-[#A89080] tracking-wide flex items-center gap-3 active:bg-[#FAF7F4]">
+                                    <Icon.Calendar /> 行事曆
+                                </button>
+                                <div className="h-px bg-[#F3E5D8] mx-4"></div>
+                                <button onClick={() => { switchTab('trend'); setMenuOpen(false); }} className="w-full px-5 py-3.5 text-left text-sm text-[#A89080] tracking-wide flex items-center gap-3 active:bg-[#FAF7F4]">
+                                    <Icon.Trend /> 趨勢圖
+                                </button>
+                                <div className="h-px bg-[#F3E5D8] mx-4"></div>
+                                <button onClick={exportJSON} className="w-full px-5 py-3.5 text-left text-sm text-[#A89080] tracking-wide flex items-center gap-3 active:bg-[#FAF7F4]">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+                                    備份資料
+                                </button>
+                                <div className="h-px bg-[#F3E5D8] mx-4"></div>
+                                <button onClick={importJSON} className="w-full px-5 py-3.5 text-left text-sm text-[#A89080] tracking-wide flex items-center gap-3 active:bg-[#FAF7F4]">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" transform="rotate(180 12 12)" /></svg>
+                                    還原資料
+                                </button>
+                            </div>
+                        )}
+                        {menuOpen && <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)}></div>}
                     </div>
                 </header>
 
@@ -344,7 +413,7 @@
                         <section key={sec.type} className="space-y-4">
                             <div className="flex justify-between items-center px-1">
                                 <h2 className="text-sm font-medium tracking-[0.2em] text-[#A89080] uppercase">{sec.label}</h2>
-                                <button onClick={() => setTab(sec.type)} className="text-sm px-4 py-1.5 bg-[#C8A882] text-white rounded-full font-medium transition-transform active:scale-95">開始記錄</button>
+                                <button onClick={() => switchTab(sec.type)} className="text-sm px-4 py-1.5 bg-[#C8A882] text-white rounded-full font-medium transition-transform active:scale-95">開始記錄</button>
                             </div>
                             <div className="space-y-3">
                                 {filtered.map(r => (
@@ -354,7 +423,7 @@
                                     </div>
                                 ))}
                             </div>
-                            {filtered.length > 0 && <button onClick={() => { onMore(sec.type); setTab('log'); }} className="w-full text-center text-xs text-[#D1C4B9] font-medium tracking-[0.3em] uppercase pt-2 transition-opacity hover:opacity-60">more</button>}
+                            {filtered.length > 0 && <button onClick={() => { onMore(sec.type); switchTab('log'); }} className="w-full text-center text-xs text-[#D1C4B9] font-medium tracking-[0.3em] uppercase pt-2 transition-opacity hover:opacity-60">more</button>}
                         </section>
                     );
                 })}
@@ -636,7 +705,7 @@
         return (
             <div className="p-8 space-y-10 animate-fade-in pb-32">
                 <header className="pt-4 flex justify-between items-end text-[#C8A882] uppercase tracking-[0.2em] font-medium">
-                    <h2 className="text-2xl font-medium uppercase tracking-[0.1em]">Calendar</h2>
+                    <h2 className="text-2xl font-light text-[#C8A882] tracking-[0.3em] uppercase">Calendar</h2>
                     <Icon.Calendar />
                 </header>
                 <div className="grid grid-cols-7 gap-2">
@@ -684,7 +753,7 @@
                             </div>
                         );
                     })}
-                    {filtered.length === 0 && <p className="text-center py-20 text-xs text-[#A89080] uppercase font-medium tracking-widest animate-fade-in">Gently Left Blank.</p>}
+                    {filtered.length === 0 && <p className="text-center py-20 text-xs text-[#D1C4B9] uppercase font-medium tracking-widest animate-fade-in">Gently Left Blank.</p>}
                 </div>
             </div>
         );
@@ -709,7 +778,7 @@
         return (
             <div className="p-8 space-y-12 animate-fade-in pb-32">
                 <header className="pt-4 flex justify-between items-end text-[#C8A882] uppercase tracking-[0.2em] font-medium">
-                    <h2 className="text-2xl">Monthly Trends</h2><Icon.Trend />
+                    <h2 className="text-2xl font-light text-[#C8A882] tracking-[0.3em] uppercase">Monthly Trends</h2><Icon.Trend />
                 </header>
                 <div className="flex justify-center border-b border-[#F3E5D8] pb-4">
                     <input type="month" value={month} onChange={e => setMonth(e.target.value)} className="bg-transparent text-sm font-medium uppercase tracking-widest text-[#C8A882] outline-none" />
@@ -757,7 +826,7 @@
         return (
             <div className="p-8 space-y-10 animate-fade-in pb-32">
                 <header className="pt-4 flex justify-between items-end text-[#C8A882] uppercase tracking-[0.2em] font-medium">
-                    <h2 className="text-2xl font-medium uppercase tracking-[0.1em]">Mini Lab</h2>
+                    <h2 className="text-2xl font-light text-[#C8A882] tracking-[0.3em] uppercase">Mini Lab</h2>
                     <Icon.Lab />
                 </header>
                 <div className="space-y-6">
