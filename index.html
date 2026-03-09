@@ -202,27 +202,29 @@
                     className="relative w-full bg-white rounded-[3rem] p-8 space-y-5 border border-[#F3E5D8] max-h-[85vh] overflow-y-auto no-scrollbar"
                     onClick={e => e.stopPropagation()}
                 >
-                    {/* Header: 右上角刪除/編輯/關閉 + 下一行日期時段 */}
-                    <div className="space-y-2 pt-1">
-                        <div className="flex justify-end items-center gap-2">
-                            {!isEditing && <>
+                    {/* Header: 日期時段 + 刪除編輯 同一行 */}
+                    <div className="flex justify-between items-center pt-1">
+                        <div className="flex items-baseline gap-2">
+                            {isEditing ? (
+                                <div className="space-y-2">
+                                    <input type="date" className="block text-base font-medium" value={edited.date} onChange={e => setEdited({...edited, date: e.target.value})} />
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {['凌晨','上午','下午','晚上','半夜'].map(slot => (
+                                            <button key={slot} onClick={() => setEdited({...edited, timeSlot: slot})} className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${edited.timeSlot === slot ? 'bg-[#C8A882] text-white border-[#C8A882]' : 'text-[#C8A882] border-[#F3E5D8]'}`}>{slot}</button>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                <>
+                                    <h2 className="text-lg font-medium text-[#D1C4B9] tracking-wide whitespace-nowrap">{record.date}</h2>
+                                    <span className="text-xs text-[#D1C4B9] font-medium">{record.timeSlot}</span>
+                                </>
+                            )}
+                        </div>
+                        {!isEditing && (
+                            <div className="flex items-center gap-2 shrink-0 ml-3">
                                 <button onClick={() => onDelete(record.id)} className="px-3 py-1.5 bg-[#8D7B6D] text-white rounded-full text-xs font-medium">刪除</button>
                                 <button onClick={() => setIsEditing(true)} className="px-3 py-1.5 border border-[#C8A882] rounded-full text-xs font-medium text-[#C8A882]">編輯</button>
-                            </>}
-                        </div>
-                        {isEditing ? (
-                            <div className="space-y-2">
-                                <input type="date" className="block text-base font-medium" value={edited.date} onChange={e => setEdited({...edited, date: e.target.value})} />
-                                <div className="flex flex-wrap gap-1.5">
-                                    {['凌晨','上午','下午','晚上','半夜'].map(slot => (
-                                        <button key={slot} onClick={() => setEdited({...edited, timeSlot: slot})} className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${edited.timeSlot === slot ? 'bg-[#C8A882] text-white border-[#C8A882]' : 'text-[#C8A882] border-[#F3E5D8]'}`}>{slot}</button>
-                                    ))}
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="flex items-baseline gap-2 justify-center">
-                                <h2 className="text-lg font-medium text-[#D1C4B9] tracking-wide whitespace-nowrap">{record.date}</h2>
-                                <span className="text-xs text-[#D1C4B9] font-medium">{record.timeSlot}</span>
                             </div>
                         )}
                     </div>
@@ -231,7 +233,7 @@
                         {/* 身體覺察內容 */}
                         {record.type === 'body' && (
                             <div className="space-y-3">
-                                <p className="text-sm font-medium text-[#8D7B6D] tracking-wide text-center">{edited.area ? edited.area + ' · ' : ''}{edited.side ? edited.side.join(' ') : ''} {record.part}</p>
+                                <p className="text-sm font-medium text-[#8D7B6D] tracking-wide">{edited.area ? edited.area + ' · ' : ''}{edited.side ? edited.side.join(' ') : ''} {record.part}</p>
                                 {edited.sensationData.map((s, idx) => (
                                     <div key={idx} className="space-y-2 bg-[#FAF7F4] p-4 rounded-2xl border border-[#F3E5D8]">
                                         <div className="flex justify-between text-sm font-medium"><span className="text-[#C8A882]">{s.label}</span><span className="text-[#C8A882]">{s.intensity}%</span></div>
@@ -269,14 +271,18 @@
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
-                                        <div className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8] space-y-2 text-center">
-                                            <p className="text-xs text-[#A89080] uppercase tracking-widest font-medium">對自己的新發現</p>
-                                            <p className="text-sm font-medium text-[#C8A882] leading-relaxed">{record.sentence}</p>
+                                        <div className="space-y-1">
+                                            <p className="text-sm font-medium text-[#8D7B6D] tracking-wide">對自己的新發現</p>
+                                            <div className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8]">
+                                                <p className="text-sm font-medium text-[#C8A882] leading-relaxed">{record.sentence}</p>
+                                            </div>
                                         </div>
                                         {record.learning && (
-                                            <div className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8] space-y-2 text-center">
-                                                <p className="text-xs text-[#A89080] uppercase tracking-widest font-medium">我的真實感受</p>
-                                                <p className="text-sm font-medium text-[#C8A882] leading-relaxed">{record.learning}</p>
+                                            <div className="space-y-1">
+                                                <p className="text-sm font-medium text-[#8D7B6D] tracking-wide">我的真實感受</p>
+                                                <div className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8]">
+                                                    <p className="text-sm font-medium text-[#C8A882] leading-relaxed">{record.learning}</p>
+                                                </div>
                                             </div>
                                         )}
                                     </div>
@@ -286,13 +292,15 @@
 
                         {/* 身體語言 */}
                         {record.type !== 'diary' && (
-                            <div className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8] space-y-2 text-center">
-                                <p className="text-xs text-[#8D7B6D] uppercase tracking-widest font-medium">身體語言</p>
-                                {isEditing ? (
-                                    <textarea value={edited.bodyLanguage} onChange={e => setEdited({...edited, bodyLanguage: e.target.value})} className="w-full bg-transparent text-sm border-none outline-none font-medium text-[#C8A882] h-20 leading-relaxed text-center" />
-                                ) : (
-                                    <p className="text-sm font-medium text-[#C8A882] leading-relaxed">{record.bodyLanguage || "未紀錄"}</p>
-                                )}
+                            <div className="space-y-1">
+                                <p className="text-sm font-medium text-[#8D7B6D] tracking-wide">身體語言</p>
+                                <div className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8]">
+                                    {isEditing ? (
+                                        <textarea value={edited.bodyLanguage} onChange={e => setEdited({...edited, bodyLanguage: e.target.value})} className="w-full bg-transparent text-sm border-none outline-none font-medium text-[#C8A882] h-20 leading-relaxed" />
+                                    ) : (
+                                        <p className="text-sm font-medium text-[#C8A882] leading-relaxed">{record.bodyLanguage || "未紀錄"}</p>
+                                    )}
+                                </div>
                             </div>
                         )}
                     </div>
