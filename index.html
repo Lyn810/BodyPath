@@ -444,9 +444,9 @@
                             <input type="range" className="w-full" value={selected[k]} onChange={e => onIntensityChange(k, e.target.value)} />
                         </div>
                     ))}
-                    <div className="p-3 border border-dashed border-[#F3E5D8] rounded-2xl flex items-center gap-2">
-                        <input value={customInput} onChange={e => onCustomInput(e.target.value)} placeholder="自定義..." className="flex-1 text-sm font-medium outline-none text-[#C8A882] bg-transparent placeholder-[#C8A882]/40" />
-                        {customInput && <button onClick={onAddCustom} className="text-sm font-bold text-[#C8A882] shrink-0 mr-2">+</button>}
+                    <div className="p-3 border border-dashed border-[#F3E5D8] rounded-2xl relative flex items-center">
+                        <input value={customInput} onChange={e => onCustomInput(e.target.value)} placeholder="自定義..." className="flex-1 text-sm font-medium outline-none text-[#C8A882] bg-transparent placeholder-[#C8A882]/40 pr-8" />
+                        {customInput && <button onClick={onAddCustom} className="absolute right-4 text-sm font-bold text-[#C8A882]">+</button>}
                     </div>
                 </div>
             </div>
