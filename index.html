@@ -193,14 +193,13 @@
         const cnType = record.type === 'body' ? '身體覺察' : record.type === 'mood' ? '心情能量' : '日記隨想';
 
         // 計算 modal 頂部位置：以點擊位置為起點，但確保不超出畫面
-        const topPct = clickY ? Math.min(Math.max(clickY - 20, 5), 30) : 10;
+        const topPct = clickY ? Math.min(Math.max(clickY - 20, 5), 60) : 10;
 
         return (
-            <div className="absolute inset-0 z-[100] animate-fade-in" onClick={onClose}>
+            <div className="absolute inset-0 z-[100] animate-fade-in flex items-center justify-center" onClick={onClose}>
                 <div className="absolute inset-0 bg-[#C8A882]/10 backdrop-blur-sm" />
                 <div
                     className="relative w-full bg-white rounded-[3rem] p-8 space-y-5 border border-[#F3E5D8] max-h-[85vh] overflow-y-auto no-scrollbar mx-auto"
-                    style={{ position: 'absolute', top: `${topPct}%`, left: 0, right: 0 }}
                     onClick={e => e.stopPropagation()}
                 >
                     {/* Header: 日期時段 + 右上角刪除/編輯/關閉 */}
