@@ -324,7 +324,7 @@
 
     function HomePage({ switchTab, records, onMore, onDetail }) {
         const sections = [{ type: 'body', label: '身體覺察' }, { type: 'mood', label: '心情能量' }, { type: 'diary', label: '日記隨想' }];
-        const [menuOpen, setMenuOpen] = React.useState(false);
+        const [menuOpen, setMenuOpen] = useState(false);
 
         const exportJSON = () => {
             const data = localStorage.getItem('bp_v25_all') || '[]';
@@ -354,7 +354,7 @@
                             localStorage.setItem('bp_v25_all', JSON.stringify(parsed));
                             window.location.reload();
                         }
-                    } catch {
+                    } catch(err) {
                         alert('檔案格式錯誤，請選擇 BodyPath 匯出的 .json 檔案');
                     }
                 };
