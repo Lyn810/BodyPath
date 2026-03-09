@@ -220,7 +220,7 @@
                                 </div>
                             </div>
                         ) : (
-                            <div className="flex items-baseline gap-2">
+                            <div className="flex items-baseline gap-2 justify-center">
                                 <h2 className="text-lg font-medium text-[#D1C4B9] tracking-wide whitespace-nowrap">{record.date}</h2>
                                 <span className="text-xs text-[#D1C4B9] font-medium">{record.timeSlot}</span>
                             </div>
@@ -231,7 +231,7 @@
                         {/* 身體覺察內容 */}
                         {record.type === 'body' && (
                             <div className="space-y-3">
-                                <p className="text-sm font-medium text-[#8D7B6D] tracking-wide">{edited.area ? edited.area + ' · ' : ''}{edited.side ? edited.side.join(' ') : ''} {record.part}</p>
+                                <p className="text-sm font-medium text-[#8D7B6D] tracking-wide text-center">{edited.area ? edited.area + ' · ' : ''}{edited.side ? edited.side.join(' ') : ''} {record.part}</p>
                                 {edited.sensationData.map((s, idx) => (
                                     <div key={idx} className="space-y-2 bg-[#FAF7F4] p-4 rounded-2xl border border-[#F3E5D8]">
                                         <div className="flex justify-between text-sm font-medium"><span className="text-[#C8A882]">{s.label}</span><span className="text-[#C8A882]">{s.intensity}%</span></div>
@@ -269,12 +269,12 @@
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
-                                        <div className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8] space-y-2">
+                                        <div className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8] space-y-2 text-center">
                                             <p className="text-xs text-[#A89080] uppercase tracking-widest font-medium">對自己的新發現</p>
                                             <p className="text-sm font-medium text-[#C8A882] leading-relaxed">{record.sentence}</p>
                                         </div>
                                         {record.learning && (
-                                            <div className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8] space-y-2">
+                                            <div className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8] space-y-2 text-center">
                                                 <p className="text-xs text-[#A89080] uppercase tracking-widest font-medium">我的真實感受</p>
                                                 <p className="text-sm font-medium text-[#C8A882] leading-relaxed">{record.learning}</p>
                                             </div>
@@ -286,10 +286,10 @@
 
                         {/* 身體語言 */}
                         {record.type !== 'diary' && (
-                            <div className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8] space-y-2">
+                            <div className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8] space-y-2 text-center">
                                 <p className="text-xs text-[#8D7B6D] uppercase tracking-widest font-medium">身體語言</p>
                                 {isEditing ? (
-                                    <textarea value={edited.bodyLanguage} onChange={e => setEdited({...edited, bodyLanguage: e.target.value})} className="w-full bg-transparent text-sm border-none outline-none font-medium text-[#C8A882] h-20 leading-relaxed" />
+                                    <textarea value={edited.bodyLanguage} onChange={e => setEdited({...edited, bodyLanguage: e.target.value})} className="w-full bg-transparent text-sm border-none outline-none font-medium text-[#C8A882] h-20 leading-relaxed text-center" />
                                 ) : (
                                     <p className="text-sm font-medium text-[#C8A882] leading-relaxed">{record.bodyLanguage || "未紀錄"}</p>
                                 )}
