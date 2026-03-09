@@ -116,6 +116,8 @@
             const main = document.querySelector('main');
             if (main) main.scrollTop = 0;
         };
+
+        const openDetail = (record, e) => {
             if (e) {
                 const container = document.querySelector('.app-container');
                 const rect = container ? container.getBoundingClientRect() : { top: 0, height: window.innerHeight };
