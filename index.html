@@ -381,18 +381,12 @@
         const totalCount = weekRecords.length;
 
         const getInsight = () => {
-            if (totalCount === 0) return '每一天都值得被溫柔記錄。
-輕輕觸碰下方，開始今天的覺察。';
-            if (bodyCount >= 5) return `這週身體傳來了 ${bodyCount} 次訊息。
-試著在每次不適前先深呼吸，聽聽它想說什麼。`;
-            if (moodCount >= 5) return `這週你記錄了 ${moodCount} 次心情起伏。
-情緒流動是正常的，你已經在好好感受了。`;
-            if (diaryCount >= 3) return `你已經連續書寫了 ${diaryCount} 次日記。
-這種與自己對話的習慣，會慢慢帶來清晰。`;
-            if (totalCount >= 3) return `這週已經有 ${totalCount} 筆覺察。
-持續記錄，你會越來越了解自己的節律。`;
-            return '今天也要好好照顧自己。
-身體和心情，都值得被看見。';
+            if (totalCount === 0) return '每一天都值得被溫柔記錄。\n輕輕觸碰下方，開始今天的覺察。';
+            if (bodyCount >= 5) return `這週身體傳來了 ${bodyCount} 次訊息。\n試著在每次不適前先深呼吸，聽聽它想說什麼。`;
+            if (moodCount >= 5) return `這週你記錄了 ${moodCount} 次心情起伏。\n情緒流動是正常的，你已經在好好感受了。`;
+            if (diaryCount >= 3) return `你已經連續書寫了 ${diaryCount} 次日記。\n這種與自己對話的習慣，會慢慢帶來清晰。`;
+            if (totalCount >= 3) return `這週已經有 ${totalCount} 筆覺察。\n持續記錄，你會越來越了解自己的節律。`;
+            return '今天也要好好照顧自己。\n身體和心情，都值得被看見。';
         };
 
         const entries = [
