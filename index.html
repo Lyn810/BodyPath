@@ -807,7 +807,7 @@
                 <div className="space-y-10">
                     <h3 className="text-xs font-bold text-[#C8A882] tracking-[0.2em] border-b border-[#F3E5D8] pb-2 uppercase">{selectedDate} Journey</h3>
                     {['body', 'mood', 'diary', 'lab'].map(type => {
-                        const items = type === 'lab' ? filtered.filter(f => f.lab) : filtered.filter(f => f.type === type);
+                        const items = type === 'lab' ? filtered.filter(f => f.lab && f.lab.length > 0) : filtered.filter(f => f.type === type);
                         if (items.length === 0) return null;
                         return (
                             <div key={type} className="space-y-4 animate-fade-in">
