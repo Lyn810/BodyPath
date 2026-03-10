@@ -107,7 +107,6 @@
     function App() {
         const [tab, setTab] = useState('home');
         const [records, setRecords] = useState(JSON.parse(localStorage.getItem('bp_v25_all') || '[]'));
-        const [moreType, setMoreType] = useState(null);
         const [selectedDetail, setSelectedDetail] = useState(null);
         const [detailClickY, setDetailClickY] = useState(null);
 
@@ -133,7 +132,11 @@
             const newList = [{ ...r, id: Date.now() }, ...records];
             newList.sort((a, b) => new Date(b.date) - new Date(a.date));
             setRecords(newList);
-            setTab('home');
+            // Go back to list tab after saving
+            if (tab === 'body_rec') switchTab('body');
+            else if (tab === 'mood_rec') switchTab('mood');
+            else if (tab === 'diary_rec') switchTab('diary');
+            else switchTab('home');
         };
 
         const updateRecord = (updatedR) => {
@@ -154,11 +157,14 @@
             <div className="flex justify-center min-h-screen bg-[#f8f8f8]">
                 <div className="app-container shadow-2xl">
                     <main className="flex-1 overflow-y-auto no-scrollbar pb-24">
-                        {tab === 'home' && <HomePage switchTab={switchTab} records={records} onMore={setMoreType} onDetail={openDetail} />}
-                        {tab === 'log' && <CategoryLog records={records} type={moreType} onBack={() => switchTab('home')} onDetail={openDetail} />}
-                        {tab === 'body' && <BodyRecorder onSave={addRecord} onCancel={() => switchTab('home')} />}
-                        {tab === 'mood' && <MoodRecorder onSave={addRecord} onCancel={() => switchTab('home')} />}
-                        {tab === 'diary' && <DiaryRecorder onSave={addRecord} onCancel={() => switchTab('home')} />}
+                        {tab === 'home' && <HomePage switchTab={switchTab} records={records} onDetail={openDetail} />}
+                        
+                        {tab === 'body' && <CategoryLog records={records} type="body" onBack={() => switchTab('home')} onDetail={openDetail} onAdd={() => switchTab('body_rec')} />}
+                        {tab === 'mood' && <CategoryLog records={records} type="mood" onBack={() => switchTab('home')} onDetail={openDetail} onAdd={() => switchTab('mood_rec')} />}
+                        {tab === 'diary' && <CategoryLog records={records} type="diary" onBack={() => switchTab('home')} onDetail={openDetail} onAdd={() => switchTab('diary_rec')} />}
+                        {tab === 'body_rec' && <BodyRecorder onSave={addRecord} onCancel={() => switchTab('body')} />}
+                        {tab === 'mood_rec' && <MoodRecorder onSave={addRecord} onCancel={() => switchTab('mood')} />}
+                        {tab === 'diary_rec' && <DiaryRecorder onSave={addRecord} onCancel={() => switchTab('diary')} />}
                         {tab === 'lab' && <MiniLab records={records} setRecords={setRecords} onDetail={openDetail} />}
                         {tab === 'calendar' && <CalendarPage records={records} setRecords={setRecords} onDetail={openDetail} />}
                         {tab === 'trend' && <TrendPage records={records} />}
@@ -167,11 +173,11 @@
                     {selectedDetail && <DetailModal record={selectedDetail} clickY={detailClickY} onClose={() => setSelectedDetail(null)} onUpdate={updateRecord} onDelete={deleteRecord} />}
 
                     <nav className="fixed bottom-0 w-full max-w-[428px] h-20 bg-white border-t border-[#F3E5D8] flex items-center justify-around px-2 z-50">
-                        <NavBtn active={tab === 'home'} onClick={() => {switchTab('home'); setMoreType(null);}} label="首頁" icon={<Icon.Home />} />
+                        <NavBtn active={tab === 'home'} onClick={() => switchTab('home')} label="首頁" icon={<Icon.Home />} />
                         <NavBtn active={tab === 'body'} onClick={() => switchTab('body')} label="身體" icon={<Icon.Body />} />
                         <NavBtn active={tab === 'mood'} onClick={() => switchTab('mood')} label="心情" icon={<Icon.Mood />} />
                         <NavBtn active={tab === 'diary'} onClick={() => switchTab('diary')} label="日記" icon={<Icon.Diary />} />
-                        <NavBtn active={tab === 'lab'} onClick={() => switchTab('lab')} label="紀錄" icon={<Icon.Lab />} />
+                        <NavBtn active={tab === 'lab'} onClick={() => switchTab('lab')} label="紀錄" icon={<Icon.Calendar />} />
                     </nav>
                 </div>
             </div>
@@ -324,7 +330,7 @@
         );
     }
 
-    function HomePage({ switchTab, records, onMore, onDetail }) {
+    function HomePage({ switchTab, records, onDetail }) {
         const sections = [{ type: 'body', label: '身體覺察' }, { type: 'mood', label: '心情能量' }, { type: 'diary', label: '日記隨想' }];
         const [menuOpen, setMenuOpen] = useState(false);
 
@@ -366,8 +372,67 @@
             setMenuOpen(false);
         };
 
+        // 動態 Insight 根據近一週資料
+        const oneWeekAgo = new Date(); oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        const weekRecords = records.filter(r => new Date(r.date) >= oneWeekAgo);
+        const bodyCount = weekRecords.filter(r => r.type === 'body').length;
+        const moodCount = weekRecords.filter(r => r.type === 'mood').length;
+        const diaryCount = weekRecords.filter(r => r.type === 'diary').length;
+        const totalCount = weekRecords.length;
+
+        const getInsight = () => {
+            if (totalCount === 0) return '每一天都值得被溫柔記錄。
+輕輕觸碰下方，開始今天的覺察。';
+            if (bodyCount >= 5) return `這週身體傳來了 ${bodyCount} 次訊息。
+試著在每次不適前先深呼吸，聽聽它想說什麼。`;
+            if (moodCount >= 5) return `這週你記錄了 ${moodCount} 次心情起伏。
+情緒流動是正常的，你已經在好好感受了。`;
+            if (diaryCount >= 3) return `你已經連續書寫了 ${diaryCount} 次日記。
+這種與自己對話的習慣，會慢慢帶來清晰。`;
+            if (totalCount >= 3) return `這週已經有 ${totalCount} 筆覺察。
+持續記錄，你會越來越了解自己的節律。`;
+            return '今天也要好好照顧自己。
+身體和心情，都值得被看見。';
+        };
+
+        const entries = [
+            {
+                type: 'body',
+                label: '身體覺察',
+                desc: '記錄不適的位置與感受',
+                icon: (
+                    <svg className="w-7 h-7" fill="none" stroke="#C8A882" strokeWidth="1.3" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 2a3 3 0 100 6 3 3 0 000-6zM9 12c0-1.5.8-2.8 2-3.5M15 12c0-1.5-.8-2.8-2-3.5M9 12v5l1 4h4l1-4v-5" />
+                    </svg>
+                ),
+                count: records.filter(r => r.type === 'body').length,
+            },
+            {
+                type: 'mood',
+                label: '心情能量',
+                desc: '記錄當下的情緒狀態',
+                icon: (
+                    <svg className="w-7 h-7" fill="none" stroke="#C8A882" strokeWidth="1.3" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                    </svg>
+                ),
+                count: records.filter(r => r.type === 'mood').length,
+            },
+            {
+                type: 'diary',
+                label: '日記隨想',
+                desc: '寫下今天想對自己說的話',
+                icon: (
+                    <svg className="w-7 h-7" fill="none" stroke="#C8A882" strokeWidth="1.3" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                    </svg>
+                ),
+                count: records.filter(r => r.type === 'diary').length,
+            },
+        ];
+
         return (
-            <div className="p-8 space-y-12 animate-fade-in pb-10">
+            <div className="p-8 space-y-8 animate-fade-in pb-10">
                 <header className="pt-4 flex justify-between items-center">
                     <div>
                         <h1 className="text-2xl font-light text-[#C8A882] tracking-[0.3em]">BodyPath</h1>
@@ -400,49 +465,59 @@
                     </div>
                 </header>
 
-                <div className="p-6 bg-[#F3E5D8]/30 rounded-[2.5rem] border border-[#F3E5D8] text-center">
-                    <p className="text-[10px] text-[#D1C4B9] font-medium tracking-widest uppercase">Self-Care Insight</p>
-                    <p className="text-sm text-[#C8A882]/80 leading-relaxed font-medium mt-2 px-2">"這陣子身體的訊息比較頻繁，可以試試看在早晨醒來時，深呼吸三次，感受今天能量的流動。"</p>
+                {/* Insight 區塊 */}
+                <div className="p-6 bg-[#F3E5D8]/30 rounded-[2.5rem] border border-[#F3E5D8]">
+                    <p className="text-[10px] text-[#D1C4B9] font-medium tracking-widest uppercase mb-3">Self-Care Insight</p>
+                    <p className="text-sm text-[#C8A882]/80 leading-relaxed font-medium whitespace-pre-line">{getInsight()}</p>
                 </div>
 
-                {sections.map(sec => {
-                    const filtered = records.filter(r => r.type === sec.type).slice(0, 5);
-                    return (
-                        <section key={sec.type} className="space-y-4">
-                            <div className="flex justify-between items-center px-1">
-                                <h2 className="text-sm font-medium tracking-[0.2em] text-[#A89080] uppercase">{sec.label}</h2>
-                                <button onClick={() => switchTab(sec.type)} className="text-sm px-4 py-1.5 bg-[#C8A882] text-white rounded-full font-medium transition-transform active:scale-95">開始記錄</button>
+                {/* 三個記錄入口 */}
+                <div className="space-y-3">
+                    {entries.map(e => (
+                        <button key={e.type} onClick={() => switchTab(e.type)}
+                            className="w-full flex items-center gap-5 p-5 bg-white border border-[#F3E5D8] rounded-[2rem] active:bg-[#F3E5D8]/30 transition-all text-left">
+                            <div className="w-12 h-12 rounded-2xl bg-[#F3E5D8]/60 flex items-center justify-center shrink-0">
+                                {e.icon}
                             </div>
-                            <div className="space-y-3">
-                                {filtered.map(r => (
-                                    <div key={r.id} onClick={(e) => onDetail(r, e)} className="p-5 border border-[#F3E5D8] rounded-[1.5rem] bg-white hover:bg-[#F3E5D8]/10 cursor-pointer transition-all">
-                                        <h3 className="text-sm font-medium text-[#C8A882] truncate tracking-wide">{r.type === 'body' ? bodyLabel(r) : r.type === 'mood' ? Object.keys(r.moods).join(', ') : r.sentence}</h3>
-                                        <p className="text-xs text-[#D1C4B9] uppercase mt-1 tracking-widest font-medium">{r.date} · {r.timeSlot}</p>
-                                    </div>
-                                ))}
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-[#C8A882] tracking-wide">{e.label}</p>
+                                <p className="text-xs text-[#D1C4B9] mt-0.5 tracking-wide">{e.desc}</p>
                             </div>
-                            {filtered.length > 0 && <button onClick={() => { onMore(sec.type); switchTab('log'); }} className="w-full text-center text-xs text-[#D1C4B9] font-medium tracking-[0.3em] uppercase pt-2 transition-opacity hover:opacity-60">more</button>}
-                        </section>
-                    );
-                })}
+                            <div className="text-right shrink-0">
+                                <p className="text-lg font-light text-[#C8A882]">{e.count}</p>
+                                <p className="text-[10px] text-[#D1C4B9] tracking-widest uppercase">筆</p>
+                            </div>
+                        </button>
+                    ))}
+                </div>
             </div>
         );
     }
 
-    function CategoryLog({ records, type, onBack, onDetail }) {
+    function CategoryLog({ records, type, onBack, onDetail, onAdd }) {
         const filtered = records.filter(r => r.type === type);
         const mapTitle = { body: '身體覺察', mood: '心情能量', diary: '日記隨想' };
+        const mapIcon = { body: <Icon.Body />, mood: <Icon.Mood />, diary: <Icon.Diary /> };
         return (
-            <div className="p-8 animate-fade-in space-y-8 pb-32">
-                <header className="flex items-center gap-4 pt-4 text-[#C8A882] font-medium uppercase tracking-widest">
-                    <button onClick={onBack} className="text-xl transition-transform active:scale-95">✕</button>
-                    <h2>{mapTitle[type] || type} 紀錄</h2>
+            <div className="p-8 animate-fade-in space-y-6 pb-32">
+                <header className="pt-4 flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                        {mapIcon[type]}
+                        <h2 className="text-2xl font-light text-[#C8A882] tracking-[0.3em] uppercase">{mapTitle[type]}</h2>
+                    </div>
+                    <button onClick={onAdd} className="px-4 py-2 bg-[#C8A882] text-white rounded-full text-xs font-medium tracking-widest transition-transform active:scale-95">+ 新增</button>
                 </header>
+                {filtered.length === 0 && (
+                    <div className="text-center py-20 space-y-4">
+                        <p className="text-xs text-[#D1C4B9] uppercase font-medium tracking-widest">Gently Left Blank.</p>
+                        <button onClick={onAdd} className="text-xs text-[#C8A882] border border-[#C8A882]/40 px-5 py-2.5 rounded-full font-medium tracking-wide">開始第一筆記錄</button>
+                    </div>
+                )}
                 <div className="space-y-4">
                     {filtered.map(r => (
-                        <div key={r.id} onClick={(e) => onDetail(r, e)} className="p-6 border border-[#F3E5D8] rounded-[2rem] bg-white cursor-pointer hover:bg-[#F3E5D8]/10 transition-all">
+                        <div key={r.id} onClick={(e) => onDetail(r, e)} className="p-6 border border-[#F3E5D8] rounded-[2rem] bg-white cursor-pointer active:bg-[#F3E5D8]/10 transition-all">
                             <span className="text-xs font-medium text-[#D1C4B9] uppercase tracking-widest">{r.date} · {r.timeSlot}</span>
-                            <p className="text-sm font-medium text-[#C8A882] mt-1 truncate">{r.type === 'body' ? bodyLabel(r) : r.type === 'mood' ? Object.keys(r.moods).join(', ') : r.sentence}</p>
+                            <p className="text-sm font-medium text-[#C8A882] mt-1 truncate tracking-wide">{r.type === 'body' ? bodyLabel(r) : r.type === 'mood' ? Object.keys(r.moods).join(', ') : r.sentence}</p>
                         </div>
                     ))}
                 </div>
