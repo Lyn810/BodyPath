@@ -160,7 +160,7 @@
                         {tab === 'mood' && <MoodRecorder onSave={addRecord} onCancel={() => switchTab('home')} />}
                         {tab === 'diary' && <DiaryRecorder onSave={addRecord} onCancel={() => switchTab('home')} />}
                         {tab === 'lab' && <MiniLab records={records} setRecords={setRecords} />}
-                        {tab === 'calendar' && <CalendarPage records={records} onDetail={openDetail} />}
+                        {tab === 'calendar' && <CalendarPage records={records} setRecords={setRecords} onDetail={openDetail} />}
                         {tab === 'trend' && <TrendPage records={records} />}
                     </main>
 
@@ -714,20 +714,21 @@
         };
 
         const handleDelete = (labId) => {
-            if (window.confirm('確定要刪除這筆對策嗎？')) onDeleteLab(labId);
+            if (window.confirm('確定要刪除這筆對策嗎？')) {
+                const remaining = (record.lab||[]).filter(l => l.id !== labId);
+                onDeleteLab(labId, remaining.length === 0);
+            }
         };
 
         return (
             <div className="fixed inset-0 z-[100] animate-fade-in flex items-center justify-center px-6" onClick={onClose}>
                 <div className="fixed inset-0 bg-[#C8A882]/10 backdrop-blur-sm" />
                 <div className="relative w-full bg-white rounded-[3rem] p-8 space-y-5 border border-[#F3E5D8] max-h-[85vh] overflow-y-auto no-scrollbar" onClick={e => e.stopPropagation()}>
-                    <div className="flex justify-between items-center pt-1">
-                        <div>
-                            <h2 className="text-lg font-medium text-[#D1C4B9] tracking-wide whitespace-nowrap">{record.date}</h2>
-                            <span className="text-xs text-[#D1C4B9] font-medium">{record.timeSlot}</span>
-                        </div>
+                    <div className="flex items-baseline gap-2 pt-1">
+                        <h2 className="text-lg font-medium text-[#D1C4B9] tracking-wide whitespace-nowrap">{record.date}</h2>
+                        <span className="text-xs text-[#D1C4B9] font-medium">{record.timeSlot}</span>
                     </div>
-                    <p className="text-sm font-medium text-[#8D7B6D] tracking-wide">
+                    <p className="text-sm font-medium text-[#C8A882] tracking-wide">
                         {record.type === 'body'
                             ? `${record.area ? record.area + ' · ' : ''}${record.side?record.side.join(' '):''}${record.part} : ${record.sensationData?.map(s=>s.label).join(', ')}`
                             : Object.keys(record.moods||{}).join(', ')}
@@ -775,7 +776,7 @@
         );
     }
 
-        function CalendarPage({ records, onDetail }) {
+        function CalendarPage({ records, setRecords, onDetail }) {
         const today = new Date().toISOString().slice(0, 10);
         const [labDetail, setLabDetail] = useState(null);
         const [selectedDate, setSelectedDate] = useState(today);
@@ -839,8 +840,24 @@
                     <LabDetailModal
                         record={labDetail}
                         onClose={() => setLabDetail(null)}
-                        onDeleteLab={(labId) => setLabDetail({ ...labDetail, lab: (labDetail.lab||[]).filter(l => l.id !== labId) })}
-                        onUpdateLab={(labId, updated) => setLabDetail({ ...labDetail, lab: (labDetail.lab||[]).map(l => l.id === labId ? updated : l) })}
+                        onDeleteLab={(labId, isEmpty) => {
+                            const updatedLab = (labDetail.lab||[]).filter(l => l.id !== labId);
+                            if (isEmpty) {
+                                // 清空 lab 但保留原始身體/心情紀錄
+                                setRecords(records.map(r => r.id === labDetail.id ? { ...r, lab: [] } : r));
+                                setLabDetail(null);
+                            } else {
+                                const updated = { ...labDetail, lab: updatedLab };
+                                setRecords(records.map(r => r.id === labDetail.id ? updated : r));
+                                setLabDetail(updated);
+                            }
+                        }}
+                        onUpdateLab={(labId, updated) => {
+                            const updatedLab = (labDetail.lab||[]).map(l => l.id === labId ? updated : l);
+                            const updatedRecord = { ...labDetail, lab: updatedLab };
+                            setRecords(records.map(r => r.id === labDetail.id ? updatedRecord : r));
+                            setLabDetail(updatedRecord);
+                        }}
                     />
                 )}
             </div>
