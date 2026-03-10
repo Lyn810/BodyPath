@@ -159,7 +159,7 @@
                         {tab === 'body' && <BodyRecorder onSave={addRecord} onCancel={() => switchTab('home')} />}
                         {tab === 'mood' && <MoodRecorder onSave={addRecord} onCancel={() => switchTab('home')} />}
                         {tab === 'diary' && <DiaryRecorder onSave={addRecord} onCancel={() => switchTab('home')} />}
-                        {tab === 'lab' && <MiniLab records={records} setRecords={setRecords} />}
+                        {tab === 'lab' && <MiniLab records={records} setRecords={setRecords} onDetail={openDetail} />}
                         {tab === 'calendar' && <CalendarPage records={records} setRecords={setRecords} onDetail={openDetail} />}
                         {tab === 'trend' && <TrendPage records={records} />}
                     </main>
@@ -171,7 +171,7 @@
                         <NavBtn active={tab === 'body'} onClick={() => switchTab('body')} label="身體" icon={<Icon.Body />} />
                         <NavBtn active={tab === 'mood'} onClick={() => switchTab('mood')} label="心情" icon={<Icon.Mood />} />
                         <NavBtn active={tab === 'diary'} onClick={() => switchTab('diary')} label="日記" icon={<Icon.Diary />} />
-                        <NavBtn active={tab === 'lab'} onClick={() => switchTab('lab')} label="實驗" icon={<Icon.Lab />} />
+                        <NavBtn active={tab === 'lab'} onClick={() => switchTab('lab')} label="紀錄" icon={<Icon.Lab />} />
                     </nav>
                 </div>
             </div>
@@ -381,10 +381,6 @@
                         </button>
                         {menuOpen && (
                             <div className="absolute right-0 top-12 w-44 bg-white border border-[#F3E5D8] rounded-[1.5rem] shadow-lg overflow-hidden z-50 animate-fade-in">
-                                <button onClick={() => { switchTab('calendar'); setMenuOpen(false); }} className="w-full px-5 py-3.5 text-left text-sm text-[#A89080] tracking-wide flex items-center gap-3 active:bg-[#FAF7F4]">
-                                    <Icon.Calendar /> 行事曆
-                                </button>
-                                <div className="h-px bg-[#F3E5D8] mx-4"></div>
                                 <button onClick={() => { switchTab('trend'); setMenuOpen(false); }} className="w-full px-5 py-3.5 text-left text-sm text-[#A89080] tracking-wide flex items-center gap-3 active:bg-[#FAF7F4]">
                                     <Icon.Trend /> 趨勢圖
                                 </button>
@@ -904,10 +900,18 @@
         );
     }
 
-    function MiniLab({ records, setRecords }) {
+    function MiniLab({ records, setRecords, onDetail }) {
+        const today = new Date().toISOString().slice(0, 10);
+        const [selectedDate, setSelectedDate] = useState(today);
         const [expId, setExpId] = useState(null);
         const [newLab, setNewLab] = useState({ action: '', effect: 50 });
-        const labRecords = records.filter(r => r.type !== 'diary');
+
+        // 當月所有天（固定顯示當月）
+        const [viewMonth] = useState(today.slice(0, 7));
+        const daysInMonth = new Date(parseInt(viewMonth.slice(0,4)), parseInt(viewMonth.slice(5,7)), 0).getDate();
+        const monthPrefix = viewMonth; // e.g. "2026-03"
+
+        const filtered = records.filter(r => r.date === selectedDate && r.type !== 'diary');
 
         const saveLab = (recordId) => {
             if (!newLab.action.trim()) return;
@@ -929,23 +933,52 @@
         };
 
         return (
-            <div className="p-8 space-y-10 animate-fade-in pb-32">
-                <header className="pt-4 flex justify-between items-end text-[#C8A882] uppercase tracking-[0.2em] font-medium">
-                    <h2 className="text-2xl font-light text-[#C8A882] tracking-[0.3em] uppercase">Mini Lab</h2>
+            <div className="p-8 space-y-8 animate-fade-in pb-32">
+                <header className="pt-4 flex justify-between items-end">
+                    <h2 className="text-2xl font-light text-[#C8A882] tracking-[0.3em] uppercase">Journal</h2>
                     <Icon.Lab />
                 </header>
+
+                {/* 月曆 */}
+                <div className="grid grid-cols-7 gap-2">
+                    {Array.from({length: daysInMonth}, (_, i) => {
+                        const ds = `${monthPrefix}-${String(i+1).padStart(2, '0')}`;
+                        const has = records.some(r => r.date === ds && r.type !== 'diary');
+                        const isToday = ds === today;
+                        const isSelected = ds === selectedDate;
+                        return (
+                            <button key={i} onClick={() => { setSelectedDate(ds); setExpId(null); }} className={`aspect-square rounded-xl flex items-center justify-center text-[13px] font-medium transition-all
+                                ${isSelected && !isToday ? 'border-2 border-[#C8A882] text-[#C8A882]' : ''}
+                                ${isToday && isSelected ? 'bg-[#C8A882] text-white ring-2 ring-[#C8A882] ring-offset-1' : ''}
+                                ${isToday && !isSelected ? 'bg-[#C8A882] text-white' : ''}
+                                ${!isToday && !isSelected && has ? 'bg-[#F3E5D8] text-[#C8A882]' : ''}
+                                ${!isToday && !isSelected && !has ? 'bg-[#F3E5D8]/20 text-[#A89080] border border-[#F3E5D8]' : ''}
+                            `}>{i + 1}</button>
+                        );
+                    })}
+                </div>
+
+                {/* 日期標題 */}
+                <h3 className="text-xs font-medium text-[#C8A882] tracking-[0.2em] border-b border-[#F3E5D8] pb-2 uppercase">{selectedDate} · Record</h3>
+
+                {/* 當日紀錄 */}
                 <div className="space-y-6">
-                    {labRecords.map(r => (
+                    {filtered.length === 0 && (
+                        <p className="text-center py-16 text-xs text-[#D1C4B9] uppercase font-medium tracking-widest animate-fade-in">Gently Left Blank.</p>
+                    )}
+                    {filtered.map(r => (
                         <div key={r.id} className="p-6 border border-[#F3E5D8] rounded-[2.5rem] space-y-5 bg-white">
-                            {/* 紀錄標題 */}
+                            {/* 標題列：症狀 + 新增對策按鈕 */}
                             <div className="flex justify-between items-start gap-3">
-                                <div className="space-y-1 min-w-0 flex-1">
-                                    <span className="text-xs font-medium text-[#D1C4B9] uppercase tracking-widest">{r.date} · {r.timeSlot}</span>
+                                <div className="space-y-1 min-w-0 flex-1 cursor-pointer" onClick={() => onDetail(r)}>
+                                    <span className="text-xs font-medium text-[#D1C4B9] uppercase tracking-widest">{r.timeSlot}</span>
                                     <h3 className="text-sm font-medium text-[#C8A882] leading-snug tracking-wide">
-                                        {r.type === 'body' ? `${r.area ? r.area + ' · ' : ''}${r.side?r.side.join(''):''}${r.part} — ${r.sensationData[0]?.label}` : Object.keys(r.moods).join(', ')}
+                                        {r.type === 'body'
+                                            ? `${r.area ? r.area + ' · ' : ''}${r.side?r.side.join(''):''}${r.part} : ${r.sensationData?.map(s=>s.label).join(', ')}`
+                                            : Object.keys(r.moods||{}).join(', ')}
                                     </h3>
                                 </div>
-                                <button onClick={() => setExpId(expId === r.id ? null : r.id)} className="text-xs font-medium text-[#C8A882] border border-[#C8A882]/40 px-3 py-1.5 rounded-full hover:bg-[#C8A882] hover:text-white transition-all shrink-0 whitespace-nowrap">+ 新增對策</button>
+                                <button onClick={() => setExpId(expId === r.id ? null : r.id)} className="text-xs font-medium text-[#C8A882] border border-[#C8A882]/40 px-3 py-1.5 rounded-full hover:bg-[#C8A882] hover:text-white transition-all shrink-0 whitespace-nowrap">+ 對策</button>
                             </div>
 
                             {/* 身體語言 */}
@@ -956,11 +989,11 @@
                                 </div>
                             )}
 
-                            {/* 已記錄的對策 */}
+                            {/* 對策清單 */}
                             {(r.lab || []).map(l => (
                                 <div key={l.id} className="p-5 bg-[#F3E5D8]/30 rounded-[1.5rem] border border-[#F3E5D8] space-y-3 animate-fade-in">
                                     <div className="flex justify-between items-start">
-                                        <p className="text-sm font-medium text-[#C8A882] leading-relaxed flex-1 pr-3">對策：{l.action}</p>
+                                        <p className="text-sm font-medium text-[#C8A882] leading-relaxed flex-1 pr-3">{l.action}</p>
                                         <button onClick={() => deleteLab(r.id, l.id)} className="text-xs text-[#A89080] px-2 py-0.5">✕</button>
                                     </div>
                                     <div className="flex items-center gap-3">
@@ -998,7 +1031,7 @@
         );
     }
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
+        const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<App />);
 </script>
 </body>
