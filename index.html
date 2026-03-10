@@ -699,7 +699,83 @@
         );
     }
 
-    function CalendarPage({ records, onDetail }) {
+    function LabDetailModal({ record, onClose, onDeleteLab, onUpdateLab }) {
+        const [editingId, setEditingId] = useState(null);
+        const [editVal, setEditVal] = useState({ action: '', effect: 50 });
+
+        const startEdit = (l) => {
+            setEditingId(l.id);
+            setEditVal({ action: l.action, effect: l.effect });
+        };
+
+        const saveEdit = (labId) => {
+            onUpdateLab(labId, { ...editVal, id: labId });
+            setEditingId(null);
+        };
+
+        const handleDelete = (labId) => {
+            if (window.confirm('確定要刪除這筆對策嗎？')) onDeleteLab(labId);
+        };
+
+        return (
+            <div className="fixed inset-0 z-[100] animate-fade-in flex items-center justify-center px-6" onClick={onClose}>
+                <div className="fixed inset-0 bg-[#C8A882]/10 backdrop-blur-sm" />
+                <div className="relative w-full bg-white rounded-[3rem] p-8 space-y-5 border border-[#F3E5D8] max-h-[85vh] overflow-y-auto no-scrollbar" onClick={e => e.stopPropagation()}>
+                    <div className="flex justify-between items-center pt-1">
+                        <div>
+                            <h2 className="text-lg font-medium text-[#D1C4B9] tracking-wide whitespace-nowrap">{record.date}</h2>
+                            <span className="text-xs text-[#D1C4B9] font-medium">{record.timeSlot}</span>
+                        </div>
+                    </div>
+                    <p className="text-sm font-medium text-[#8D7B6D] tracking-wide">
+                        {record.type === 'body'
+                            ? `${record.area ? record.area + ' · ' : ''}${record.side?record.side.join(' '):''}${record.part} : ${record.sensationData?.map(s=>s.label).join(', ')}`
+                            : Object.keys(record.moods||{}).join(', ')}
+                    </p>
+                    <div className="space-y-3">
+                        <p className="text-sm font-medium text-[#8D7B6D] tracking-wide">實驗對策</p>
+                        {(record.lab||[]).length === 0 && <p className="text-xs text-[#D1C4B9] tracking-wide">尚無對策紀錄</p>}
+                        {(record.lab||[]).map((l) => (
+                            <div key={l.id} className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8] space-y-3">
+                                {editingId === l.id ? (
+                                    <div className="space-y-3">
+                                        <textarea value={editVal.action} onChange={e => setEditVal({...editVal, action: e.target.value})} className="w-full bg-white p-3 rounded-2xl text-sm border border-[#F3E5D8] outline-none font-medium text-[#C8A882] h-20 leading-relaxed" />
+                                        <div className="space-y-1">
+                                            <div className="flex justify-between text-xs font-medium text-[#C8A882] uppercase tracking-widest"><span>緩解程度</span><span>{editVal.effect}%</span></div>
+                                            <input type="range" className="w-full" value={editVal.effect} onChange={e => setEditVal({...editVal, effect: e.target.value})} />
+                                        </div>
+                                        <div className="flex gap-3">
+                                            <button onClick={() => setEditingId(null)} className="flex-1 py-2 text-xs text-[#A89080] font-medium uppercase tracking-widest">取消</button>
+                                            <button onClick={() => saveEdit(l.id)} className="flex-[2] py-2 bg-[#C8A882] text-white rounded-2xl text-xs font-medium tracking-widest">儲存</button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="flex justify-between items-start gap-2">
+                                            <p className="text-sm font-medium text-[#C8A882] leading-relaxed flex-1">{l.action}</p>
+                                            <div className="flex gap-2 shrink-0">
+                                                <button onClick={() => startEdit(l)} className="px-3 py-1 border border-[#C8A882] rounded-full text-xs font-medium text-[#C8A882] tracking-wide">編輯</button>
+                                                <button onClick={() => handleDelete(l.id)} className="px-3 py-1 bg-[#8D7B6D] text-white rounded-full text-xs font-medium tracking-wide">刪除</button>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex-1 h-2 bg-white border border-[#C8A882]/30 rounded-full overflow-hidden">
+                                                <div className="h-full bg-[#C8A882] transition-all duration-700" style={{ width: `${l.effect}%` }}></div>
+                                            </div>
+                                            <span className="text-xs font-medium text-[#C8A882]">{l.effect}% 有效</span>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                    <button onClick={onClose} className="w-full py-4 bg-[#C8A882] text-white rounded-2xl font-medium tracking-widest uppercase transition-transform active:scale-95">關閉</button>
+                </div>
+            </div>
+        );
+    }
+
+        function CalendarPage({ records, onDetail }) {
         const today = new Date().toISOString().slice(0, 10);
         const [labDetail, setLabDetail] = useState(null);
         const [selectedDate, setSelectedDate] = useState(today);
@@ -760,36 +836,12 @@
                 </div>
 
                 {labDetail && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20" onClick={() => setLabDetail(null)}>
-                        <div className="relative w-full max-w-[390px] mx-4 bg-white rounded-[2rem] p-6 space-y-5 border border-[#F3E5D8] max-h-[80vh] overflow-y-auto no-scrollbar" onClick={e => e.stopPropagation()}>
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <p className="text-xs text-[#D1C4B9] tracking-widest font-medium uppercase">{labDetail.date} · {labDetail.timeSlot}</p>
-                                    <h3 className="text-sm font-medium text-[#C8A882] mt-1">
-                                        {labDetail.type === 'body'
-                                            ? `${labDetail.area ? labDetail.area + ' · ' : ''}${labDetail.side?labDetail.side.join(''):''}${labDetail.part} : ${labDetail.sensationData?.map(s=>s.label).join(', ')}`
-                                            : Object.keys(labDetail.moods||{}).join(', ')}
-                                    </h3>
-                                </div>
-                            </div>
-                            <div className="h-px bg-[#F3E5D8]"></div>
-                            <div className="space-y-4">
-                                <p className="text-xs text-[#A89080] font-medium tracking-widest uppercase">實驗對策</p>
-                                {(labDetail.lab||[]).map((l, idx) => (
-                                    <div key={idx} className="bg-[#FAF7F4] rounded-2xl p-4 space-y-2 border border-[#F3E5D8]">
-                                        <p className="text-sm font-medium text-[#C8A882]">{l.action}</p>
-                                        {l.result && (
-                                            <p className="text-xs text-[#A89080] font-medium">
-                                                結果：<span className={l.result === '好轉' ? 'text-[#C8A882]' : l.result === '更差' ? 'text-rose-400' : 'text-[#D1C4B9]'}>{l.result}</span>
-                                            </p>
-                                        )}
-                                        {l.note && <p className="text-xs text-[#D1C4B9]">{l.note}</p>}
-                                    </div>
-                                ))}
-                            </div>
-                            <button onClick={() => setLabDetail(null)} className="w-full py-3 text-xs text-[#A89080] font-medium tracking-widest uppercase border border-[#F3E5D8] rounded-2xl">關閉</button>
-                        </div>
-                    </div>
+                    <LabDetailModal
+                        record={labDetail}
+                        onClose={() => setLabDetail(null)}
+                        onDeleteLab={(labId) => setLabDetail({ ...labDetail, lab: (labDetail.lab||[]).filter(l => l.id !== labId) })}
+                        onUpdateLab={(labId, updated) => setLabDetail({ ...labDetail, lab: (labDetail.lab||[]).map(l => l.id === labId ? updated : l) })}
+                    />
                 )}
             </div>
         );
