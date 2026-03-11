@@ -177,7 +177,7 @@
                         <NavBtn active={tab === 'body'} onClick={() => switchTab('body')} label="身體" icon={<Icon.Body />} />
                         <NavBtn active={tab === 'mood'} onClick={() => switchTab('mood')} label="心情" icon={<Icon.Mood />} />
                         <NavBtn active={tab === 'diary'} onClick={() => switchTab('diary')} label="日記" icon={<Icon.Diary />} />
-                        <NavBtn active={tab === 'lab'} onClick={() => switchTab('lab')} label="紀錄" icon={<Icon.Calendar />} />
+                        <NavBtn active={tab === 'lab'} onClick={() => switchTab('lab')} label="調頻" icon={<Icon.Calendar />} />
                     </nav>
                 </div>
             </div>
@@ -268,49 +268,61 @@
                         )}
 
                         {/* 日記內容 */}
-                        {record.type === 'diary' && (
-                            <div className="space-y-4">
-                                {isEditing ? (
-                                    <div className="space-y-3">
-                                        <div className="space-y-3">
-                                            <p className="text-xs text-[#A89080] uppercase tracking-widest font-medium">對自己的新發現</p>
-                                            <textarea value={edited.sentence} onChange={e => setEdited({...edited, sentence: e.target.value})} className="w-full bg-[#FAF7F4] p-4 rounded-2xl text-sm border border-[#F3E5D8] h-24 outline-none focus:border-[#C8A882] font-medium" />
-                                        </div>
-                                        <div className="space-y-3">
-                                            <p className="text-xs text-[#A89080] uppercase tracking-widest font-medium">我的真實感受</p>
-                                            <textarea value={edited.learning} onChange={e => setEdited({...edited, learning: e.target.value})} className="w-full bg-[#FAF7F4] p-4 rounded-2xl text-sm border border-[#F3E5D8] h-24 outline-none focus:border-[#C8A882] font-medium" />
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-4">
+                        {record.type === 'diary' && (() => {
+                            const FIELD_LABELS = { f1: '環境的質地', f2: '留白時刻', f3: '對自己的新發現', f4: '內在的呼喚', f5: '溫柔回應內在呼喚', f6: '最深刻的一抹色彩' };
+                            const df = record.diaryFields || {};
+                            return (
+                                <div className="space-y-4">
+                                    {Object.entries(FIELD_LABELS).map(([k, label]) => {
+                                        const val = df[k];
+                                        if (!val && !isEditing) return null;
+                                        return (
+                                            <div key={k} className="space-y-3">
+                                                <p className="text-sm font-medium text-[#8D7B6D] tracking-wide">{label}</p>
+                                                <div className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8]">
+                                                    {isEditing
+                                                        ? <textarea value={edited.diaryFields?.[k] || ''} onChange={e => setEdited({...edited, diaryFields: {...(edited.diaryFields||{}), [k]: e.target.value}})} className="w-full bg-transparent text-sm border-none outline-none font-medium text-[#C8A882] h-20 leading-relaxed resize-none" />
+                                                        : <p className="text-sm font-medium text-[#C8A882] leading-relaxed tracking-wide">{val || '未紀錄'}</p>
+                                                    }
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    {/* legacy fields */}
+                                    {!record.diaryFields && record.sentence && (
                                         <div className="space-y-3">
                                             <p className="text-sm font-medium text-[#8D7B6D] tracking-wide">對自己的新發現</p>
                                             <div className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8]">
                                                 <p className="text-sm font-medium text-[#C8A882] leading-relaxed tracking-wide">{record.sentence}</p>
                                             </div>
                                         </div>
-                                        {record.learning && (
-                                            <div className="space-y-3">
-                                                <p className="text-sm font-medium text-[#8D7B6D] tracking-wide">我的真實感受</p>
-                                                <div className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8]">
-                                                    <p className="text-sm font-medium text-[#C8A882] leading-relaxed tracking-wide">{record.learning}</p>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                                    )}
+                                </div>
+                            );
+                        })()}
 
-                        {/* 身體語言 */}
+                        {/* 身體想告訴我... */}
                         {record.type !== 'diary' && (
                             <div className="space-y-3">
-                                <p className="text-sm font-medium text-[#8D7B6D] tracking-wide">身體語言</p>
+                                <p className="text-sm font-medium text-[#8D7B6D] tracking-wide">身體想告訴我...</p>
                                 <div className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8]">
                                     {isEditing ? (
                                         <textarea value={edited.bodyLanguage} onChange={e => setEdited({...edited, bodyLanguage: e.target.value})} className="w-full bg-transparent text-sm border-none outline-none font-medium text-[#C8A882] h-20 leading-relaxed" />
                                     ) : (
                                         <p className="text-sm font-medium text-[#C8A882] leading-relaxed tracking-wide">{record.bodyLanguage || "未紀錄"}</p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                        {/* 我的真實感受是... */}
+                        {record.type !== 'diary' && (
+                            <div className="space-y-3">
+                                <p className="text-sm font-medium text-[#8D7B6D] tracking-wide">我的真實感受是...</p>
+                                <div className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8]">
+                                    {isEditing ? (
+                                        <textarea value={edited.trueFeeling || ''} onChange={e => setEdited({...edited, trueFeeling: e.target.value})} className="w-full bg-transparent text-sm border-none outline-none font-medium text-[#C8A882] h-20 leading-relaxed" />
+                                    ) : (
+                                        <p className="text-sm font-medium text-[#C8A882] leading-relaxed tracking-wide">{record.trueFeeling || "未紀錄"}</p>
                                     )}
                                 </div>
                             </div>
@@ -394,11 +406,7 @@
                 type: 'body',
                 label: '身體覺察',
                 desc: '記錄不適的位置與感受',
-                icon: (
-                    <svg className="w-7 h-7" fill="none" stroke="#C8A882" strokeWidth="1.3" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 2a3 3 0 100 6 3 3 0 000-6zM9 12c0-1.5.8-2.8 2-3.5M15 12c0-1.5-.8-2.8-2-3.5M9 12v5l1 4h4l1-4v-5" />
-                    </svg>
-                ),
+                icon: <Icon.Body />,
                 count: records.filter(r => r.type === 'body').length,
             },
             {
@@ -461,8 +469,7 @@
 
                 {/* Insight 區塊 */}
                 <div className="p-6 bg-[#F3E5D8]/30 rounded-[2.5rem] border border-[#F3E5D8]">
-                    <p className="text-[10px] text-[#D1C4B9] font-medium tracking-widest uppercase mb-3">Self-Care Insight</p>
-                    <p className="text-sm text-[#C8A882]/80 leading-relaxed font-medium whitespace-pre-line">{getInsight()}</p>
+                    <p className="text-sm text-[#C8A882]/80 leading-relaxed font-medium whitespace-pre-line text-center">{getInsight()}</p>
                 </div>
 
                 {/* 三個記錄入口 */}
@@ -509,9 +516,11 @@
                 )}
                 <div className="space-y-4">
                     {filtered.map(r => (
-                        <div key={r.id} onClick={(e) => onDetail(r, e)} className="p-6 border border-[#F3E5D8] rounded-[2rem] bg-white cursor-pointer active:bg-[#F3E5D8]/10 transition-all">
+                        <div key={r.id} onClick={(e) => onDetail(r, e)} className="p-6 border border-[#F3E5D8] rounded-[2rem] bg-white cursor-pointer active:bg-[#F3E5D8]/10 transition-all space-y-2">
                             <span className="text-xs font-medium text-[#D1C4B9] uppercase tracking-widest">{r.date} · {r.timeSlot}</span>
                             <p className="text-sm font-medium text-[#C8A882] mt-1 truncate tracking-wide">{r.type === 'body' ? bodyLabel(r) : r.type === 'mood' ? Object.keys(r.moods).join(', ') : r.sentence}</p>
+                            {r.bodyLanguage && <p className="text-xs text-[#A89080] leading-relaxed line-clamp-2"><span className="text-[#D1C4B9]">身體想告訴我 · </span>{r.bodyLanguage}</p>}
+                            {r.trueFeeling && <p className="text-xs text-[#A89080] leading-relaxed line-clamp-2"><span className="text-[#D1C4B9]">真實感受 · </span>{r.trueFeeling}</p>}
                         </div>
                     ))}
                 </div>
@@ -680,8 +689,12 @@
                             onAddCustom={() => { if(data.customInput) { setData({...data, sensationData: {...data.sensationData, [data.customInput]: 50}, customInput: ''}); }}}
                         />
                         <div className="space-y-2 mt-6">
-                            <p className="text-sm font-medium text-[#C8A882] uppercase tracking-widest ml-1">身體語言</p>
+                            <p className="text-sm font-medium text-[#C8A882] uppercase tracking-widest ml-1">身體想告訴我...</p>
                             <textarea value={data.bodyLanguage} onChange={e => setData({...data, bodyLanguage: e.target.value})} placeholder="如果身體會說話，它想告訴你什麼呢？" className="w-full bg-[#FAF7F4] p-5 rounded-3xl text-sm outline-none border border-[#F3E5D8] h-28 leading-relaxed font-medium placeholder-[#C8A882]/30" />
+                        </div>
+                        <div className="space-y-2 mt-4">
+                            <p className="text-sm font-medium text-[#C8A882] uppercase tracking-widest ml-1">我的真實感受是...</p>
+                            <textarea value={data.trueFeeling || ''} onChange={e => setData({...data, trueFeeling: e.target.value})} placeholder="此刻你內心真實的感受是什麼？" className="w-full bg-[#FAF7F4] p-5 rounded-3xl text-sm outline-none border border-[#F3E5D8] h-28 leading-relaxed font-medium placeholder-[#C8A882]/30" />
                         </div>
                         <div className="space-y-3 mt-6">
                             <button onClick={() => onSave({...data, type: 'body', sensationData: sensationArr, timeSlot: data.timeSlot === '自定義' && data.customTime ? data.customTime : data.timeSlot})} className="w-full py-5 bg-[#C8A882] text-white rounded-2xl font-medium tracking-widest transition-transform active:scale-95 shadow-lg shadow-[#C8A882]/20" disabled={sensationArr.length === 0}>儲存紀錄</button>
@@ -723,8 +736,12 @@
                             intensityLabel="能量強度"
                         />
                         <div className="space-y-2 mt-6">
-                            <p className="text-sm font-medium text-[#C8A882] uppercase tracking-widest ml-1">身體語言</p>
+                            <p className="text-sm font-medium text-[#C8A882] uppercase tracking-widest ml-1">身體想告訴我...</p>
                             <textarea value={data.bodyLanguage} onChange={e => setData({...data, bodyLanguage: e.target.value})} placeholder="如果身體會說話，它想告訴你什麼呢？" className="w-full bg-[#FAF7F4] p-5 rounded-3xl text-sm outline-none border border-[#F3E5D8] h-28 leading-relaxed font-medium placeholder-[#C8A882]/30" />
+                        </div>
+                        <div className="space-y-2 mt-4">
+                            <p className="text-sm font-medium text-[#C8A882] uppercase tracking-widest ml-1">我的真實感受是...</p>
+                            <textarea value={data.trueFeeling || ''} onChange={e => setData({...data, trueFeeling: e.target.value})} placeholder="此刻你內心真實的感受是什麼？" className="w-full bg-[#FAF7F4] p-5 rounded-3xl text-sm outline-none border border-[#F3E5D8] h-28 leading-relaxed font-medium placeholder-[#C8A882]/30" />
                         </div>
                         <button onClick={() => onSave({ ...data, type: 'mood', timeSlot: data.timeSlot === '自定義' && data.customTime ? data.customTime : data.timeSlot })} className="w-full py-5 bg-[#C8A882] text-white rounded-2xl font-medium tracking-widest transition-transform active:scale-95 shadow-lg shadow-[#C8A882]/20" disabled={Object.keys(data.moods).length === 0}>記錄情緒能量</button>
                         <button onClick={() => setStep(0)} className="w-full py-2 text-xs text-[#D1C4B9] font-medium uppercase tracking-widest text-center">BACK</button>
@@ -735,9 +752,27 @@
     }
 
     function DiaryRecorder({ onSave, onCancel }) {
+        const PROMPTS = [
+            "如果此刻你的心是一張紙，它是平整的還是充滿摺痕的？",
+            "今天你的頻率在哪個狀態上最讓自己舒服？",
+            "試著捕捉一個你今天「照顧了自己」的細微動作。",
+            "今天有什麼時刻，你感覺到自己真實存在著？",
+            "如果把今天的狀態用一種天氣描述，是什麼天氣？",
+            "今天的你，最需要被什麼溫柔對待？",
+        ];
+        const [prompt] = useState(() => PROMPTS[Math.floor(Math.random() * PROMPTS.length)]);
         const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-        const [sentence, setSentence] = useState('');
-        const [learning, setLearning] = useState('');
+        const [fields, setFields] = useState({ f1: '', f2: '', f3: '', f4: '', f5: '', f6: '' });
+        const setF = (k, v) => setFields(prev => ({...prev, [k]: v}));
+        const hasContent = Object.values(fields).some(v => v.trim());
+        const DIARY_FIELDS = [
+            { key: 'f1', label: '環境的質地', placeholder: '記下今天所處環境帶給我的感覺' },
+            { key: 'f2', label: '留白時刻', placeholder: '記下今天把時間留給自己的時刻' },
+            { key: 'f3', label: '對自己的新發現', placeholder: '記下過去未曾注意過的自己' },
+            { key: 'f4', label: '內在的呼喚', placeholder: '記下今天想被幫忙的時刻' },
+            { key: 'f5', label: '溫柔回應內在呼喚', placeholder: '如果是你最重視的人需要你寫在上方的幫忙，你會如何回應' },
+            { key: 'f6', label: '最深刻的一抹色彩', placeholder: '記下今天最印象深刻的事情' },
+        ];
         return (
             <div className="p-8 space-y-8 pb-32">
                 <div className="flex justify-between items-center">
@@ -747,26 +782,26 @@
                 <div className="bg-[#F3E5D8]/30 py-4 px-6 rounded-[2rem] border border-[#F3E5D8] text-center">
                     <input type="date" value={date} onChange={e => setDate(e.target.value)} />
                 </div>
-                <div className="space-y-2">
-                    <p className="text-sm font-medium text-[#A89080] uppercase tracking-widest ml-1">對自己的新發現</p>
-                    <div className="bg-[#F3E5D8]/50 rounded-[2.5rem] p-6 border border-[#D1C4B9]">
-                        <textarea value={sentence} onChange={e => setSentence(e.target.value)} className="w-full bg-transparent text-[#C8A882] text-sm outline-none h-28 resize-none leading-relaxed font-medium placeholder-[#C8A882]/30" />
-                    </div>
+                {/* 動態 prompt */}
+                <div className="px-2">
+                    <p className="text-sm text-[#C8A882]/70 leading-relaxed font-light italic text-center tracking-wide">「{prompt}」</p>
                 </div>
-                <div className="space-y-2">
-                    <p className="text-sm font-medium text-[#A89080] uppercase tracking-widest ml-1">我的真實感受 <span className="text-xs text-[#D1C4B9] normal-case tracking-normal">(選填)</span></p>
-                    <div className="bg-[#F3E5D8]/50 rounded-[2.5rem] p-6 border border-[#D1C4B9]">
-                        <textarea value={learning} onChange={e => setLearning(e.target.value)} className="w-full bg-transparent text-[#C8A882] text-sm outline-none h-28 resize-none leading-relaxed font-medium placeholder-[#C8A882]/30" />
+                {DIARY_FIELDS.map(f => (
+                    <div key={f.key} className="space-y-2">
+                        <p className="text-sm font-medium text-[#A89080] tracking-widest ml-1">{f.label}</p>
+                        <div className="bg-[#F3E5D8]/50 rounded-[2.5rem] p-6 border border-[#D1C4B9]">
+                            <textarea value={fields[f.key]} onChange={e => setF(f.key, e.target.value)} placeholder={f.placeholder} className="w-full bg-transparent text-[#C8A882] text-sm outline-none h-24 resize-none leading-relaxed font-medium placeholder-[#D1C4B9]" />
+                        </div>
                     </div>
-                </div>
-                <button disabled={!sentence} onClick={() => onSave({ type: 'diary', date, sentence, learning, timeSlot: '全天' })} className="w-full py-5 rounded-[1.5rem] transition-all font-medium tracking-widest shadow-lg bg-[#C8A882] text-white shadow-[#C8A882]/20 disabled:opacity-30">儲存這天的覺察</button>
+                ))}
+                <button disabled={!hasContent} onClick={() => onSave({ type: 'diary', date, sentence: fields.f3 || fields.f1 || '', learning: fields.f6 || '', diaryFields: fields, timeSlot: '全天' })} className="w-full py-5 rounded-[1.5rem] transition-all font-medium tracking-widest shadow-lg bg-[#C8A882] text-white shadow-[#C8A882]/20 disabled:opacity-30">儲存這天的覺察</button>
             </div>
         );
     }
 
     function LabDetailModal({ record, onClose, onDeleteLab, onUpdateLab }) {
         const [editingId, setEditingId] = useState(null);
-        const [editVal, setEditVal] = useState({ action: '', effect: 50 });
+        const [editVal, setEditVal] = useState({ action: '', effect: 0 });
 
         const startEdit = (l) => {
             setEditingId(l.id);
@@ -807,8 +842,8 @@
                                     <div className="space-y-3">
                                         <textarea value={editVal.action} onChange={e => setEditVal({...editVal, action: e.target.value})} className="w-full bg-white p-3 rounded-2xl text-sm border border-[#F3E5D8] outline-none font-medium text-[#C8A882] h-20 leading-relaxed" />
                                         <div className="space-y-1">
-                                            <div className="flex justify-between text-xs font-medium text-[#C8A882] uppercase tracking-widest"><span>緩解程度</span><span>{editVal.effect}%</span></div>
-                                            <input type="range" className="w-full" value={editVal.effect} onChange={e => setEditVal({...editVal, effect: e.target.value})} />
+                                            <div className="flex justify-between text-xs font-medium text-[#C8A882] uppercase tracking-widest"><span>回應成效</span><span style={{color: editVal.effect < 0 ? '#A89080' : '#C8A882'}}>{editVal.effect * 10}%</span></div>
+                                            <div className="flex items-center gap-2 text-[10px] text-[#D1C4B9]"><span>負面</span><input type="range" min="-10" max="10" step="1" className="flex-1" value={editVal.effect} onChange={e => setEditVal({...editVal, effect: parseInt(e.target.value)})} /><span>正面</span></div>
                                         </div>
                                         <div className="flex gap-3">
                                             <button onClick={() => setEditingId(null)} className="flex-1 py-2 text-xs text-[#A89080] font-medium uppercase tracking-widest">取消</button>
@@ -825,10 +860,13 @@
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3">
-                                            <div className="flex-1 h-2 bg-white border border-[#C8A882]/30 rounded-full overflow-hidden">
-                                                <div className="h-full bg-[#C8A882] transition-all duration-700" style={{ width: `${l.effect}%` }}></div>
+                                            <div className="flex-1 h-2 bg-white border border-[#C8A882]/30 rounded-full overflow-hidden relative">
+                                                {l.effect >= 0
+                                                    ? <div className="h-full bg-[#C8A882] transition-all duration-700" style={{ width: `${Math.abs(l.effect) * 10}%`, marginLeft: '50%' }}></div>
+                                                    : <div className="h-full bg-[#A89080] transition-all duration-700 absolute right-1/2" style={{ width: `${Math.abs(l.effect) * 10}%` }}></div>
+                                                }
                                             </div>
-                                            <span className="text-xs font-medium text-[#C8A882]">{l.effect}% 有效</span>
+                                            <span className="text-xs font-medium" style={{color: l.effect < 0 ? '#A89080' : '#C8A882'}}>{l.effect * 10}%</span>
                                         </div>
                                     </>
                                 )}
@@ -947,11 +985,12 @@
         }, [records, month]);
         return (
             <div className="p-8 space-y-12 animate-fade-in pb-32">
-                <header className="pt-4 flex justify-between items-end text-[#C8A882] uppercase tracking-[0.2em] font-medium">
-                    <h2 className="text-2xl font-light text-[#C8A882] tracking-[0.3em] uppercase">Monthly Trends</h2><Icon.Trend />
+                <header className="pt-4 flex items-center gap-3">
+                    <Icon.Trend />
+                    <h2 className="text-2xl font-light text-[#C8A882] tracking-[0.3em]">趨勢圖</h2>
                 </header>
                 <div className="flex justify-center border-b border-[#F3E5D8] pb-4">
-                    <input type="month" value={month} onChange={e => setMonth(e.target.value)} className="bg-transparent text-sm font-medium uppercase tracking-widest text-[#C8A882] outline-none" />
+                    <input type="month" value={month} onChange={e => setMonth(e.target.value)} className="bg-transparent text-xl font-light tracking-widest text-[#C8A882] outline-none" />
                 </div>
                 <section className="space-y-4"><h3 className="text-sm font-medium text-[#C8A882] tracking-[0.2em] uppercase ml-1">身體覺察 (不適指數 MAX)</h3><div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] h-56"><canvas id="chart-body-trend"></canvas></div></section>
                 <section className="space-y-4"><h3 className="text-sm font-medium text-[#C8A882] tracking-[0.2em] uppercase ml-1">心情能量 (平均基調 AVG)</h3><div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] h-56"><canvas id="chart-mood-trend"></canvas></div></section>
@@ -973,7 +1012,7 @@
         const today = new Date().toISOString().slice(0, 10);
         const [selectedDate, setSelectedDate] = useState(today);
         const [expId, setExpId] = useState(null);
-        const [newLab, setNewLab] = useState({ action: '', effect: 50 });
+        const [newLab, setNewLab] = useState({ action: '', effect: 0 });
 
         // 當月所有天（固定顯示當月）
         const [viewMonth] = useState(today.slice(0, 7));
@@ -990,7 +1029,7 @@
                 return { ...r, lab: [...existing, { ...newLab, id: Date.now() }] };
             }));
             setExpId(null);
-            setNewLab({ action: '', effect: 50 });
+            setNewLab({ action: '', effect: 0 });
         };
 
         const deleteLab = (recordId, labId) => {
@@ -1003,9 +1042,9 @@
 
         return (
             <div className="p-8 space-y-8 animate-fade-in pb-32">
-                <header className="pt-4 flex justify-between items-end">
-                    <h2 className="text-2xl font-light text-[#C8A882] tracking-[0.3em] uppercase">Journal</h2>
-                    <Icon.Lab />
+                <header className="pt-4 flex items-center gap-3">
+                    <Icon.Calendar />
+                    <h2 className="text-2xl font-light text-[#C8A882] tracking-[0.3em]">調頻月曆</h2>
                 </header>
 
                 {/* 月曆 */}
@@ -1028,7 +1067,7 @@
                 </div>
 
                 {/* 日期標題 */}
-                <h3 className="text-xs font-medium text-[#C8A882] tracking-[0.2em] border-b border-[#F3E5D8] pb-2 uppercase">{selectedDate} · Record</h3>
+                <h3 className="text-xs font-medium text-[#C8A882] tracking-[0.2em] border-b border-[#F3E5D8] pb-2">{selectedDate} · 今日記事與溫柔回應</h3>
 
                 {/* 當日紀錄 */}
                 <div className="space-y-6">
@@ -1047,7 +1086,7 @@
                                             : Object.keys(r.moods||{}).join(', ')}
                                     </h3>
                                 </div>
-                                <button onClick={() => setExpId(expId === r.id ? null : r.id)} className="text-xs font-medium text-[#C8A882] border border-[#C8A882]/40 px-3 py-1.5 rounded-full hover:bg-[#C8A882] hover:text-white transition-all shrink-0 whitespace-nowrap">+ 對策</button>
+                                <button onClick={() => setExpId(expId === r.id ? null : r.id)} className="text-xs font-medium text-[#C8A882] border border-[#C8A882]/40 px-3 py-1.5 rounded-full hover:bg-[#C8A882] hover:text-white transition-all shrink-0 whitespace-nowrap">+ 回應</button>
                             </div>
 
                             {/* 身體語言 */}
@@ -1066,10 +1105,13 @@
                                         <button onClick={() => deleteLab(r.id, l.id)} className="text-xs text-[#A89080] px-2 py-0.5">✕</button>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <div className="flex-1 h-2 bg-white border border-[#C8A882]/30 rounded-full overflow-hidden">
-                                            <div className="h-full bg-[#C8A882] transition-all duration-700" style={{ width: `${l.effect}%` }}></div>
+                                        <div className="flex-1 h-2 bg-white border border-[#C8A882]/30 rounded-full overflow-hidden relative">
+                                            {l.effect >= 0
+                                                ? <div className="h-full bg-[#C8A882] transition-all duration-700" style={{ width: `${Math.abs(l.effect) * 10}%`, marginLeft: '50%' }}></div>
+                                                : <div className="h-full bg-[#A89080] transition-all duration-700 absolute right-1/2" style={{ width: `${Math.abs(l.effect) * 10}%` }}></div>
+                                            }
                                         </div>
-                                        <span className="text-xs font-medium text-[#C8A882]">{l.effect}% 有效</span>
+                                        <span className="text-xs font-medium" style={{color: l.effect < 0 ? '#A89080' : '#C8A882'}}>{l.effect * 10}%</span>
                                     </div>
                                 </div>
                             ))}
@@ -1080,16 +1122,16 @@
                                     <textarea
                                         value={newLab.action}
                                         onChange={e => setNewLab({...newLab, action: e.target.value})}
-                                        placeholder="你嘗試了什麼對策，如：伸展、休息、吃藥..."
+                                        placeholder="記下你如何回應這個狀態，如：吃宵夜、去運動、多睡覺、吃藥..."
                                         className="w-full bg-[#F3E5D8]/30 p-5 rounded-2xl text-sm outline-none h-24 placeholder-[#C8A882]/40 font-medium border border-[#D1C4B9]"
                                     />
                                     <div className="space-y-2">
-                                        <div className="flex justify-between text-xs font-medium text-[#C8A882] uppercase tracking-widest"><span>緩解程度</span><span>{newLab.effect}%</span></div>
-                                        <input type="range" className="w-full" value={newLab.effect} onChange={e => setNewLab({...newLab, effect: e.target.value})} />
+                                        <div className="flex justify-between text-xs font-medium text-[#C8A882] uppercase tracking-widest"><span>回應成效</span><span style={{color: newLab.effect < 0 ? '#A89080' : '#C8A882'}}>{newLab.effect * 10}%</span></div>
+                                        <div className="flex items-center gap-2 text-[10px] text-[#D1C4B9]"><span>負面</span><input type="range" min="-10" max="10" step="1" className="flex-1" value={newLab.effect} onChange={e => setNewLab({...newLab, effect: parseInt(e.target.value)})} /><span>正面</span></div>
                                     </div>
                                     <div className="flex gap-4">
                                         <button onClick={() => setExpId(null)} className="flex-1 text-xs text-[#A89080] font-medium uppercase tracking-widest">取消</button>
-                                        <button onClick={() => saveLab(r.id)} disabled={!newLab.action.trim()} className="flex-[2.5] py-4 bg-[#C8A882] text-white rounded-2xl text-xs font-medium tracking-[0.2em] transition-transform active:scale-95 disabled:opacity-30 uppercase">記錄對策</button>
+                                        <button onClick={() => saveLab(r.id)} disabled={!newLab.action.trim()} className="flex-[2.5] py-4 bg-[#C8A882] text-white rounded-2xl text-xs font-medium tracking-[0.2em] transition-transform active:scale-95 disabled:opacity-30 uppercase">儲存回應</button>
                                     </div>
                                 </div>
                             )}
