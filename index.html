@@ -170,8 +170,8 @@
                      onClick={e => e.stopPropagation()}>
                     <div className="p-8 space-y-6 pb-32 text-center">
                         {/* Header */}
-                        <div className="flex justify-end items-start">
-                            <div className="flex-1 px-4 text-center">
+                        <div className="flex justify-center items-start">
+                            <div className="text-center">
                                 <p className="text-xs text-[#D1C4B9] tracking-widest mb-1">{formatDate(record.date)} {record.timeSlot || ''}</p>
                                 <p className="text-base font-medium text-[#8D7B6D] leading-snug">
                                     {record.type === 'body' ? (
@@ -181,7 +181,6 @@
                                     )}
                                 </p>
                             </div>
-                            <div className="w-8" />
                         </div>
 
                         {/* Three option cards */}
@@ -620,19 +619,6 @@
                                 </div>
                             </div>
                         )}
-                        {/* 身體想告訴我... */}
-                        {record.type !== 'diary' && (
-                            <div className="space-y-3">
-                                <p className="text-sm font-medium text-[#A89080] tracking-wide">身體想告訴我...</p>
-                                <div className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8]">
-                                    {isEditing ? (
-                                        <textarea value={edited.bodyLanguage} onChange={e => setEdited({...edited, bodyLanguage: e.target.value})} className="w-full bg-transparent text-sm border-none outline-none font-medium text-[#C8A882] h-20 leading-relaxed" />
-                                    ) : (
-                                        <p className="text-sm font-medium text-[#C8A882] leading-relaxed tracking-wide">{record.bodyLanguage || "未紀錄"}</p>
-                                    )}
-                                </div>
-                            </div>
-                        )}
                         {/* 我的真實感受是... */}
                         {record.type !== 'diary' && (
                             <div className="space-y-3">
@@ -878,8 +864,8 @@
                                     {r.timingBefore && <p className="text-xs leading-relaxed line-clamp-1"><span className="text-[#A89080] font-medium">發生前 · </span><span className="text-[#8D7B6D]">{r.timingBefore}</span></p>}
                                     {r.timingDuring && <p className="text-xs leading-relaxed line-clamp-1"><span className="text-[#A89080] font-medium">發生時 · </span><span className="text-[#8D7B6D]">{r.timingDuring}</span></p>}
                                     {r.timingAfter && <p className="text-xs leading-relaxed line-clamp-1"><span className="text-[#A89080] font-medium">即將發生 · </span><span className="text-[#8D7B6D]">{r.timingAfter}</span></p>}
-                                    {r.bodyLanguage && <p className="text-xs leading-relaxed line-clamp-2"><span className="text-[#A89080] font-medium">身體想告訴我 · </span><span className="text-[#8D7B6D]">{r.bodyLanguage}</span></p>}
                                     {r.trueFeeling && <p className="text-xs leading-relaxed line-clamp-2"><span className="text-[#A89080] font-medium">真實感受 · </span><span className="text-[#8D7B6D]">{r.trueFeeling}</span></p>}
+                                    {r.bodyLanguage && <p className="text-xs leading-relaxed line-clamp-2"><span className="text-[#A89080] font-medium">身體想告訴我 · </span><span className="text-[#8D7B6D]">{r.bodyLanguage}</span></p>}
                                 </div>
                             )}
                         {(r.type === 'body' || r.type === 'mood') && !(r.timingBefore && r.timingDuring && r.timingAfter && r.bodyLanguage && r.trueFeeling) && (
@@ -1052,7 +1038,7 @@
 
                 {step === 4 && (
                     <div className="space-y-8 animate-fade-in text-left pb-10">
-                        <h2 className="text-lg font-medium tracking-widest text-center text-[#A89080] uppercase">{data.side.join('')} {data.part} 的感受</h2>
+                        <h2 className="text-lg font-medium tracking-widest text-center text-[#A89080] uppercase">{data.part} {data.side.join('')} 的感受</h2>
                         <SensationSelector
                             groups={SENSATION_GROUPS}
                             selected={data.sensationData}
@@ -1578,11 +1564,11 @@
                             {/* 身體想告訴我 / 真實感受 */}
                             {(r.bodyLanguage || r.trueFeeling) && (
                                 <div className="pt-2 border-t border-[#F3E5D8] space-y-1.5">
-                                    {r.bodyLanguage && (
-                                        <p className="text-xs leading-relaxed"><span className="text-[#A89080] font-medium">身體想告訴我 · </span><span className="text-[#8D7B6D] font-light">{r.bodyLanguage}</span></p>
-                                    )}
                                     {r.trueFeeling && (
                                         <p className="text-xs leading-relaxed"><span className="text-[#A89080] font-medium">真實感受 · </span><span className="text-[#8D7B6D] font-light">{r.trueFeeling}</span></p>
+                                    )}
+                                    {r.bodyLanguage && (
+                                        <p className="text-xs leading-relaxed"><span className="text-[#A89080] font-medium">身體想告訴我 · </span><span className="text-[#8D7B6D] font-light">{r.bodyLanguage}</span></p>
                                     )}
                                 </div>
                             )}
@@ -1648,4 +1634,17 @@
     root.render(<App />);
 </script>
 </body>
-</html>
+</html>{/* 身體想告訴我... */}
+                        {record.type !== 'diary' && (
+                            <div className="space-y-3">
+                                <p className="text-sm font-medium text-[#A89080] tracking-wide">身體想告訴我...</p>
+                                <div className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8]">
+                                    {isEditing ? (
+                                        <textarea value={edited.bodyLanguage} onChange={e => setEdited({...edited, bodyLanguage: e.target.value})} className="w-full bg-transparent text-sm border-none outline-none font-medium text-[#C8A882] h-20 leading-relaxed" />
+                                    ) : (
+                                        <p className="text-sm font-medium text-[#C8A882] leading-relaxed tracking-wide">{record.bodyLanguage || "未紀錄"}</p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                        
