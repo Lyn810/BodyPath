@@ -108,26 +108,143 @@
         { title: "起伏波動", desc: "感覺不穩定、混亂", items: [{ label: "焦慮", sub: "像快轉的發條，停不下來卻又不知道往哪去。" }, { label: "困惑", sub: "像走進一場大霧，找不到前進或後退的方向。" }, { label: "矛盾", sub: "內心有兩股力量在拉扯，難以決定落腳點。" }, { label: "多愁善感", sub: "情緒像潮汐頻繁起伏，容易被微小的事物觸動。" }, { label: "麻木", sub: "像隔了一層玻璃看世界，感覺不到冷熱與起伏。" }] }
     ];
 
-    function SavedToast({ justSaved, onSuplement, onClose }) {
+    function SavedModal({ justSaved, onSupplement, onClose }) {
         if (!justSaved) return null;
         return (
-            <div className="fixed bottom-24 left-1/2 z-[200]" style={{transform:'translateX(-50%)', width:'calc(100% - 2rem)', maxWidth:'380px'}}>
-                <div className="bg-white rounded-2xl shadow-lg border border-[#F3E5D8] px-5 py-4 flex items-center justify-between gap-3"
+            <div className="fixed inset-0 z-[200] flex items-center justify-center px-8"
+                 style={{background:'rgba(250,247,244,0.85)', backdropFilter:'blur(4px)'}}>
+                <div className="bg-white rounded-[2rem] shadow-xl border border-[#F3E5D8] px-10 py-10 flex flex-col items-center gap-6 w-full max-w-xs"
                      style={{animation:'slideUp 0.3s ease'}}>
-                    <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className="text-[#C8A882] text-sm">✓</span>
-                            <span className="text-sm text-[#8D7B6D]">也想記下「發生時機」與「自我對話」嗎？</span>
-                        </div>
-                        <p className="text-xs text-[#D1C4B9] ml-5">掌握脈絡，讓你更懂自己。</p>
+                    <div className="flex flex-col items-center gap-3">
+                        <span className="text-3xl text-[#C8A882]">✓</span>
+                        <p className="text-base font-medium text-[#8D7B6D] tracking-widest">已儲存</p>
                     </div>
-                    <div className="flex items-center gap-2 ml-2 shrink-0">
-                        <button onClick={onSuplement}
-                            className="text-xs text-[#C8A882] font-medium border border-[#C8A882] rounded-full px-3 py-1.5 whitespace-nowrap">
-                            補充
+                    <button onClick={onClose}
+                        className="w-full py-3 rounded-full border border-[#F3E5D8] text-sm text-[#A89080] font-medium tracking-widest">
+                        關閉
+                    </button>
+                    <button onClick={onSupplement}
+                        className="text-xs text-[#A89080] underline underline-offset-4 decoration-[#D1C4B9]">
+                        記下發生時機與自我對話
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    const TIMING_OPTIONS = ['飯前', '飯後', '起床後', '睡前', '運動中', '工作時', '開會後', '壓力大時', '休息時'];
+
+    function SupplementPage({ record, onSave, onClose }) {
+        const [selected, setSelected] = React.useState([]);
+        const [timing, setTiming] = React.useState(record.timing || '');
+        const [customTiming, setCustomTiming] = React.useState('');
+        const [bodyLanguage, setBodyLanguage] = React.useState(record.bodyLanguage || '');
+        const [trueFeeling, setTrueFeeling] = React.useState(record.trueFeeling || '');
+
+        const toggle = (key) => setSelected(s => s.includes(key) ? s.filter(k => k !== key) : [...s, key]);
+
+        const handleSave = () => {
+            const updated = {
+                ...record,
+                timing: timing || customTiming || record.timing,
+                bodyLanguage,
+                trueFeeling,
+            };
+            onSave(updated);
+        };
+
+        const hasContent = timing || customTiming || bodyLanguage || trueFeeling;
+
+        return (
+            <div className="p-8 space-y-8 pb-32 text-center animate-fade-in">
+                <div className="flex justify-between items-center">
+                    <button onClick={onClose} className="text-[#A89080] text-xl transition-transform active:scale-95">✕</button>
+                    <span className="text-xs font-medium text-[#C8A882] tracking-widest uppercase">補充脈絡</span>
+                    <div className="w-8" />
+                </div>
+
+                {/* Three option cards */}
+                <div className="space-y-3 text-left">
+                    {/* 發生時機 */}
+                    <div className="border border-[#F3E5D8] rounded-[2rem] overflow-hidden">
+                        <button onClick={() => toggle('timing')}
+                            className="w-full flex items-center justify-between px-6 py-5 text-left">
+                            <div>
+                                <p className="text-sm font-medium text-[#A89080] tracking-wide">發生時機是...</p>
+                                {timing && !selected.includes('timing') && (
+                                    <p className="text-xs text-[#C8A882] mt-1">{timing}</p>
+                                )}
+                            </div>
+                            <span className="text-[#C8A882] text-xl font-light">{selected.includes('timing') ? '−' : '+'}</span>
                         </button>
-                        <button onClick={onClose} className="text-[#D1C4B9] text-lg leading-none">✕</button>
+                        {selected.includes('timing') && (
+                            <div className="px-6 pb-6 space-y-4">
+                                <div className="flex flex-wrap gap-2">
+                                    {TIMING_OPTIONS.map(t => (
+                                        <button key={t} onClick={() => setTiming(timing === t ? '' : t)}
+                                            className={`px-4 py-2 rounded-full text-sm border transition-all ${timing === t ? 'bg-[#C8A882] text-white border-[#C8A882]' : 'border-[#F3E5D8] text-[#A89080]'}`}>
+                                            {t}
+                                        </button>
+                                    ))}
+                                </div>
+                                <input value={customTiming} onChange={e => setCustomTiming(e.target.value)}
+                                    placeholder="或自行描述當時的情況..."
+                                    className="w-full bg-[#FAF7F4] px-5 py-3 rounded-2xl text-sm outline-none border border-[#F3E5D8] text-[#8D7B6D] placeholder-[#D1C4B9]" />
+                            </div>
+                        )}
                     </div>
+
+                    {/* 我的真實感受 */}
+                    <div className="border border-[#F3E5D8] rounded-[2rem] overflow-hidden">
+                        <button onClick={() => toggle('feeling')}
+                            className="w-full flex items-center justify-between px-6 py-5 text-left">
+                            <div>
+                                <p className="text-sm font-medium text-[#A89080] tracking-wide">我的真實感受是...</p>
+                                {trueFeeling && !selected.includes('feeling') && (
+                                    <p className="text-xs text-[#C8A882] mt-1 line-clamp-1">{trueFeeling}</p>
+                                )}
+                            </div>
+                            <span className="text-[#C8A882] text-xl font-light">{selected.includes('feeling') ? '−' : '+'}</span>
+                        </button>
+                        {selected.includes('feeling') && (
+                            <div className="px-6 pb-6">
+                                <textarea value={trueFeeling} onChange={e => setTrueFeeling(e.target.value)}
+                                    placeholder="此刻你內心真實的感受是什麼？"
+                                    className="w-full bg-[#FAF7F4] p-5 rounded-3xl text-sm outline-none border border-[#F3E5D8] h-28 leading-relaxed text-[#8D7B6D] placeholder-[#D1C4B9]" />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 身體想告訴我 */}
+                    <div className="border border-[#F3E5D8] rounded-[2rem] overflow-hidden">
+                        <button onClick={() => toggle('body')}
+                            className="w-full flex items-center justify-between px-6 py-5 text-left">
+                            <div>
+                                <p className="text-sm font-medium text-[#A89080] tracking-wide">身體想告訴我...</p>
+                                {bodyLanguage && !selected.includes('body') && (
+                                    <p className="text-xs text-[#C8A882] mt-1 line-clamp-1">{bodyLanguage}</p>
+                                )}
+                            </div>
+                            <span className="text-[#C8A882] text-xl font-light">{selected.includes('body') ? '−' : '+'}</span>
+                        </button>
+                        {selected.includes('body') && (
+                            <div className="px-6 pb-6">
+                                <textarea value={bodyLanguage} onChange={e => setBodyLanguage(e.target.value)}
+                                    placeholder="如果身體會說話，你覺得它想告訴你什麼呢？"
+                                    className="w-full bg-[#FAF7F4] p-5 rounded-3xl text-sm outline-none border border-[#F3E5D8] h-28 leading-relaxed text-[#8D7B6D] placeholder-[#D1C4B9]" />
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="space-y-3 pt-2">
+                    <button onClick={handleSave} disabled={!hasContent}
+                        className={`w-full py-4 rounded-full text-sm font-medium tracking-widest uppercase transition-all ${hasContent ? 'bg-[#C8A882] text-white' : 'bg-[#F3E5D8] text-[#D1C4B9]'}`}>
+                        儲存補充
+                    </button>
+                    <button onClick={onClose} className="w-full py-2 text-xs text-[#D1C4B9] font-medium uppercase tracking-widest">
+                        略過
+                    </button>
                 </div>
             </div>
         );
@@ -140,6 +257,7 @@
         const [selectedDetail, setSelectedDetail] = useState(null);
         const [detailClickY, setDetailClickY] = useState(null);
         const [justSaved, setJustSaved] = useState(null); // { id, type } for post-save toast
+        const [supplementRecord, setSupplementRecord] = useState(null); // record open in SupplementPage
 
         const switchTab = (newTab) => {
             setPrevTab(tab);
@@ -184,6 +302,13 @@
             setSelectedDetail(null);
         };
 
+        const saveSupplementRecord = (updatedR) => {
+            const newList = records.map(r => r.id === updatedR.id ? updatedR : r);
+            newList.sort((a, b) => new Date(b.date) - new Date(a.date));
+            setRecords(newList);
+            setSupplementRecord(null);
+        };
+
         const deleteRecord = (id) => {
             if(window.confirm("確定要刪除這筆覺察紀錄嗎？")) {
                 setRecords(records.filter(r => r.id !== id));
@@ -197,8 +322,8 @@
                     <main className="flex-1 overflow-y-auto no-scrollbar pb-24">
                         {tab === 'home' && <HomePage switchTab={switchTab} records={records} onDetail={openDetail} />}
                         
-                        {tab === 'body' && <CategoryLog records={records} type="body" onBack={() => switchTab('home')} onDetail={openDetail} onAdd={() => switchTab('body_rec')} />}
-                        {tab === 'mood' && <CategoryLog records={records} type="mood" onBack={() => switchTab('home')} onDetail={openDetail} onAdd={() => switchTab('mood_rec')} />}
+                        {tab === 'body' && <CategoryLog records={records} type="body" onBack={() => switchTab('home')} onDetail={openDetail} onAdd={() => switchTab('body_rec')} onSupplement={(r) => setSupplementRecord(r)} />}
+                        {tab === 'mood' && <CategoryLog records={records} type="mood" onBack={() => switchTab('home')} onDetail={openDetail} onAdd={() => switchTab('mood_rec')} onSupplement={(r) => setSupplementRecord(r)} />}
                         {tab === 'diary' && <CategoryLog records={records} type="diary" onBack={() => switchTab('home')} onDetail={openDetail} onAdd={() => switchTab('diary_rec')} />}
                         {tab === 'body_rec' && <BodyRecorder onSave={addRecord} onCancel={() => switchTab(prevTab === 'body' ? 'body' : 'home')} />}
                         {tab === 'mood_rec' && <MoodRecorder onSave={addRecord} onCancel={() => switchTab(prevTab === 'mood' ? 'mood' : 'home')} />}
@@ -208,17 +333,25 @@
                         {tab === 'trend' && <TrendPage records={records} />}
                     </main>
 
-                    <SavedToast
+                    <SavedModal
                         justSaved={justSaved}
-                        onSuplement={() => {
+                        onSupplement={() => {
                             if (justSaved) {
-                                setSelectedDetail({ ...justSaved.record, _editMode: true });
-                                setDetailClickY(window.innerHeight / 2);
+                                setSupplementRecord(justSaved.record);
                                 setJustSaved(null);
                             }
                         }}
                         onClose={() => setJustSaved(null)}
                     />
+                    {supplementRecord && (
+                        <div className="absolute inset-0 bg-white z-[150] overflow-y-auto no-scrollbar">
+                            <SupplementPage
+                                record={supplementRecord}
+                                onSave={saveSupplementRecord}
+                                onClose={() => setSupplementRecord(null)}
+                            />
+                        </div>
+                    )}
                     {selectedDetail && <DetailModal record={selectedDetail} clickY={detailClickY} onClose={() => setSelectedDetail(null)} onUpdate={updateRecord} onDelete={deleteRecord} />}
 
                     <nav className="fixed bottom-0 w-full max-w-[428px] h-20 bg-white border-t border-[#F3E5D8] flex items-center justify-around px-2 z-50">
@@ -249,7 +382,7 @@
 
     // --- 詳情 Modal ---
     function DetailModal({ record, onClose, onUpdate, onDelete, clickY }) {
-        const [isEditing, setIsEditing] = useState(!!record._editMode);
+        const [isEditing, setIsEditing] = useState(false);
         const [edited, setEdited] = useState({...record});
         const cnType = record.type === 'body' ? '身體覺察' : record.type === 'mood' ? '心情能量' : '日記隨想';
 
@@ -628,7 +761,7 @@
         );
     }
 
-    function CategoryLog({ records, type, onBack, onDetail, onAdd }) {
+    function CategoryLog({ records, type, onBack, onDetail, onAdd, onSupplement }) {
         const filtered = records.filter(r => r.type === type);
         const mapTitle = { body: '身體覺察', mood: '心情能量', diary: '日記隨想' };
         const mapIcon = { body: <Icon.Body />, mood: <Icon.Mood />, diary: <Icon.Diary /> };
@@ -691,6 +824,14 @@
                                 <div className="pt-1 border-t border-[#F3E5D8] space-y-1.5">
                                     {r.bodyLanguage && <p className="text-xs leading-relaxed line-clamp-2"><span className="text-[#A89080] font-medium">身體想告訴我 · </span><span className="text-[#8D7B6D]">{r.bodyLanguage}</span></p>}
                                     {r.trueFeeling && <p className="text-xs leading-relaxed line-clamp-2"><span className="text-[#A89080] font-medium">真實感受 · </span><span className="text-[#8D7B6D]">{r.trueFeeling}</span></p>}
+                                </div>
+                            )}
+                        {(r.type === 'body' || r.type === 'mood') && !r.timing && !r.bodyLanguage && !r.trueFeeling && (
+                                <div className="pt-2 flex justify-end" onClick={e => e.stopPropagation()}>
+                                    <button onClick={() => onSupplement(r)}
+                                        className="text-xs text-[#C8A882] border border-[#F3E5D8] rounded-full px-4 py-1.5 font-medium tracking-wide">
+                                        ＋ 補充
+                                    </button>
                                 </div>
                             )}
                         </div>
@@ -925,7 +1066,7 @@
         // type 'pair' means f4+f5 shown together
         const FIELD_GROUPS = [
             { id: 'f1', label: '環境的質地', type: 'single',
-              fields: [{ key: 'f1', placeholder: '記下今天所處環境帶給我的感覺' }] },
+              fields: [{ key: 'f1', placeholder: '記下今天所處環境帶給你的感覺' }] },
             { id: 'f2', label: '留白時刻', type: 'single',
               fields: [{ key: 'f2', placeholder: '記下今天把時間留給自己的時刻' }] },
             { id: 'f3', label: '對自己的新發現', type: 'single',
@@ -1421,6 +1562,14 @@
                                         <button onClick={() => setExpId(null)} className="flex-1 text-xs text-[#A89080] font-medium uppercase tracking-widest">取消</button>
                                         <button onClick={() => saveLab(r.id)} disabled={!newLab.action.trim()} className="flex-[2.5] py-4 bg-[#C8A882] text-white rounded-2xl text-xs font-medium tracking-[0.2em] transition-transform active:scale-95 disabled:opacity-30 uppercase">儲存回應</button>
                                     </div>
+                                </div>
+                            )}
+                        {(r.type === 'body' || r.type === 'mood') && !r.timing && !r.bodyLanguage && !r.trueFeeling && (
+                                <div className="pt-2 flex justify-end" onClick={e => e.stopPropagation()}>
+                                    <button onClick={() => onSupplement(r)}
+                                        className="text-xs text-[#C8A882] border border-[#F3E5D8] rounded-full px-4 py-1.5 font-medium tracking-wide">
+                                        ＋ 補充
+                                    </button>
                                 </div>
                             )}
                         </div>
