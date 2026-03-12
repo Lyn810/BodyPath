@@ -137,13 +137,7 @@
         const hasFeeling = !!record.trueFeeling;
         const hasBody = !!record.bodyLanguage;
 
-        const [selected, setSelected] = React.useState(() => {
-            const s = [];
-            if (!hasTiming) s.push('timing');
-            if (!hasFeeling) s.push('feeling');
-            if (!hasBody) s.push('body');
-            return s;
-        });
+        const [selected, setSelected] = React.useState([]);
         const [timingBefore, setTimingBefore] = React.useState(record.timingBefore || '');
         const [timingDuring, setTimingDuring] = React.useState(record.timingDuring || '');
         const [timingAfter, setTimingAfter] = React.useState(record.timingAfter || '');
@@ -176,11 +170,18 @@
                      onClick={e => e.stopPropagation()}>
                     <div className="p-8 space-y-6 pb-32 text-center">
                         {/* Header */}
-                        <div className="flex justify-between items-center">
+                        <div className="flex justify-between items-start">
                             <button onClick={onClose} className="text-[#A89080] text-xl transition-transform active:scale-95">✕</button>
-                            <span className="text-xs text-[#D1C4B9] tracking-widest">
-                                {record.part || record.date ? `${record.part || ''}  ${formatDate(record.date)}` : ''}
-                            </span>
+                            <div className="flex-1 px-4 text-center">
+                                <p className="text-xs text-[#D1C4B9] tracking-widest mb-1">{formatDate(record.date)} {record.timeSlot || ''}</p>
+                                <p className="text-base font-medium text-[#8D7B6D] leading-snug">
+                                    {record.type === 'body' ? (
+                                        [record.area, record.part, (record.sensationData||[]).slice(0,2).map(s=>`${s.label} ${s.intensity}%`).join('・')].filter(Boolean).join(' · ')
+                                    ) : (
+                                        Object.entries(record.moods||{}).slice(0,2).map(([k,v])=>`${k} ${v}%`).join('・')
+                                    )}
+                                </p>
+                            </div>
                             <div className="w-8" />
                         </div>
 
@@ -289,9 +290,12 @@
         const switchTab = (newTab) => {
             setPrevTab(tab);
             setTab(newTab);
+        };
+
+        useEffect(() => {
             const main = document.querySelector('main');
             if (main) main.scrollTop = 0;
-        };
+        }, [tab]);
 
         const openDetail = (record, e) => {
             if (e) {
