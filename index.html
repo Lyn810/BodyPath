@@ -1052,6 +1052,15 @@
 
                 {step === 4 && (
                     <div className="space-y-8 animate-fade-in text-left pb-10">
+                        {sensationArr.length > 0 && (
+                            <div style={{position:'fixed', bottom:'7rem', right:'max(1rem, calc(50vw - 214px + 1rem))', zIndex:50}}>
+                                <button onClick={() => document.getElementById('body-save-btn')?.scrollIntoView({behavior:'smooth', block:'center'})}
+                                    className="bg-[#C8A882] text-white text-xs font-medium tracking-widest px-5 py-3 rounded-full shadow-lg shadow-[#C8A882]/30 flex items-center gap-2">
+                                    <span>已選 {sensationArr.length} 項</span>
+                                    <span>↓</span>
+                                </button>
+                            </div>
+                        )}
                         <h2 className="text-lg font-medium tracking-widest text-center text-[#A89080] uppercase">{data.part} {data.side.join('')} 的感受</h2>
                         <SensationSelector
                             groups={SENSATION_GROUPS}
@@ -1063,7 +1072,9 @@
                             onAddCustom={() => { if(data.customInput) { setData({...data, sensationData: {...data.sensationData, [data.customInput]: 50}, customInput: ''}); }}}
                         />
                         <div className="space-y-3 mt-6">
-                            <button onClick={() => onSave({...data, type: 'body', sensationData: sensationArr, timeSlot: data.timeSlot === '自定義' && data.customTime ? data.customTime : data.timeSlot})} className="w-full py-5 bg-[#C8A882] text-white rounded-2xl font-medium tracking-widest transition-transform active:scale-95 shadow-lg shadow-[#C8A882]/20" disabled={sensationArr.length === 0}>儲存紀錄</button>
+                            <button id="body-save-btn" onClick={() => onSave({...data, type: 'body', sensationData: sensationArr, timeSlot: data.timeSlot === '自定義' && data.customTime ? data.customTime : data.timeSlot})}
+                                className={`w-full py-5 rounded-2xl font-medium tracking-widest transition-all ${sensationArr.length > 0 ? 'bg-[#C8A882] text-white shadow-lg shadow-[#C8A882]/20 active:scale-95' : 'bg-[#F3E5D8] text-[#D1C4B9] cursor-not-allowed'}`}
+                                disabled={sensationArr.length === 0}>儲存紀錄</button>
                             <button onClick={() => setStep(3)} className="w-full py-2 text-xs text-[#D1C4B9] font-medium uppercase tracking-widest text-center">BACK</button>
                         </div>
                     </div>
@@ -1091,6 +1102,15 @@
 
                 {step === 0 ? <DateTimeStep title="心情發生的時間" date={data.date} timeSlot={data.timeSlot} customTime={data.customTime} onUpdate={(v) => setData({...data, ...v})} onNext={() => setStep(1)} /> : (
                     <div className="space-y-8 animate-fade-in text-left">
+                        {Object.keys(data.moods).length > 0 && (
+                            <div style={{position:'fixed', bottom:'7rem', right:'max(1rem, calc(50vw - 214px + 1rem))', zIndex:50}}>
+                                <button onClick={() => document.getElementById('mood-save-btn')?.scrollIntoView({behavior:'smooth', block:'center'})}
+                                    className="bg-[#C8A882] text-white text-xs font-medium tracking-widest px-5 py-3 rounded-full shadow-lg shadow-[#C8A882]/30 flex items-center gap-2">
+                                    <span>已選 {Object.keys(data.moods).length} 項</span>
+                                    <span>↓</span>
+                                </button>
+                            </div>
+                        )}
                         <SensationSelector
                             groups={MOOD_GROUPS}
                             selected={data.moods}
@@ -1101,7 +1121,10 @@
                             onAddCustom={() => { if(data.customInput) { setData({...data, moods: {...data.moods, [data.customInput]: 50}, customInput: ''}); }}}
                             intensityLabel="能量強度"
                         />
-                        <button onClick={() => onSave({ ...data, type: 'mood', timeSlot: data.timeSlot === '自定義' && data.customTime ? data.customTime : data.timeSlot })} className="w-full py-5 bg-[#C8A882] text-white rounded-2xl font-medium tracking-widest transition-transform active:scale-95 shadow-lg shadow-[#C8A882]/20" disabled={Object.keys(data.moods).length === 0}>記錄情緒能量</button>
+                        <button onClick={() => onSave({ ...data, type: 'mood', timeSlot: data.timeSlot === '自定義' && data.customTime ? data.customTime : data.timeSlot })}
+                        id="mood-save-btn"
+                        className={`w-full py-5 rounded-2xl font-medium tracking-widest transition-all ${Object.keys(data.moods).length > 0 ? 'bg-[#C8A882] text-white shadow-lg shadow-[#C8A882]/20 active:scale-95' : 'bg-[#F3E5D8] text-[#D1C4B9] cursor-not-allowed'}`}
+                        disabled={Object.keys(data.moods).length === 0}>記錄情緒能量</button>
                         <button onClick={() => setStep(0)} className="w-full py-2 text-xs text-[#D1C4B9] font-medium uppercase tracking-widest text-center">BACK</button>
                     </div>
                 )}
