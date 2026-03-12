@@ -595,6 +595,31 @@
                             );
                         })()}
 
+                        {/* 發生時機 */}
+                        {record.type !== 'diary' && (record.timingBefore || record.timingDuring || record.timingAfter || isEditing) && (
+                            <div className="space-y-3">
+                                <p className="text-sm font-medium text-[#A89080] tracking-wide">發生時機</p>
+                                <div className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8] space-y-3">
+                                    {[
+                                        { key: 'timingBefore', label: '發生前' },
+                                        { key: 'timingDuring', label: '發生時' },
+                                        { key: 'timingAfter', label: '即將發生的事' },
+                                    ].map(({ key, label }) => (
+                                        (isEditing || record[key]) && (
+                                            <div key={key}>
+                                                <p className="text-xs text-[#C8A882] font-medium tracking-widest uppercase mb-1">{label}</p>
+                                                {isEditing ? (
+                                                    <input value={edited[key]||''} onChange={e => setEdited({...edited, [key]: e.target.value})}
+                                                        className="w-full bg-transparent text-sm border-b border-[#F3E5D8] outline-none text-[#8D7B6D] pb-1" />
+                                                ) : (
+                                                    <p className="text-sm text-[#8D7B6D]">{record[key]}</p>
+                                                )}
+                                            </div>
+                                        )
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                         {/* 身體想告訴我... */}
                         {record.type !== 'diary' && (
                             <div className="space-y-3">
@@ -848,13 +873,16 @@
                                         )}
                                     </div>
                             )}
-                            {(r.bodyLanguage || r.trueFeeling) && (
+                            {(r.timingBefore || r.timingDuring || r.timingAfter || r.bodyLanguage || r.trueFeeling) && (
                                 <div className="pt-1 border-t border-[#F3E5D8] space-y-1.5">
+                                    {r.timingBefore && <p className="text-xs leading-relaxed line-clamp-1"><span className="text-[#A89080] font-medium">發生前 · </span><span className="text-[#8D7B6D]">{r.timingBefore}</span></p>}
+                                    {r.timingDuring && <p className="text-xs leading-relaxed line-clamp-1"><span className="text-[#A89080] font-medium">發生時 · </span><span className="text-[#8D7B6D]">{r.timingDuring}</span></p>}
+                                    {r.timingAfter && <p className="text-xs leading-relaxed line-clamp-1"><span className="text-[#A89080] font-medium">即將發生 · </span><span className="text-[#8D7B6D]">{r.timingAfter}</span></p>}
                                     {r.bodyLanguage && <p className="text-xs leading-relaxed line-clamp-2"><span className="text-[#A89080] font-medium">身體想告訴我 · </span><span className="text-[#8D7B6D]">{r.bodyLanguage}</span></p>}
                                     {r.trueFeeling && <p className="text-xs leading-relaxed line-clamp-2"><span className="text-[#A89080] font-medium">真實感受 · </span><span className="text-[#8D7B6D]">{r.trueFeeling}</span></p>}
                                 </div>
                             )}
-                        {(r.type === 'body' || r.type === 'mood') && !(r.timingBefore && r.timingDuring && r.timingAfter && r.bodyLanguage && r.trueFeeling) && (
+                        {(r.type === 'body' || r.type === 'mood') && !(r.timingBefore || r.timingDuring || r.timingAfter || r.bodyLanguage || r.trueFeeling) && (
                                 <div className="pt-2 flex justify-end" onClick={e => e.stopPropagation()}>
                                     <button onClick={() => onSupplement(r)}
                                         className="text-xs text-[#C8A882] border border-[#F3E5D8] rounded-full px-4 py-1.5 font-medium tracking-wide">
@@ -1601,7 +1629,7 @@
                                     </div>
                                 </div>
                             )}
-                        {(r.type === 'body' || r.type === 'mood') && !(r.timingBefore && r.timingDuring && r.timingAfter && r.bodyLanguage && r.trueFeeling) && (
+                        {(r.type === 'body' || r.type === 'mood') && !(r.timingBefore || r.timingDuring || r.timingAfter || r.bodyLanguage || r.trueFeeling) && (
                                 <div className="pt-2 flex justify-end" onClick={e => e.stopPropagation()}>
                                     <button onClick={() => onSupplement(r)}
                                         className="text-xs text-[#C8A882] border border-[#F3E5D8] rounded-full px-4 py-1.5 font-medium tracking-wide">
