@@ -170,8 +170,7 @@
                      onClick={e => e.stopPropagation()}>
                     <div className="p-8 space-y-6 pb-32 text-center">
                         {/* Header */}
-                        <div className="flex justify-between items-start">
-                            <button onClick={onClose} className="text-[#A89080] text-xl transition-transform active:scale-95">✕</button>
+                        <div className="flex justify-end items-start">
                             <div className="flex-1 px-4 text-center">
                                 <p className="text-xs text-[#D1C4B9] tracking-widest mb-1">{formatDate(record.date)} {record.timeSlot || ''}</p>
                                 <p className="text-base font-medium text-[#8D7B6D] leading-snug">
