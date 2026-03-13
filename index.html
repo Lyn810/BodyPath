@@ -355,7 +355,106 @@
         );
     }
 
-        function App() {
+        function TagManagerPage({ onClose }) {
+        const [tab, setTab] = React.useState('body');
+        const [bodyTags, setBodyTagsState] = React.useState(() => getBodyCustomTags());
+        const [moodTags, setMoodTagsState] = React.useState(() => getMoodCustomTags());
+        const [timingTags, setTimingTagsState] = React.useState(() => getTimingTags());
+        const [editingTag, setEditingTag] = React.useState(null); // { type, slot?, index, value }
+        const [newInput, setNewInput] = React.useState('');
+
+        const saveBody = (tags) => { setBodyTagsState(tags); saveTags('body', tags); };
+        const saveMood = (tags) => { setMoodTagsState(tags); saveTags('mood', tags); };
+        const saveTiming = (tt) => { setTimingTagsState(tt); saveTags('timing', tt); };
+
+        const deleteTag = (type, slot, idx) => {
+            if (type === 'body') { const t = [...bodyTags]; t.splice(idx, 1); saveBody(t); }
+            else if (type === 'mood') { const t = [...moodTags]; t.splice(idx, 1); saveMood(t); }
+            else { const tt = {...timingTags, [slot]: timingTags[slot].filter((_,i)=>i!==idx) }; saveTiming(tt); }
+        };
+        const renameTag = (type, slot, idx, newVal) => {
+            if (!newVal.trim()) return;
+            if (type === 'body') { const t = [...bodyTags]; t[idx] = newVal.trim(); saveBody(t); }
+            else if (type === 'mood') { const t = [...moodTags]; t[idx] = newVal.trim(); saveMood(t); }
+            else { const sl = [...timingTags[slot]]; sl[idx] = newVal.trim(); saveTiming({...timingTags, [slot]: sl}); }
+            setEditingTag(null);
+        };
+        const addTag = (type, slot) => {
+            if (!newInput.trim()) return;
+            const v = newInput.trim();
+            if (type === 'body' && !bodyTags.includes(v)) saveBody([...bodyTags, v]);
+            else if (type === 'mood' && !moodTags.includes(v)) saveMood([...moodTags, v]);
+            else if (type === 'timing' && !timingTags[slot].includes(v)) saveTiming({...timingTags, [slot]: [...timingTags[slot], v]});
+            setNewInput('');
+        };
+
+        const TagList = ({ tags, type, slot }) => (
+            <div className="space-y-2">
+                {tags.length === 0 && <p className="text-xs text-[#D1C4B9] text-center py-4">\u5c1a\u7121\u6a19\u7c64</p>}
+                {tags.map((tag, idx) => (
+                    <div key={idx} className="flex items-center gap-3 px-4 py-3 border border-[#F3E5D8] rounded-2xl bg-white">
+                        {editingTag?.type === type && editingTag?.slot === slot && editingTag?.index === idx ? (
+                            <>
+                                <input autoFocus value={editingTag.value} onChange={e => setEditingTag({...editingTag, value: e.target.value})}
+                                    onKeyDown={e => { if(e.key==='Enter') renameTag(type, slot, idx, editingTag.value); if(e.key==='Escape') setEditingTag(null); }}
+                                    className="flex-1 text-sm outline-none text-[#8D7B6D] bg-transparent border-b border-[#C8A882]" />
+                                <button onClick={() => renameTag(type, slot, idx, editingTag.value)} className="text-xs text-white bg-[#C8A882] px-3 py-1 rounded-full">\u5132\u5b58</button>
+                                <button onClick={() => setEditingTag(null)} className="text-xs text-[#A89080]">\u53d6\u6d88</button>
+                            </>
+                        ) : (
+                            <>
+                                <span className="flex-1 text-sm text-[#8D7B6D]">{tag}</span>
+                                <button onClick={() => setEditingTag({ type, slot, index: idx, value: tag })} className="text-xs text-[#A89080] px-2">\u6539\u540d</button>
+                                <button onClick={() => deleteTag(type, slot, idx)} className="text-xs text-[#D1C4B9] px-1">\u2715</button>
+                            </>
+                        )}
+                    </div>
+                ))}
+                <div className="flex gap-2 pt-1">
+                    <input value={newInput} onChange={e => setNewInput(e.target.value)}
+                        onKeyDown={e => { if(e.key==='Enter') addTag(type, slot); }}
+                        placeholder="\u65b0\u589e\u6a19\u7c64..."
+                        className="flex-1 text-sm outline-none border-b border-[#F3E5D8] text-[#8D7B6D] placeholder-[#D1C4B9] py-1.5 bg-transparent" />
+                    {newInput.trim() && <button onClick={() => addTag(type, slot)} className="text-xs text-white bg-[#C8A882] px-3 py-1.5 rounded-full">\u65b0\u589e</button>}
+                </div>
+            </div>
+        );
+
+        const TIMING_SLOTS = [
+            { key: 'before', label: '\u6211\u525b\u505a\u4e86...' },
+            { key: 'during', label: '\u6211\u6b63\u5728\u505a...' },
+            { key: 'after',  label: '\u6211\u4e4b\u5f8c\u8981\u53bb...' },
+        ];
+
+        return (
+            <div className="fixed inset-0 z-[300] bg-white flex flex-col max-w-[428px] mx-auto">
+                <div className="flex items-center justify-between px-8 pt-12 pb-4 border-b border-[#F3E5D8]">
+                    <h2 className="text-lg font-light text-[#C8A882] tracking-[0.2em]">\u6a19\u7c64\u7ba1\u7406</h2>
+                    <button onClick={onClose} className="text-[#A89080] text-xl">\u2715</button>
+                </div>
+                <div className="flex gap-2 px-8 py-4 border-b border-[#F3E5D8]">
+                    {[['body','\u8eab\u9ad4\u611f\u53d7'],['mood','\u5fc3\u60c5'],['timing','\u60c5\u5883\u8108\u7d61']].map(([key,label]) => (
+                        <button key={key} onClick={() => { setTab(key); setNewInput(''); setEditingTag(null); }}
+                            className={`px-4 py-1.5 rounded-full text-xs font-medium tracking-widest transition-all ${tab===key ? 'bg-[#C8A882] text-white' : 'border border-[#F3E5D8] text-[#A89080]'}`}>
+                            {label}
+                        </button>
+                    ))}
+                </div>
+                <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+                    {tab === 'body' && <TagList tags={bodyTags} type="body" slot={null} />}
+                    {tab === 'mood' && <TagList tags={moodTags} type="mood" slot={null} />}
+                    {tab === 'timing' && TIMING_SLOTS.map(({ key, label }) => (
+                        <div key={key} className="space-y-3">
+                            <p className="text-xs font-medium text-[#C8A882] tracking-widest">{label}</p>
+                            <TagList tags={timingTags[key]} type="timing" slot={key} />
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
+    function App() {
         const [tab, setTab] = useState('home');
         const [prevTab, setPrevTab] = useState('home');
         const [records, setRecords] = useState(JSON.parse(localStorage.getItem('bp_v25_all') || '[]'));
@@ -746,104 +845,7 @@
 
     function HomePage({ switchTab, records, onDetail }) {
         const sections = [{ type: 'body', label: '身體覺察' }, { type: 'mood', label: '心情能量' }, { type: 'diary', label: '日記隨想' }];
-    function TagManagerPage({ onClose }) {
-        const [tab, setTab] = React.useState('body');
-        const [bodyTags, setBodyTagsState] = React.useState(() => getBodyCustomTags());
-        const [moodTags, setMoodTagsState] = React.useState(() => getMoodCustomTags());
-        const [timingTags, setTimingTagsState] = React.useState(() => getTimingTags());
-        const [editingTag, setEditingTag] = React.useState(null); // { type, slot?, index, value }
-        const [newInput, setNewInput] = React.useState('');
 
-        const saveBody = (tags) => { setBodyTagsState(tags); saveTags('body', tags); };
-        const saveMood = (tags) => { setMoodTagsState(tags); saveTags('mood', tags); };
-        const saveTiming = (tt) => { setTimingTagsState(tt); saveTags('timing', tt); };
-
-        const deleteTag = (type, slot, idx) => {
-            if (type === 'body') { const t = [...bodyTags]; t.splice(idx, 1); saveBody(t); }
-            else if (type === 'mood') { const t = [...moodTags]; t.splice(idx, 1); saveMood(t); }
-            else { const tt = {...timingTags, [slot]: timingTags[slot].filter((_,i)=>i!==idx) }; saveTiming(tt); }
-        };
-        const renameTag = (type, slot, idx, newVal) => {
-            if (!newVal.trim()) return;
-            if (type === 'body') { const t = [...bodyTags]; t[idx] = newVal.trim(); saveBody(t); }
-            else if (type === 'mood') { const t = [...moodTags]; t[idx] = newVal.trim(); saveMood(t); }
-            else { const sl = [...timingTags[slot]]; sl[idx] = newVal.trim(); saveTiming({...timingTags, [slot]: sl}); }
-            setEditingTag(null);
-        };
-        const addTag = (type, slot) => {
-            if (!newInput.trim()) return;
-            const v = newInput.trim();
-            if (type === 'body' && !bodyTags.includes(v)) saveBody([...bodyTags, v]);
-            else if (type === 'mood' && !moodTags.includes(v)) saveMood([...moodTags, v]);
-            else if (type === 'timing' && !timingTags[slot].includes(v)) saveTiming({...timingTags, [slot]: [...timingTags[slot], v]});
-            setNewInput('');
-        };
-
-        const TagList = ({ tags, type, slot }) => (
-            <div className="space-y-2">
-                {tags.length === 0 && <p className="text-xs text-[#D1C4B9] text-center py-4">尚無標籤</p>}
-                {tags.map((tag, idx) => (
-                    <div key={idx} className="flex items-center gap-3 px-4 py-3 border border-[#F3E5D8] rounded-2xl bg-white">
-                        {editingTag?.type === type && editingTag?.slot === slot && editingTag?.index === idx ? (
-                            <>
-                                <input autoFocus value={editingTag.value} onChange={e => setEditingTag({...editingTag, value: e.target.value})}
-                                    onKeyDown={e => { if(e.key==='Enter') renameTag(type, slot, idx, editingTag.value); if(e.key==='Escape') setEditingTag(null); }}
-                                    className="flex-1 text-sm outline-none text-[#8D7B6D] bg-transparent border-b border-[#C8A882]" />
-                                <button onClick={() => renameTag(type, slot, idx, editingTag.value)} className="text-xs text-white bg-[#C8A882] px-3 py-1 rounded-full">儲存</button>
-                                <button onClick={() => setEditingTag(null)} className="text-xs text-[#A89080]">取消</button>
-                            </>
-                        ) : (
-                            <>
-                                <span className="flex-1 text-sm text-[#8D7B6D]">{tag}</span>
-                                <button onClick={() => setEditingTag({ type, slot, index: idx, value: tag })} className="text-xs text-[#A89080] px-2">改名</button>
-                                <button onClick={() => deleteTag(type, slot, idx)} className="text-xs text-[#D1C4B9] px-1">✕</button>
-                            </>
-                        )}
-                    </div>
-                ))}
-                <div className="flex gap-2 pt-1">
-                    <input value={newInput} onChange={e => setNewInput(e.target.value)}
-                        onKeyDown={e => { if(e.key==='Enter') addTag(type, slot); }}
-                        placeholder="新增標籤..."
-                        className="flex-1 text-sm outline-none border-b border-[#F3E5D8] text-[#8D7B6D] placeholder-[#D1C4B9] py-1.5 bg-transparent" />
-                    {newInput.trim() && <button onClick={() => addTag(type, slot)} className="text-xs text-white bg-[#C8A882] px-3 py-1.5 rounded-full">新增</button>}
-                </div>
-            </div>
-        );
-
-        const TIMING_SLOTS = [
-            { key: 'before', label: '我剛做了...' },
-            { key: 'during', label: '我正在做...' },
-            { key: 'after',  label: '我之後要去...' },
-        ];
-
-        return (
-            <div className="fixed inset-0 z-[300] bg-white flex flex-col max-w-[428px] mx-auto">
-                <div className="flex items-center justify-between px-8 pt-12 pb-4 border-b border-[#F3E5D8]">
-                    <h2 className="text-lg font-light text-[#C8A882] tracking-[0.2em]">標籤管理</h2>
-                    <button onClick={onClose} className="text-[#A89080] text-xl">✕</button>
-                </div>
-                <div className="flex gap-2 px-8 py-4 border-b border-[#F3E5D8]">
-                    {[['body','身體感受'],['mood','心情'],['timing','情境脈絡']].map(([key,label]) => (
-                        <button key={key} onClick={() => { setTab(key); setNewInput(''); setEditingTag(null); }}
-                            className={`px-4 py-1.5 rounded-full text-xs font-medium tracking-widest transition-all ${tab===key ? 'bg-[#C8A882] text-white' : 'border border-[#F3E5D8] text-[#A89080]'}`}>
-                            {label}
-                        </button>
-                    ))}
-                </div>
-                <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
-                    {tab === 'body' && <TagList tags={bodyTags} type="body" slot={null} />}
-                    {tab === 'mood' && <TagList tags={moodTags} type="mood" slot={null} />}
-                    {tab === 'timing' && TIMING_SLOTS.map(({ key, label }) => (
-                        <div key={key} className="space-y-3">
-                            <p className="text-xs font-medium text-[#C8A882] tracking-widest">{label}</p>
-                            <TagList tags={timingTags[key]} type="timing" slot={key} />
-                        </div>
-                    ))}
-                </div>
-            </div>
-        );
-    }
 
     const [menuOpen, setMenuOpen] = useState(false);
         const [tagManagerOpen, setTagManagerOpen] = useState(false);
