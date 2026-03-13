@@ -538,10 +538,10 @@
                                                         {['f4','f5'].map(fk => (
                                                             <div key={fk} className="space-y-2">
                                                                 <p className="text-xs font-medium text-[#D1C4B9] tracking-widest ml-1">{BUILT_IN[fk]}</p>
-                                                                <div className="bg-[#FAF7F4] p-4 rounded-[1.5rem] border border-[#F3E5D8]">
+                                                                <div className="p-4 rounded-[1.5rem] border border-[#F3E5D8]">
                                                                     {isEditing
-                                                                        ? <textarea value={df[fk]||''} onChange={e => setEdited({...edited, diaryFields: {...df, [fk]: e.target.value}})} className="w-full bg-transparent text-sm border-none outline-none text-[#C8A882] h-16 leading-relaxed resize-none" />
-                                                                        : <p className="text-sm font-light text-[#C8A882] leading-relaxed">{df[fk]}</p>
+                                                                        ? <textarea value={df[fk]||''} onChange={e => setEdited({...edited, diaryFields: {...df, [fk]: e.target.value}})} className="w-full bg-transparent text-sm border-none outline-none text-[#8D7B6D] h-16 leading-relaxed resize-none" />
+                                                                        : <p className="text-sm font-light text-[#8D7B6D] leading-relaxed">{df[fk]}</p>
                                                                     }
                                                                 </div>
                                                             </div>
@@ -556,10 +556,10 @@
                                                 rows.push(
                                                     <div key={k} className="space-y-2">
                                                         <p className="text-sm font-medium text-[#A89080] tracking-wide">{label}</p>
-                                                        <div className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8]">
+                                                        <div className="p-5 rounded-[1.5rem] border border-[#F3E5D8]">
                                                             {isEditing
-                                                                ? <textarea value={df[k]||''} onChange={e => setEdited({...edited, diaryFields: {...df, [k]: e.target.value}})} className="w-full bg-transparent text-sm border-none outline-none text-[#C8A882] h-20 leading-relaxed resize-none" />
-                                                                : <p className="text-sm font-light text-[#C8A882] leading-relaxed">{df[k]}</p>
+                                                                ? <textarea value={df[k]||''} onChange={e => setEdited({...edited, diaryFields: {...df, [k]: e.target.value}})} className="w-full bg-transparent text-sm border-none outline-none text-[#8D7B6D] h-20 leading-relaxed resize-none" />
+                                                                : <p className="text-sm font-light text-[#8D7B6D] leading-relaxed">{df[k]}</p>
                                                             }
                                                         </div>
                                                     </div>
@@ -585,8 +585,8 @@
                                     {!record.diaryFields && record.sentence && (
                                         <div className="space-y-3">
                                             <p className="text-sm font-medium text-[#A89080] tracking-wide">對自己的新發現</p>
-                                            <div className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8]">
-                                                <p className="text-sm font-light text-[#C8A882] leading-relaxed">{record.sentence}</p>
+                                            <div className="p-5 rounded-[1.5rem] border border-[#F3E5D8]">
+                                                <p className="text-sm font-light text-[#8D7B6D] leading-relaxed">{record.sentence}</p>
                                             </div>
                                         </div>
                                     )}
@@ -598,7 +598,7 @@
                         {record.type !== 'diary' && (record.timingBefore || record.timingDuring || record.timingAfter || isEditing) && (
                             <div className="space-y-3">
                                 <p className="text-sm font-medium text-[#A89080] tracking-wide">發生時機</p>
-                                <div className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8] space-y-3">
+                                <div className="p-5 rounded-[1.5rem] border border-[#F3E5D8] space-y-3">
                                     {[
                                         { key: 'timingBefore', label: '發生前', placeholder: '例如：吃太飽、睡眠不足...' },
                                         { key: 'timingDuring', label: '發生時', placeholder: '例如：正在做瑜珈、久坐工作...' },
@@ -623,11 +623,11 @@
                         {record.type !== 'diary' && (
                             <div className="space-y-3">
                                 <p className="text-sm font-medium text-[#A89080] tracking-wide">我的真實感受是...</p>
-                                <div className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8]">
+                                <div className="p-5 rounded-[1.5rem] border border-[#F3E5D8]">
                                     {isEditing ? (
-                                        <textarea value={edited.trueFeeling || ''} onChange={e => setEdited({...edited, trueFeeling: e.target.value})} className="w-full bg-transparent text-sm border-none outline-none font-medium text-[#C8A882] h-20 leading-relaxed" />
+                                        <textarea value={edited.trueFeeling || ''} onChange={e => setEdited({...edited, trueFeeling: e.target.value})} className="w-full bg-transparent text-sm border-none outline-none font-light text-[#8D7B6D] h-20 leading-relaxed" />
                                     ) : (
-                                        <p className="text-sm font-medium text-[#C8A882] leading-relaxed tracking-wide">{record.trueFeeling || "未紀錄"}</p>
+                                        <p className="text-sm font-light text-[#8D7B6D] leading-relaxed tracking-wide">{record.trueFeeling || "未紀錄"}</p>
                                     )}
                                 </div>
                             </div>
@@ -637,11 +637,11 @@
                         {record.type !== 'diary' && (
                             <div className="space-y-3">
                                 <p className="text-sm font-medium text-[#A89080] tracking-wide">身體想告訴我...</p>
-                                <div className="bg-[#FAF7F4] p-5 rounded-[2rem] border border-[#F3E5D8]">
+                                <div className="p-5 rounded-[1.5rem] border border-[#F3E5D8]">
                                     {isEditing ? (
-                                        <textarea value={edited.bodyLanguage} onChange={e => setEdited({...edited, bodyLanguage: e.target.value})} className="w-full bg-transparent text-sm border-none outline-none font-medium text-[#C8A882] h-20 leading-relaxed" />
+                                        <textarea value={edited.bodyLanguage} onChange={e => setEdited({...edited, bodyLanguage: e.target.value})} className="w-full bg-transparent text-sm border-none outline-none font-light text-[#8D7B6D] h-20 leading-relaxed" />
                                     ) : (
-                                        <p className="text-sm font-medium text-[#C8A882] leading-relaxed tracking-wide">{record.bodyLanguage || "未紀錄"}</p>
+                                        <p className="text-sm font-light text-[#8D7B6D] leading-relaxed tracking-wide">{record.bodyLanguage || "未紀錄"}</p>
                                     )}
                                 </div>
                             </div>
@@ -859,16 +859,16 @@
                                 </div>
                             ) : (
                                 <div className="space-y-2 pt-3 border-t border-[#F3E5D8]">
-                                        {r.diaryFields ? (
-                                            [['f1','環境的質地'],['f2','留白時刻'],['f3','對自己的新發現'],['f4','內在的呼喚'],['f5','溫柔回應內在呼喚'],['f6','最深刻的一抹色彩']].map(([k,label]) =>
-                                                r.diaryFields[k] ? (
-                                                    <p key={k} className="text-sm leading-relaxed line-clamp-1">
-                                                        <span className="font-medium text-[#A89080]">{label}．</span>
-                                                        <span className="font-light text-[#8D7B6D]">{r.diaryFields[k]}</span>
-                                                    </p>
-                                                ) : null
-                                            )
-                                        ) : (
+                                        {r.diaryFields ? (() => {
+                                            const BUILT_IN_LABELS = { f1:'環境的質地', f2:'留白時刻', f3:'對自己的新發現', f4:'內在呼喚', f5:'溫柔回應', f6:'最深刻的一抹色彩' };
+                                            const entries = Object.entries(r.diaryFields).filter(([,v]) => v);
+                                            return entries.length > 0 ? entries.map(([k, v]) => (
+                                                <p key={k} className="text-sm leading-relaxed line-clamp-1">
+                                                    <span className="font-medium text-[#A89080]">{BUILT_IN_LABELS[k] || (r.customLabels?.[k] || k)}．</span>
+                                                    <span className="font-light text-[#8D7B6D]">{v}</span>
+                                                </p>
+                                            )) : <p className="text-sm font-light text-[#D1C4B9]">Gently Left Blank</p>;
+                                        })() : (
                                             <p className="text-sm font-light text-[#8D7B6D] line-clamp-2 leading-relaxed">{r.sentence || ''}</p>
                                         )}
                                     </div>
