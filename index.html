@@ -620,7 +620,7 @@
                             </div>
                         )}
                         {/* 我的真實感受是... */}
-                        {record.type !== 'diary' && (
+                        {record.type !== 'diary' && (record.trueFeeling || isEditing) && (
                             <div className="space-y-3">
                                 <p className="text-sm font-medium text-[#A89080] tracking-wide">我的真實感受是...</p>
                                 <div className="p-5 rounded-[1.5rem] border border-[#F3E5D8]">
@@ -634,7 +634,7 @@
                         )}
 
                         {/* 身體想告訴我... */}
-                        {record.type !== 'diary' && (
+                        {record.type !== 'diary' && (record.bodyLanguage || isEditing) && (
                             <div className="space-y-3">
                                 <p className="text-sm font-medium text-[#A89080] tracking-wide">身體想告訴我...</p>
                                 <div className="p-5 rounded-[1.5rem] border border-[#F3E5D8]">
