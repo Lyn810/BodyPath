@@ -116,9 +116,9 @@
     };
 
     const DEFAULT_TIMING_TAGS = {
-        before: ['空腹', '飯前', '睡前', '起床前', '運動前', '壓力大時', '月經期間'],
-        during: ['飯後', '工作中', '開會時', '久坐後', '運動中', '睡眠中', '如廁時'],
-        after:  ['運動後', '洗澡後', '開會後', '用餐後', '睡醒後', '情緒波動後', '飲酒後'],
+        before: ['久坐', '熬夜', '空腹', '飯後', '運動後', '壓力大', '月經期間', '睡眠不足'],
+        during: ['工作中', '開會時', '如廁時', '睡眠中', '走路時', '用餐時', '久站後'],
+        after:  ['重要會議', '考試', '出差', '比賽', '上台', '就醫', '長途旅行'],
     };
 
     function loadTags(type) {
@@ -253,9 +253,9 @@
                                 {selected.includes('timing') && (() => {
                                     const timingTags = getTimingTags();
                                     const slotConfig = [
-                                        { key: 'before', label: '我剛做了...', val: timingBefore, set: setTimingBefore, tags: timingTags.before, placeholder: '不適出現之前，你在做什麼呢？如：吃太飽，昨天沒睡好...' },
-                                        { key: 'during', label: '我正在做...', val: timingDuring, set: setTimingDuring, tags: timingTags.during, placeholder: '不適出現的時候，你正在做什麼呢？如：正在做瑜珈、工作久坐...' },
-                                        { key: 'after',  label: '我之後要去...', val: timingAfter, set: setTimingAfter, tags: timingTags.after,  placeholder: '你接下來是不是有什麼預定要做的事呢？如：即將去開會、明天有比賽。' },
+                                        { key: 'before', label: '不適出現前', val: timingBefore, set: setTimingBefore, tags: timingTags.before, placeholder: '最近身體狀態如何呢？' },
+                                        { key: 'during', label: '不適發生時', val: timingDuring, set: setTimingDuring, tags: timingTags.during, placeholder: '當下你正在做什麼呢？' },
+                                        { key: 'after',  label: '預期事件',   val: timingAfter,  set: setTimingAfter,  tags: timingTags.after,  placeholder: '接下來有什麼預定的事，可能讓你提前感到緊張？' },
                                     ];
                                     return (
                                         <div className="px-6 pb-6 space-y-5">
@@ -367,7 +367,8 @@
     const saveMood = (tags) => { setMoodTagsState(tags); saveTags('mood', tags); };
     const saveTiming = (tt) => { setTimingTagsState(tt); saveTags('timing', tt); };
 
-    const deleteTag = (type, slot, idx) => {
+    const deleteTag = (type, slot, idx, tagName) => {
+        if (!window.confirm(`確定要刪除「${tagName}」嗎？`)) return;
         if (type === 'body') { const t = [...bodyTags]; t.splice(idx, 1); saveBody(t); }
         else if (type === 'mood') { const t = [...moodTags]; t.splice(idx, 1); saveMood(t); }
         else { const tt = {...timingTags, [slot]: timingTags[slot].filter((_,i)=>i!==idx) }; saveTiming(tt); }
@@ -407,7 +408,7 @@
                             <>
                                 <span className="flex-1 text-sm text-[#8D7B6D]">{tag}</span>
                                 <button onClick={() => setEditingTag({ type, slot, index: idx, value: tag })} className="text-xs text-[#A89080] px-2">改名</button>
-                                <button onClick={() => deleteTag(type, slot, idx)} className="text-xs text-[#D1C4B9] px-1">✕</button>
+                                <button onClick={() => deleteTag(type, slot, idx, tag)} className="text-xs text-[#D1C4B9] px-1">✕</button>
                             </>
                         )}
                     </div>
@@ -424,9 +425,9 @@
     };
 
     const TIMING_SLOTS = [
-        { key: 'before', label: '我剛做了...' },
-        { key: 'during', label: '我正在做...' },
-        { key: 'after',  label: '我之後要去...' },
+        { key: 'before', label: '不適出現前' },
+        { key: 'during', label: '不適發生時' },
+        { key: 'after',  label: '預期事件' },
     ];
 
     return (
@@ -783,9 +784,9 @@
                                 <p className="text-sm font-medium text-[#A89080] tracking-wide">情境脈絡</p>
                                 <div className="p-5 rounded-[1.5rem] border border-[#F3E5D8] space-y-3">
                                     {[
-                                        { key: 'timingBefore', label: '我剛做了...', placeholder: '不適出現之前，你在做什麼呢？如：吃太飽，昨天沒睡好...' },
-                                        { key: 'timingDuring', label: '我正在做...', placeholder: '不適出現的時候，你正在做什麼呢？如：正在做瑜珈、工作久坐...' },
-                                        { key: 'timingAfter', label: '我之後要去...', placeholder: '你接下來是不是有什麼預定要做的事呢？如：即將去開會、明天有比賽。' },
+                                        { key: 'timingBefore', label: '不適出現前', placeholder: '最近身體狀態如何呢？' },
+                                        { key: 'timingDuring', label: '不適發生時', placeholder: '當下你正在做什麼呢？' },
+                                        { key: 'timingAfter', label: '預期事件', placeholder: '接下來有什麼預定的事，可能讓你提前感到緊張？' },
                                     ].map(({ key, label, placeholder }) => (
                                         (isEditing || record[key]) && (
                                             <div key={key}>
@@ -1771,6 +1772,25 @@
         const monthRecs = records.filter(r => r.date.startsWith(month) && (r.type === 'body' || r.type === 'mood'));
         const hasCorrelationData = monthRecs.some(r => r.timingBefore || r.timingDuring || r.timingAfter);
 
+        // 本月最多 — body
+        const bodyAreaCount = {};
+        monthRecs.filter(r => r.type === 'body').forEach(r => {
+            const label = [r.area, r.part].filter(Boolean).join(' ');
+            if (label) bodyAreaCount[label] = (bodyAreaCount[label] || 0) + 1;
+        });
+        const topBodyEntry = Object.entries(bodyAreaCount).sort((a,b) => b[1]-a[1])[0];
+        const topBodyStr = topBodyEntry ? `本月最多：${topBodyEntry[0]} × ${topBodyEntry[1]}` : '';
+
+        // 本月最多 — mood
+        const moodCount = {};
+        monthRecs.filter(r => r.type === 'mood').forEach(r => {
+            Object.keys(r.moods || {}).forEach(m => {
+                moodCount[m] = (moodCount[m] || 0) + 1;
+            });
+        });
+        const topMoodEntry = Object.entries(moodCount).sort((a,b) => b[1]-a[1])[0];
+        const topMoodStr = topMoodEntry ? `本月最多：${topMoodEntry[0]} × ${topMoodEntry[1]}` : '';
+
         return (
             <div className="p-8 space-y-12 animate-fade-in pb-32 text-center">
                 <header className="pt-4 flex items-center justify-center gap-3">
@@ -1788,8 +1808,8 @@
                         </button>
                     ))}
                 </div>
-                {(trendTab==='all'||trendTab==='body') && <section className="space-y-4"><h3 className="text-sm font-medium text-[#C8A882] tracking-[0.2em] uppercase text-center">身體覺察 (不適指數 MAX)</h3><div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] h-56"><canvas id="chart-body-trend"></canvas></div></section>}
-                {(trendTab==='all'||trendTab==='mood') && <section className="space-y-4"><h3 className="text-sm font-medium text-[#C8A882] tracking-[0.2em] uppercase text-center">心情能量 (平均基調 AVG)</h3><div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] h-56"><canvas id="chart-mood-trend"></canvas></div></section>}
+                {(trendTab==='all'||trendTab==='body') && <section className="space-y-4"><h3 className="text-sm font-medium text-[#C8A882] tracking-[0.2em] uppercase text-center">身體覺察 (不適指數 MAX){topBodyStr && <span className="block text-xs font-light normal-case tracking-wide mt-1 text-[#A89080]">{topBodyStr}</span>}</h3><div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] h-56"><canvas id="chart-body-trend"></canvas></div></section>}
+                {(trendTab==='all'||trendTab==='mood') && <section className="space-y-4"><h3 className="text-sm font-medium text-[#C8A882] tracking-[0.2em] uppercase text-center">心情能量 (平均基調 AVG){topMoodStr && <span className="block text-xs font-light normal-case tracking-wide mt-1 text-[#A89080]">{topMoodStr}</span>}</h3><div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] h-56"><canvas id="chart-mood-trend"></canvas></div></section>}
                 {trendTab==='all' && <section className="space-y-4"><h3 className="text-sm font-medium text-[#C8A882] tracking-[0.2em] uppercase text-center">回應成效 (平均回應率 AVG)</h3><div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] h-56"><canvas id="chart-lab-trend"></canvas></div></section>}
 
                 {/* 事件 → 症狀關聯 */}
@@ -1810,7 +1830,7 @@
                     </section>
                 )}
 
-                {trendTab!=='mood' && <section className="space-y-10 pt-10 border-t border-[#F3E5D8]">
+                {trendTab==='body' && <section className="space-y-10 pt-10 border-t border-[#F3E5D8]">
                     <h2 className="text-xl font-medium text-[#C8A882] tracking-[0.3em] uppercase text-center">局部頻率統計</h2>
                     {["頭部", "頸部", "手部", "胸腹", "背腰部", "腿部"].map(cat => (
                         <div key={cat} className="space-y-4">
