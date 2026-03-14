@@ -376,8 +376,123 @@
             </div>
         </div>
     );
-}
-function App() { return <div style={{color:'green',padding:'40px',fontSize:'16px'}}>OK: loadTags, saveTags, getTimingTags, getBodyCustomTags, getMoodCustomTags, SavedModal, TimingCustomInput, SupplementPage, TagManagerPage</div>; }
+}function App() {
+        const [tab, setTab] = useState('home');
+        const [prevTab, setPrevTab] = useState('home');
+        const [records, setRecords] = useState(JSON.parse(localStorage.getItem('bp_v25_all') || '[]'));
+        const [selectedDetail, setSelectedDetail] = useState(null);
+        const [detailClickY, setDetailClickY] = useState(null);
+        const [justSaved, setJustSaved] = useState(null); // { id, type } for post-save toast
+        const [supplementRecord, setSupplementRecord] = useState(null); // record open in SupplementPage
+
+        const switchTab = (newTab) => {
+            setPrevTab(tab);
+            setTab(newTab);
+        };
+
+        const mainRef = useRef(null);
+
+        useEffect(() => {
+            if (mainRef.current) mainRef.current.scrollTop = 0;
+        }, [tab]);
+
+        const openDetail = (record, e) => {
+            if (e) {
+                const container = document.querySelector('.app-container');
+                const rect = container ? container.getBoundingClientRect() : { top: 0, height: window.innerHeight };
+                const relY = ((e.clientY - rect.top) / rect.height) * 100;
+                setDetailClickY(relY);
+            }
+            setSelectedDetail(record);
+        };
+
+        useEffect(() => { localStorage.setItem('bp_v25_all', JSON.stringify(records)); }, [records]);
+
+        const addRecord = (r) => {
+            const newId = Date.now();
+            const newRecord = { ...r, id: newId };
+            const newList = [newRecord, ...records];
+            newList.sort((a, b) => new Date(b.date) - new Date(a.date));
+            setRecords(newList);
+            // Show post-save toast for body/mood only
+            if (r.type === 'body' || r.type === 'mood') {
+                setJustSaved({ id: newId, record: newRecord });
+            }
+            // Go back to where we came from
+            if (tab === 'body_rec') switchTab(prevTab === 'body' ? 'body' : 'home');
+            else if (tab === 'mood_rec') switchTab(prevTab === 'mood' ? 'mood' : 'home');
+            else if (tab === 'diary_rec') switchTab(prevTab === 'diary' ? 'diary' : 'home');
+            else switchTab('home');
+        };
+
+        const updateRecord = (updatedR) => {
+            const newList = records.map(r => r.id === updatedR.id ? updatedR : r);
+            newList.sort((a, b) => new Date(b.date) - new Date(a.date));
+            setRecords(newList);
+            setSelectedDetail(null);
+        };
+
+        const saveSupplementRecord = (updatedR) => {
+            const newList = records.map(r => r.id === updatedR.id ? updatedR : r);
+            newList.sort((a, b) => new Date(b.date) - new Date(a.date));
+            setRecords(newList);
+            setSupplementRecord(null);
+        };
+
+        const deleteRecord = (id) => {
+            if(window.confirm("確定要刪除這筆覺察紀錄嗎？")) {
+                setRecords(records.filter(r => r.id !== id));
+                setSelectedDetail(null);
+            }
+        };
+
+        return (
+            <div className="flex justify-center min-h-screen bg-[#f8f8f8]">
+                <div className="app-container shadow-2xl">
+                    <main ref={mainRef} className="flex-1 overflow-y-auto no-scrollbar pb-24">
+                        {tab === 'home' && <HomePage switchTab={switchTab} records={records} onDetail={openDetail} />}
+                        
+                        {tab === 'body' && <CategoryLog records={records} type="body" onBack={() => switchTab('home')} onDetail={openDetail} onAdd={() => switchTab('body_rec')} onSupplement={(r) => setSupplementRecord(r)} />}
+                        {tab === 'mood' && <CategoryLog records={records} type="mood" onBack={() => switchTab('home')} onDetail={openDetail} onAdd={() => switchTab('mood_rec')} onSupplement={(r) => setSupplementRecord(r)} />}
+                        {tab === 'diary' && <CategoryLog records={records} type="diary" onBack={() => switchTab('home')} onDetail={openDetail} onAdd={() => switchTab('diary_rec')} />}
+                        {tab === 'body_rec' && <BodyRecorder onSave={addRecord} onCancel={() => switchTab(prevTab === 'body' ? 'body' : 'home')} savedCustomTags={getBodyCustomTags()} onAddCustom={(tag) => { const t = getBodyCustomTags(); if(!t.includes(tag)) saveTags('body',[...t,tag]); }} />}
+                        {tab === 'mood_rec' && <MoodRecorder onSave={addRecord} onCancel={() => switchTab(prevTab === 'mood' ? 'mood' : 'home')} savedCustomTags={getMoodCustomTags()} onAddCustom={(tag) => { const t = getMoodCustomTags(); if(!t.includes(tag)) saveTags('mood',[...t,tag]); }} />}
+                        {tab === 'diary_rec' && <DiaryRecorder onSave={addRecord} onCancel={() => switchTab(prevTab === 'diary' ? 'diary' : 'home')} />}
+                        {tab === 'lab' && <MiniLab records={records} setRecords={setRecords} onDetail={openDetail} onSupplement={(r) => setSupplementRecord(r)} />}
+                        {tab === 'calendar' && <CalendarPage records={records} setRecords={setRecords} onDetail={openDetail} />}
+                        {tab === 'trend' && <TrendPage records={records} />}
+                    </main>
+
+                    <SavedModal
+                        justSaved={justSaved}
+                        onSupplement={() => {
+                            if (justSaved) {
+                                setSupplementRecord(justSaved.record);
+                                setJustSaved(null);
+                            }
+                        }}
+                        onClose={() => setJustSaved(null)}
+                    />
+                    {supplementRecord && (
+                        <SupplementPage
+                            record={supplementRecord}
+                            onSave={saveSupplementRecord}
+                            onClose={() => setSupplementRecord(null)}
+                        />
+                    )}
+                    {selectedDetail && <DetailModal record={selectedDetail} clickY={detailClickY} onClose={() => setSelectedDetail(null)} onUpdate={updateRecord} onDelete={deleteRecord} />}
+
+                    <nav className="fixed bottom-0 w-full max-w-[428px] h-20 bg-white border-t border-[#F3E5D8] flex items-center justify-around px-2 z-50">
+                        <NavBtn active={tab === 'home'} onClick={() => switchTab('home')} label="首頁" icon={<Icon.Home />} />
+                        <NavBtn active={tab === 'body'} onClick={() => switchTab('body')} label="身體" icon={<Icon.Body />} />
+                        <NavBtn active={tab === 'mood'} onClick={() => switchTab('mood')} label="心情" icon={<Icon.Mood />} />
+                        <NavBtn active={tab === 'diary'} onClick={() => switchTab('diary')} label="日記" icon={<Icon.Diary />} />
+                        <NavBtn active={tab === 'lab'} onClick={() => switchTab('lab')} label="調頻" icon={<Icon.Calendar />} />
+                    </nav>
+                </div>
+            </div>
+        );
+    }
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
 </script></body></html>
