@@ -473,9 +473,10 @@
             setTab(newTab);
         };
 
+        const mainRef = useRef(null);
+
         useEffect(() => {
-            const main = document.querySelector('main');
-            if (main) main.scrollTop = 0;
+            if (mainRef.current) mainRef.current.scrollTop = 0;
         }, [tab]);
 
         const openDetail = (record, e) => {
@@ -531,7 +532,7 @@
         return (
             <div className="flex justify-center min-h-screen bg-[#f8f8f8]">
                 <div className="app-container shadow-2xl">
-                    <main className="flex-1 overflow-y-auto no-scrollbar pb-24">
+                    <main ref={mainRef} className="flex-1 overflow-y-auto no-scrollbar pb-24">
                         {tab === 'home' && <HomePage switchTab={switchTab} records={records} onDetail={openDetail} />}
                         
                         {tab === 'body' && <CategoryLog records={records} type="body" onBack={() => switchTab('home')} onDetail={openDetail} onAdd={() => switchTab('body_rec')} onSupplement={(r) => setSupplementRecord(r)} />}
@@ -1597,9 +1598,11 @@
 
         function CalendarPage({ records, setRecords, onDetail }) {
         const today = new Date().toISOString().slice(0, 10);
+        const [viewMonth, setViewMonth] = useState(today.slice(0, 7));
         const [labDetail, setLabDetail] = useState(null);
         const [selectedDate, setSelectedDate] = useState(today);
         const filtered = records.filter(r => r.date === selectedDate);
+        const daysInMonth = new Date(viewMonth.slice(0,4), viewMonth.slice(5,7), 0).getDate();
         const mapTitle = { body: '身體覺察', mood: '心情能量', diary: '日記隨想', lab: '實驗對策' };
         return (
             <div className="p-8 space-y-10 animate-fade-in pb-32">
@@ -1607,9 +1610,20 @@
                     <h2 className="text-2xl font-light text-[#C8A882] tracking-[0.3em] uppercase">Calendar</h2>
                     <Icon.Calendar />
                 </header>
+                <div className="flex flex-col items-center gap-2 mb-2">
+                    <div className="flex items-center gap-3">
+                        <button onClick={() => { const d = new Date(viewMonth+'-01'); d.setFullYear(d.getFullYear()-1); setViewMonth(d.toISOString().slice(0,7)); }} className="text-xs text-[#A89080] px-3 py-1 rounded-full border border-[#F3E5D8] active:bg-[#F3E5D8] tracking-widest">《 年</button>
+                        <span className="text-base font-medium tracking-widest text-[#C8A882] min-w-[4rem] text-center">{viewMonth.slice(0,4)}</span>
+                        <button onClick={() => { const d = new Date(viewMonth+'-01'); d.setFullYear(d.getFullYear()+1); setViewMonth(d.toISOString().slice(0,7)); }} className="text-xs text-[#A89080] px-3 py-1 rounded-full border border-[#F3E5D8] active:bg-[#F3E5D8] tracking-widest">年 》</button>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => { const d = new Date(viewMonth+'-01'); d.setMonth(d.getMonth()-1); setViewMonth(d.toISOString().slice(0,7)); }} className="w-9 h-9 flex items-center justify-center rounded-full border border-[#F3E5D8] text-[#A89080] text-xl active:bg-[#F3E5D8]">‹</button>
+                        <span className="text-xl font-light tracking-[0.3em] text-[#C8A882] min-w-[4rem] text-center">{parseInt(viewMonth.slice(5,7))}月</span>
+                        <button onClick={() => { const d = new Date(viewMonth+'-01'); d.setMonth(d.getMonth()+1); setViewMonth(d.toISOString().slice(0,7)); }} className="w-9 h-9 flex items-center justify-center rounded-full border border-[#F3E5D8] text-[#A89080] text-xl active:bg-[#F3E5D8]">›</button>
+                    </div>
                 <div className="grid grid-cols-7 gap-2">
-                    {Array.from({length: 31}, (_, i) => {
-                        const ds = `2026-03-${String(i+1).padStart(2, '0')}`;
+                    {Array.from({length: daysInMonth}, (_, i) => {
+                        const ds = `${viewMonth}-${String(i+1).padStart(2, '0')}`;
                         const has = records.some(r => r.date === ds);
                         const isToday = ds === today;
                         const isSelected = ds === selectedDate;
@@ -1684,9 +1698,10 @@
     }
 
     function TrendPage({ records }) {
-        const [month, setMonth] = useState('2026-03');
+        const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
         const [trendTab, setTrendTab] = useState('all');
         useEffect(() => {
+            const timer = setTimeout(() => {
             const CATEGORIES = ["頭部", "頸部", "手部", "胸腹", "背腰部", "腿部"];
             const createLineChart = (id, data, color, bgColor) => {
                 const ctx = document.getElementById(id); if(!ctx) return;
@@ -1766,7 +1781,9 @@
             buildCorrelation('chart-event-symptom');
             // ────────────────────────────────────────────────────────
 
-        }, [records, month]);
+        }, 0);
+            return () => clearTimeout(timer);
+        }, [records, month, trendTab]);
 
         // Compute whether correlation chart has data (for empty state)
         const monthRecs = records.filter(r => r.date.startsWith(month) && (r.type === 'body' || r.type === 'mood'));
