@@ -1701,7 +1701,6 @@
         const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
         const [trendTab, setTrendTab] = useState('all');
         useEffect(() => {
-            const timer = setTimeout(() => {
             const CATEGORIES = ["頭部", "頸部", "手部", "胸腹", "背腰部", "腿部"];
             const createLineChart = (id, data, color, bgColor) => {
                 const ctx = document.getElementById(id); if(!ctx) return;
@@ -1781,8 +1780,6 @@
             buildCorrelation('chart-event-symptom');
             // ────────────────────────────────────────────────────────
 
-        }, 0);
-            return () => clearTimeout(timer);
         }, [records, month, trendTab]);
 
         // Compute whether correlation chart has data (for empty state)
