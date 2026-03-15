@@ -1773,7 +1773,7 @@
             buildCorrelation('chart-event-symptom');
             // ────────────────────────────────────────────────────────
 
-        }, [records, month]);
+        }, [records, month, trendTab]);
 
         // Compute whether correlation chart has data (for empty state)
         const monthRecs = records.filter(r => r.date.startsWith(month) && (r.type === 'body' || r.type === 'mood'));
@@ -1800,13 +1800,14 @@
 
         return (
             <div className="p-8 space-y-12 animate-fade-in pb-32 text-center">
-                <header className="pt-4 flex items-center justify-center gap-3">
-                    <Icon.Trend />
-                    <h2 className="text-2xl font-light text-[#C8A882] tracking-[0.3em]">趨勢圖</h2>
+                <header className="pt-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <Icon.Trend />
+                        <h2 className="text-2xl font-light text-[#C8A882] tracking-[0.3em]">趨勢圖</h2>
+                    </div>
+                    <input type="month" value={month} onChange={e => setMonth(e.target.value)}
+                        className="bg-transparent text-base font-medium tracking-widest text-[#C8A882] outline-none text-right" />
                 </header>
-                <div className="flex justify-center border-b border-[#F3E5D8] pb-4">
-                    <input type="month" value={month} onChange={e => setMonth(e.target.value)} className="bg-transparent text-xl font-medium tracking-widest text-[#C8A882] outline-none text-center" />
-                </div>
                 <div className="flex justify-center gap-2">
                     {[['all','綜合'],['mood','心情'],['body','身體']].map(([key,label]) => (
                         <button key={key} onClick={() => setTrendTab(key)}
