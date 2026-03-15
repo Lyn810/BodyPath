@@ -91,7 +91,7 @@
         "背部": ["肩胛骨", "膏肓", "背部"],
         "腰臀": ["腰部", "臀部", "尾椎", "私密處"],
         "胸部": ["鎖骨", "胸部", "肋骨", "心臟"],
-        "腹部": ["腹部", "腸胃", "下腹", "膀胱"],
+        "腹部": ["腹部", "腸胃", "膀胱"],
         "手臂": ["上手臂", "下手臂", "手肘", "手腕", "手指"],
         "腿腳": ["大腿", "膝蓋", "小腿", "腳踝", "腳背", "腳掌"],
         "全身": [],
@@ -180,8 +180,8 @@
     };
 
     const DEFAULT_TIMING_TAGS = {
-        before: ['久坐', '熬夜', '空腹', '飯後', '運動後', '壓力大', '月經期間', '睡眠不足'],
-        during: ['工作中', '開會時', '如廁時', '睡眠中', '走路時', '用餐時', '久站後'],
+        before: ['久坐', '熬夜', '空腹', '飯後', '運動後', '壓力大', '月經結束', '睡眠不足'],
+        during: ['工作中', '開會時', '如廁時', '睡眠中', '走路時', '用餐時', '久站後', '月經期間', '壓力大'],
         after:  ['重要會議', '考試', '出差', '比賽', '上台', '就醫', '長途旅行'],
     };
 
@@ -738,7 +738,10 @@
 
     // 部位顯示格式
     function bodyLabel(r) {
-        return `${[r.area, r.part, r.side?.join('')].filter(Boolean).join(' · ')} : ${r.sensationData.map(s => s.label).join(', ')}`;
+        const side = (r.side || []).filter(s => s !== '不分').join(' ');
+        const pos = (r.position || []).join(' ');
+        const level = (r.level || []).join(' ');
+        return [r.area, side || null, r.part, pos || null, level || null].filter(Boolean).join(' · ');
     }
 
     // --- 詳情 Modal ---
@@ -788,7 +791,7 @@
                         {/* 身體覺察內容 */}
                         {record.type === 'body' && (
                             <div className="space-y-4">
-                                <p className="text-lg font-medium text-[#8D7B6D] tracking-wide leading-snug">{edited.area ? edited.area + ' · ' : ''}{edited.side ? edited.side.join(' ') : ''} {record.part}</p>
+                                <p className="text-lg font-medium text-[#8D7B6D] tracking-wide leading-snug">{(() => { const side = (edited.side||[]).filter(s=>s!=='不分').join(' '); const pos = (edited.position||[]).join(' '); const level = (edited.level||[]).join(' '); return [edited.area, side||null, record.part, pos||null, level||null].filter(Boolean).join(' · '); })()}</p>
                                 <div className="space-y-2">
                                     {edited.sensationData.map((s, idx) => (
                                         <div key={idx} className="space-y-2 bg-[#FAF7F4] p-4 rounded-2xl border border-[#F3E5D8]">
@@ -1227,7 +1230,7 @@
                             </div>
                             {r.type === 'body' ? (
                                 <div className="space-y-3">
-                                    <p className="text-sm font-medium text-[#C8A882] tracking-wide">{[r.area, r.part, r.side?.join('')].filter(Boolean).join(' · ')}</p>
+                                    <p className="text-sm font-medium text-[#C8A882] tracking-wide">{bodyLabel(r)}</p>
                                     {(r.sensationData||[]).length > 0 && (
                                         <div className="flex flex-wrap gap-1.5 pt-3 border-t border-[#F3E5D8]">
                                             {(r.sensationData||[]).map((s,i) => (
@@ -2215,7 +2218,7 @@
                                     <span className="text-xs font-medium text-[#D1C4B9] uppercase tracking-widest">{r.timeSlot}</span>
                                     {r.type === 'body' ? (
                                         <div className="space-y-2 mt-1">
-                                            <p className="text-sm font-medium text-[#C8A882] tracking-wide">{[r.area, r.part, r.side?.join('')].filter(Boolean).join(' · ')}</p>
+                                            <p className="text-sm font-medium text-[#C8A882] tracking-wide">{bodyLabel(r)}</p>
                                             {(r.sensationData||[]).length > 0 && (
                                                 <div className="flex flex-wrap gap-1.5 pt-2 border-t border-[#F3E5D8]">
                                                     {(r.sensationData||[]).map((s,i) => (
