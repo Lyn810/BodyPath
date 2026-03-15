@@ -86,12 +86,13 @@
 
     const TIME_SLOTS = ["凌晨", "上午", "下午", "晚上", "半夜", "自定義"];
     const BODY_STRUCTURE = {
-        "頭頸": ["眼", "耳", "鼻", "喉嚨", "口腔", "額頭", "太陽穴", "臉頰", "下巴", "頭頂", "後腦", "頸部正面", "頸部側面", "後頸"],
-        "肩背": ["肩膀", "肩胛骨", "上背", "中背"],
-        "胸口": ["鎖骨", "上胸", "胸腔", "肋骨"],
-        "腹部": ["上腹(胃)", "肚臍周圍", "下腹", "側腹", "私密處"],
-        "腰臀": ["後腰", "下背", "腰側", "臀部"],
-        "手臂": ["肩以下", "上手臂", "手肘", "下手臂", "手腕", "手掌", "手指"],
+        "頭部": ["頭部", "臉部", "眼睛", "耳朵", "鼻子", "口腔", "呼吸道"],
+        "肩頸": ["頸部", "肩膀", "肩頸", "喉嚨"],
+        "背部": ["肩胛骨", "膏肓", "背部"],
+        "胸部": ["鎖骨", "胸部", "肋骨", "心臟"],
+        "腹部": ["腹部", "腸胃", "下腹", "膀胱"],
+        "腰臀": ["腰部", "臀部", "尾椎", "私密處"],
+        "手臂": ["上手臂", "下手臂", "手肘", "手腕", "手指"],
         "腿腳": ["大腿", "膝蓋", "小腿", "腳踝", "腳背", "腳掌"],
         "全身": [],
     };
@@ -103,6 +104,16 @@
         { label: "乾燥", sub: "皮膚緊繃、脫屑或起皮。" },
         { label: "出油", sub: "皮膚分泌過多油脂。" },
         { label: "脫皮", sub: "皮膚表層剝落。" },
+        { label: "過敏", sub: "皮膚對某些物質產生敏感反應。" },
+    ];
+
+    const RESPIRATORY_SENSATIONS = [
+        { label: "流鼻水", sub: "鼻腔分泌物增多，持續流出。" },
+        { label: "打噴嚏", sub: "鼻腔受刺激引發的急速噴氣反應。" },
+        { label: "鼻塞", sub: "鼻腔阻塞，呼吸不順暢。" },
+        { label: "過敏", sub: "呼吸道對環境或食物產生過敏反應。" },
+        { label: "咳嗽", sub: "氣道受刺激引發的咳嗽反應。" },
+        { label: "氣喘感", sub: "呼吸時感到費力或有喘鳴聲。" },
     ];
 
     const WHOLE_BODY_SENSATIONS = [
@@ -1177,6 +1188,27 @@
 
         return (
             <div className="space-y-6">
+                {/* 不適感 - 獨立快選 */}
+                {(() => {
+                    const act = selected['不適感'];
+                    return (
+                        <div className={"rounded-[2rem] border transition-all p-5 bg-white " + (act ? 'border-[#C8A882]' : 'border-[#F3E5D8]')}>
+                            <button onClick={() => onToggle('不適感')} className="w-full text-left flex justify-between items-start">
+                                <div className="pr-4">
+                                    <p className={"text-sm font-medium tracking-wide " + (act ? 'text-[#C8A882]' : 'text-[#8D7B6D]')}>不適感</p>
+                                    <p className="text-xs text-[#D1C4B9] font-medium leading-tight mt-0.5">說不清楚，就是哪裡不舒服。</p>
+                                </div>
+                                {act && <span className="text-[#C8A882]">✓</span>}
+                            </button>
+                            {act && (
+                                <div className="mt-4 pt-4 border-t border-dashed border-[#F3E5D8] space-y-2 animate-fade-in">
+                                    <div className="flex justify-between text-xs font-medium text-[#C8A882] uppercase tracking-widest"><span>{intensityLabel}</span><span>{act}%</span></div>
+                                    <input type="range" min="0" max="100" value={act} onChange={e => onIntensityChange('不適感', e.target.value)} className="w-full" />
+                                </div>
+                            )}
+                        </div>
+                    );
+                })()}
                 {groups.map(group => (
                     <div key={group.title} className="space-y-3">
                         <div className="border-l-2 border-[#C8A882] pl-3 py-0.5">
@@ -1323,8 +1355,8 @@
                         </>)}
                         <div className="space-y-2 text-left">
                             <p className="text-xs text-[#A89080] tracking-widest pl-1">{data.area !== '全身' ? '3.' : ''} 層級</p>
-                            <div className="grid grid-cols-2 gap-3">
-                                {['淺層組織（皮膚）', '深層組織（肌肉、內臟、骨頭）'].map(s => {
+                            <div className="grid grid-cols-3 gap-3">
+                                {['皮膚', '深層組織', '關節'].map(s => {
                                     const act = (data.level || []).includes(s);
                                     return (<button key={s} onClick={() => {
                                         const cur = data.level || [];
@@ -1356,7 +1388,8 @@
                                    ...SENSATION_GROUPS.map(g => ({...g, defaultOpen: false}))]
                                 : [
                                    ...SENSATION_GROUPS,
-                                   ...((data.level || []).includes('淺層組織（皮膚）') ? [{ title: "皮膚類", desc: "皮膚表層的感受。", items: SKIN_SENSATIONS }] : [])
+                                   ...((data.level || []).includes('皮膚') ? [{ title: "皮膚類", desc: "皮膚表層的感受。", items: SKIN_SENSATIONS }] : []),
+                                   ...(data.part === '呼吸道' ? [{ title: "呼吸道類", desc: "呼吸道相關的感受。", items: RESPIRATORY_SENSATIONS }] : [])
                                   ]}
                             selected={data.sensationData}
                             onToggle={toggleSensation}
