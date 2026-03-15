@@ -86,12 +86,12 @@
 
     const TIME_SLOTS = ["凌晨", "上午", "下午", "晚上", "半夜", "自定義"];
     const BODY_STRUCTURE = {
-        "頭部": ["頭部", "臉部", "眼睛", "耳朵", "鼻子", "口腔", "呼吸道"],
-        "肩頸": ["頸部", "肩膀", "肩頸", "喉嚨"],
+        "頭部": ["頭部", "臉部", "眼睛", "耳朵", "鼻子", "嘴巴", "喉嚨", "呼吸道"],
+        "肩頸": ["頸部", "肩膀", "肩頸"],
         "背部": ["肩胛骨", "膏肓", "背部"],
+        "腰臀": ["腰部", "臀部", "尾椎", "私密處"],
         "胸部": ["鎖骨", "胸部", "肋骨", "心臟"],
         "腹部": ["腹部", "腸胃", "下腹", "膀胱"],
-        "腰臀": ["腰部", "臀部", "尾椎", "私密處"],
         "手臂": ["上手臂", "下手臂", "手肘", "手腕", "手指"],
         "腿腳": ["大腿", "膝蓋", "小腿", "腳踝", "腳背", "腳掌"],
         "全身": [],
@@ -1146,8 +1146,8 @@
                         {(r.type === 'body' || r.type === 'mood') && !(r.timingBefore && r.timingDuring && r.timingAfter && r.bodyLanguage && r.trueFeeling) && (
                                 <div className="pt-2 flex justify-end" onClick={e => e.stopPropagation()}>
                                     <button onClick={() => onSupplement(r)}
-                                        className="text-xs text-[#C8A882] border border-[#F3E5D8] rounded-full px-4 py-1.5 font-medium tracking-wide">
-                                        ＋ 補充
+                                        className="text-xs text-[#C8A882] border border-[#C8A882] rounded-full px-4 py-1.5 font-medium tracking-widest transition-transform active:scale-95">
+                                        + 補充
                                     </button>
                                 </div>
                             )}
@@ -1180,11 +1180,11 @@
     // 共用感受/心情選擇
     function SensationSelector({ groups, selected, onToggle, onIntensityChange, customInput, onCustomInput, onAddCustom, intensityLabel = "強度", savedCustomTags = [] }) {
         const allBuiltIn = groups.flatMap(g => g.items).map(i => i.label);
-        // custom tags currently active (in selected but not in built-in)
-        const activeCustom = Object.keys(selected).filter(k => !allBuiltIn.includes(k));
-        // saved library tags not yet active
-        const libraryTags = savedCustomTags.filter(t => !allBuiltIn.includes(t));
+        const activeCustom = Object.keys(selected).filter(k => !allBuiltIn.includes(k) && k !== '不適感');
+        const libraryTags = savedCustomTags.filter(t => !allBuiltIn.includes(t) && t !== '不適感');
         const typeName = intensityLabel === '強度' ? '感受' : '心情';
+        const [expandedGroups, setExpandedGroups] = React.useState({});
+        const toggleGroup = (title) => setExpandedGroups(prev => ({...prev, [title]: !prev[title]}));
 
         return (
             <div className="space-y-6">
@@ -1209,20 +1209,26 @@
                         </div>
                     );
                 })()}
-                {groups.map(group => (
+                {groups.map(group => {
+                    const hasSelected = group.items.some(i => selected[i.label]);
+                    const isOpen = expandedGroups[group.title] || hasSelected || group.defaultOpen;
+                    return (
                     <div key={group.title} className="space-y-3">
-                        <div className="border-l-2 border-[#C8A882] pl-3 py-0.5">
-                            <h3 className="text-base font-medium text-[#C8A882] uppercase tracking-widest">{group.title}</h3>
-                            <p className="text-xs text-[#D1C4B9] font-medium leading-relaxed mt-0.5">{group.desc}</p>
-                        </div>
-                        <div className="grid grid-cols-1 gap-3">
+                        <button onClick={() => toggleGroup(group.title)} className="w-full flex items-center justify-between border-l-2 border-[#C8A882] pl-3 py-0.5">
+                            <div className="text-left">
+                                <h3 className="text-base font-medium text-[#C8A882] uppercase tracking-widest">{group.title}</h3>
+                                <p className="text-xs text-[#D1C4B9] font-medium leading-relaxed mt-0.5">{group.desc}</p>
+                            </div>
+                            <span className={"text-[#C8A882] text-lg font-light ml-3 " + (hasSelected ? 'opacity-100' : 'opacity-60')}>{isOpen ? '−' : '+'}</span>
+                        </button>
+                        {isOpen && <div className="grid grid-cols-1 gap-3">
                             {group.items.map(item => {
                                 const act = selected[item.label];
                                 return (
-                                    <div key={item.label} className={`rounded-[2rem] border transition-all p-5 bg-white ${act ? 'border-[#C8A882]' : 'border-[#F3E5D8]'}`}>
+                                    <div key={item.label} className={"rounded-[2rem] border transition-all p-5 bg-white " + (act ? 'border-[#C8A882]' : 'border-[#F3E5D8]')}>
                                         <button onClick={() => onToggle(item.label)} className="w-full text-left flex justify-between items-start">
                                             <div className="pr-4">
-                                                <p className={`text-sm font-medium tracking-wide ${act ? 'text-[#C8A882]' : 'text-[#8D7B6D]'}`}>{item.label}</p>
+                                                <p className={"text-sm font-medium tracking-wide " + (act ? 'text-[#C8A882]' : 'text-[#8D7B6D]')}>{item.label}</p>
                                                 <p className="text-xs text-[#D1C4B9] font-medium leading-tight mt-0.5">{item.sub}</p>
                                             </div>
                                             {act && <span className="text-[#C8A882]">✓</span>}
@@ -1236,9 +1242,10 @@
                                     </div>
                                 );
                             })}
-                        </div>
+                        </div>}
                     </div>
-                ))}
+                    );
+                })}
                 {/* 自訂標籤庫 + 已啟用自訂 */}
                 <div className="space-y-3">
                     <div className="border-l-2 border-[#F3E5D8] pl-3 py-0.5">
@@ -1283,7 +1290,7 @@
 
     function BodyRecorder({ onSave, onCancel }) {
         const [step, setStep] = useState(0);
-        const [data, setData] = useState({ date: new Date().toISOString().slice(0, 10), timeSlot: '上午', customTime: '', area: '', part: '', side: [], level: [], sensationData: {}, bodyLanguage: '', trueFeeling: '', timingBefore: '', timingDuring: '', timingAfter: '', customInput: '' });
+        const [data, setData] = useState({ date: new Date().toISOString().slice(0, 10), timeSlot: '上午', customTime: '', area: '', part: '', side: [], position: [], level: [], sensationData: {}, bodyLanguage: '', trueFeeling: '', timingBefore: '', timingDuring: '', timingAfter: '', customInput: '' });
 
         const toggleSensation = (label) => {
             const n = {...data.sensationData};
@@ -1304,7 +1311,7 @@
                 {step === 1 && (
                     <div className="space-y-8 animate-fade-in">
                         <p className="text-lg font-medium text-[#A89080] tracking-[0.2em] uppercase">在哪個區域？</p>
-                        <div className="grid grid-cols-2 gap-3">{Object.keys(BODY_STRUCTURE).map(area => (<button key={area} onClick={() => { setData({...data, area, part: area === '全身' ? '全身' : ''}); setStep(area === '全身' ? 3 : 2); }} className="p-8 bg-white border border-[#F3E5D8] rounded-[2.5rem] text-sm text-[#C8A882] hover:bg-[#C8A882] hover:text-white transition-all font-medium uppercase tracking-widest">{area}</button>))}</div>
+                        <div className="grid grid-cols-2 gap-3">{Object.keys(BODY_STRUCTURE).map(area => (<button key={area} onClick={() => { setData({...data, area, part: area === '全身' ? '全身' : ''}); setStep(area === '全身' ? 3 : 2); }} className="py-4 px-3 bg-white border border-[#F3E5D8] rounded-2xl text-sm text-[#C8A882] hover:bg-[#C8A882] hover:text-white transition-all font-medium tracking-widest">{area}</button>))}</div>
                         <button onClick={() => setStep(0)} className="text-xs text-[#D1C4B9] font-medium uppercase tracking-widest">BACK</button>
                     </div>
                 )}
@@ -1313,7 +1320,7 @@
                     <div className="space-y-6 animate-fade-in">
                         <h2 className="text-lg font-medium tracking-widest text-[#A89080] uppercase">{data.area}</h2>
                         <div className="grid grid-cols-2 gap-3">
-                            {BODY_STRUCTURE[data.area].map(p => (<button key={p} onClick={() => { setData({...data, part: p}); setStep(3); }} className="p-5 bg-white border border-[#F3E5D8] rounded-2xl text-sm text-[#C8A882] hover:bg-[#C8A882] hover:text-white transition-all font-medium uppercase">{p}</button>))}
+                            {BODY_STRUCTURE[data.area].map(p => (<button key={p} onClick={() => { setData({...data, part: p}); setStep(3); }} className="py-3 px-3 bg-white border border-[#F3E5D8] rounded-2xl text-sm text-[#C8A882] hover:bg-[#C8A882] hover:text-white transition-all font-medium">{p}</button>))}
                             <div className="col-span-2 mt-2 space-y-3">
                                 <input value={data.customInput} onChange={e => setData({...data, customInput: e.target.value})} placeholder="自定義部位" className="w-full bg-[#F3E5D8]/20 p-4 rounded-xl text-center text-sm outline-none border border-[#F3E5D8] text-[#C8A882] font-medium placeholder-[#C8A882]/50" />
                                 {data.customInput && <button onClick={() => { setData({...data, part: data.customInput, customInput: ''}); setStep(3); }} className="text-sm font-medium text-[#C8A882] uppercase">使用此位置 →</button>}
@@ -1328,7 +1335,7 @@
                         <h2 className="text-lg font-medium tracking-widest text-[#A89080] uppercase">{data.part} 的發生位置</h2>
                         {data.area !== '全身' && (<>
                         <div className="space-y-2 text-left">
-                            <p className="text-xs text-[#A89080] tracking-widest pl-1">1. 身體哪一側</p>
+                            <p className="text-xs text-[#A89080] tracking-widest pl-1">1. 身體哪一側　<span className="text-[#D1C4B9]">可複選</span></p>
                             <div className="grid grid-cols-5 gap-2">
                                 {['不分', '前', '後', '左', '右'].map(s => {
                                     const act = data.side.includes(s);
@@ -1341,12 +1348,13 @@
                         </div>
                         <div className="h-px bg-[#F3E5D8]" />
                         <div className="space-y-2 text-left">
-                            <p className="text-xs text-[#A89080] tracking-widest pl-1">2. 該部位的哪個位置</p>
+                            <p className="text-xs text-[#A89080] tracking-widest pl-1">2. 該部位的哪個位置　<span className="text-[#D1C4B9]">可複選</span></p>
                             <div className="grid grid-cols-5 gap-2">
                                 {['上', '下', '左', '右', '中'].map(s => {
-                                    const act = data.side.includes(s);
+                                    const act = (data.position || []).includes(s);
                                     return (<button key={s} onClick={() => {
-                                        setData({...data, side: data.side.includes(s) ? data.side.filter(x => x !== s) : [...data.side.filter(x => x !== '不分'), s]});
+                                        const cur = data.position || [];
+                                        setData({...data, position: cur.includes(s) ? cur.filter(x => x !== s) : [...cur, s]});
                                     }} className={"py-3 border rounded-2xl text-sm transition-all font-medium " + (act ? 'bg-[#C8A882] text-white border-[#C8A882]' : 'bg-white text-[#C8A882] border-[#F3E5D8]')}>{s}</button>)
                                 })}
                             </div>
@@ -1801,7 +1809,7 @@
         const [month, setMonth] = useState('2026-03');
         const [trendTab, setTrendTab] = useState('all');
         useEffect(() => {
-            const CATEGORIES = ["頭部", "頸部", "手部", "胸腹", "背腰部", "腿部"];
+            const CATEGORIES = ["頭部", "肩頸", "背部", "腰臀", "胸部", "腹部", "手臂", "腿腳"];
             const createLineChart = (id, data, color, bgColor) => {
                 const ctx = document.getElementById(id); if(!ctx) return;
                 const old = Chart.getChart(ctx); if(old) old.destroy();
@@ -1923,8 +1931,10 @@
                         </button>
                     ))}
                 </div>
-                {(trendTab==='all'||trendTab==='body') && <section className="space-y-4"><h3 className="text-sm font-medium text-[#C8A882] tracking-[0.2em] uppercase text-center">身體覺察 (不適指數 MAX)</h3>{topBodyStr && <p className="text-xs text-center text-[#A89080] -mt-2 tracking-wide">{topBodyStr}</p>}<div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] h-56"><canvas id="chart-body-trend"></canvas></div></section>}
-                {(trendTab==='all'||trendTab==='mood') && <section className="space-y-4"><h3 className="text-sm font-medium text-[#C8A882] tracking-[0.2em] uppercase text-center">心情能量 (平均基調 AVG)</h3>{topMoodStr && <p className="text-xs text-center text-[#A89080] -mt-2 tracking-wide">{topMoodStr}</p>}<div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] h-56"><canvas id="chart-mood-trend"></canvas></div></section>}
+                {trendTab==='all' && <section className="space-y-4"><h3 className="text-sm font-medium text-[#C8A882] tracking-[0.2em] uppercase text-center">身體覺察 (不適指數 MAX)</h3>{topBodyStr && <p className="text-xs text-center text-[#A89080] -mt-2 tracking-wide">{topBodyStr}</p>}<div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] h-56"><canvas id="chart-body-trend"></canvas></div></section>}
+                {trendTab==='all' && <section className="space-y-4"><h3 className="text-sm font-medium text-[#C8A882] tracking-[0.2em] uppercase text-center">心情能量 (平均基調 AVG)</h3>{topMoodStr && <p className="text-xs text-center text-[#A89080] -mt-2 tracking-wide">{topMoodStr}</p>}<div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] h-56"><canvas id="chart-mood-trend"></canvas></div></section>}
+                {trendTab==='body' && <section className="space-y-4"><h3 className="text-sm font-medium text-[#C8A882] tracking-[0.2em] uppercase text-center">身體覺察 (不適指數 MAX)</h3>{topBodyStr && <p className="text-xs text-center text-[#A89080] -mt-2 tracking-wide">{topBodyStr}</p>}<div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] h-56"><canvas id="chart-body-trend"></canvas></div></section>}
+                {trendTab==='mood' && <section className="space-y-4"><h3 className="text-sm font-medium text-[#C8A882] tracking-[0.2em] uppercase text-center">心情能量 (平均基調 AVG)</h3>{topMoodStr && <p className="text-xs text-center text-[#A89080] -mt-2 tracking-wide">{topMoodStr}</p>}<div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] h-56"><canvas id="chart-mood-trend"></canvas></div></section>}
                 {trendTab==='mood' && (() => {
                     const moodFreqRecs = records.filter(r => r.date.startsWith(month) && r.type === 'mood');
                     const moodFreqCount = {};
@@ -1980,7 +1990,7 @@
                         const maxVal = sorted[0][1];
                         return (
                             <div key={cat} className="space-y-3">
-                                <h3 className="text-[13px] font-medium text-[#C8A882] tracking-widest uppercase text-center">— {cat}</h3>
+                                <h3 className="text-[13px] font-medium text-[#C8A882] tracking-widest uppercase text-center">{cat}</h3>
                                 <div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] space-y-3">
                                     {sorted.map(([label, count]) => (
                                         <div key={label} className="flex items-center gap-3">
@@ -2098,7 +2108,7 @@
                                         </div>
                                     )}
                                 </div>
-                                <button onClick={() => setExpId(expId === r.id ? null : r.id)} className="text-xs font-medium text-[#C8A882] border border-[#C8A882]/40 px-3 py-1.5 rounded-full hover:bg-[#C8A882] hover:text-white transition-all shrink-0 whitespace-nowrap mt-1">+ 回應</button>
+                                <button onClick={() => setExpId(expId === r.id ? null : r.id)} className="text-xs font-medium text-white bg-[#C8A882] px-4 py-1.5 rounded-full tracking-widest transition-transform active:scale-95 shrink-0 whitespace-nowrap mt-1">+ 回應</button>
                             </div>
 
                             {/* 身體想告訴我 / 真實感受 */}
@@ -2158,8 +2168,8 @@
                         {(r.type === 'body' || r.type === 'mood') && !(r.timingBefore && r.timingDuring && r.timingAfter && r.bodyLanguage && r.trueFeeling) && (
                                 <div className="pt-2 flex justify-end" onClick={e => e.stopPropagation()}>
                                     <button onClick={() => onSupplement(r)}
-                                        className="text-xs text-[#C8A882] border border-[#F3E5D8] rounded-full px-4 py-1.5 font-medium tracking-wide">
-                                        ＋ 補充
+                                        className="text-xs text-[#C8A882] border border-[#C8A882] rounded-full px-4 py-1.5 font-medium tracking-widest transition-transform active:scale-95">
+                                        + 補充
                                     </button>
                                 </div>
                             )}
