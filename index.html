@@ -1606,22 +1606,16 @@
         const mapTitle = { body: '身體覺察', mood: '心情能量', diary: '日記隨想', lab: '實驗對策' };
         return (
             <div className="p-8 space-y-10 animate-fade-in pb-32">
-                <header className="pt-4 flex justify-between items-end text-[#C8A882] uppercase tracking-[0.2em] font-medium">
+                <header className="pt-4 flex justify-between items-start text-[#C8A882] uppercase tracking-[0.2em] font-medium">
                     <h2 className="text-2xl font-light text-[#C8A882] tracking-[0.3em] uppercase">Calendar</h2>
-                    <Icon.Calendar />
+                    <div className="relative">
+                        <button onClick={() => document.getElementById('cal-month-picker').showPicker ? document.getElementById('cal-month-picker').showPicker() : document.getElementById('cal-month-picker').click()} className="text-right">
+                            <p className="text-base font-bold text-[#C8A882] tracking-widest underline underline-offset-2">{viewMonth.slice(0,4)}</p>
+                            <p className="text-sm font-bold text-[#C8A882] tracking-widest underline underline-offset-2">{['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][parseInt(viewMonth.slice(5,7))-1]}</p>
+                        </button>
+                        <input id="cal-month-picker" type="month" value={viewMonth} onChange={e => setViewMonth(e.target.value)} className="absolute opacity-0 w-0 h-0 pointer-events-none" tabIndex="-1" />
+                    </div>
                 </header>
-                <div className="flex flex-col items-center gap-2 mb-2">
-                    <div className="flex items-center gap-3">
-                        <button onClick={() => { const d = new Date(viewMonth+'-01'); d.setFullYear(d.getFullYear()-1); setViewMonth(d.toISOString().slice(0,7)); }} className="text-xs text-[#A89080] px-3 py-1 rounded-full border border-[#F3E5D8] active:bg-[#F3E5D8] tracking-widest">《 年</button>
-                        <span className="text-base font-medium tracking-widest text-[#C8A882] min-w-[4rem] text-center">{viewMonth.slice(0,4)}</span>
-                        <button onClick={() => { const d = new Date(viewMonth+'-01'); d.setFullYear(d.getFullYear()+1); setViewMonth(d.toISOString().slice(0,7)); }} className="text-xs text-[#A89080] px-3 py-1 rounded-full border border-[#F3E5D8] active:bg-[#F3E5D8] tracking-widest">年 》</button>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <button onClick={() => { const d = new Date(viewMonth+'-01'); d.setMonth(d.getMonth()-1); setViewMonth(d.toISOString().slice(0,7)); }} className="w-9 h-9 flex items-center justify-center rounded-full border border-[#F3E5D8] text-[#A89080] text-xl active:bg-[#F3E5D8]">‹</button>
-                        <span className="text-xl font-light tracking-[0.3em] text-[#C8A882] min-w-[4rem] text-center">{parseInt(viewMonth.slice(5,7))}月</span>
-                        <button onClick={() => { const d = new Date(viewMonth+'-01'); d.setMonth(d.getMonth()+1); setViewMonth(d.toISOString().slice(0,7)); }} className="w-9 h-9 flex items-center justify-center rounded-full border border-[#F3E5D8] text-[#A89080] text-xl active:bg-[#F3E5D8]">›</button>
-                    </div>
-                </div>
                 <div className="grid grid-cols-7 gap-2">
                     {Array.from({length: daysInMonth}, (_, i) => {
                         const ds = `${viewMonth}-${String(i+1).padStart(2, '0')}`;
@@ -1639,7 +1633,7 @@
                     })}
                 </div>
                 <div className="space-y-10">
-                    <h3 className="text-xs font-bold text-[#C8A882] tracking-[0.2em] border-b border-[#F3E5D8] pb-2 uppercase">{selectedDate} Journey</h3>
+                    <h3 className="text-xs font-bold text-[#C8A882] tracking-[0.2em] border-b border-[#F3E5D8] pb-2 uppercase text-center">{selectedDate} Journey</h3>
                     {['body', 'mood', 'diary', 'lab'].map(type => {
                         const items = type === 'lab' ? filtered.filter(f => f.lab && f.lab.length > 0) : filtered.filter(f => f.type === type);
                         if (items.length === 0) return null;
@@ -1825,6 +1819,33 @@
                 </div>
                 {(trendTab==='all'||trendTab==='body') && <section className="space-y-4"><h3 className="text-sm font-medium text-[#C8A882] tracking-[0.2em] uppercase text-center">身體覺察 (不適指數 MAX)</h3>{topBodyStr && <p className="text-xs text-center text-[#A89080] -mt-2 tracking-wide">{topBodyStr}</p>}<div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] h-56"><canvas id="chart-body-trend"></canvas></div></section>}
                 {(trendTab==='all'||trendTab==='mood') && <section className="space-y-4"><h3 className="text-sm font-medium text-[#C8A882] tracking-[0.2em] uppercase text-center">心情能量 (平均基調 AVG)</h3>{topMoodStr && <p className="text-xs text-center text-[#A89080] -mt-2 tracking-wide">{topMoodStr}</p>}<div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] h-56"><canvas id="chart-mood-trend"></canvas></div></section>}
+                {trendTab==='mood' && (
+                    <section className="space-y-4">
+                        <h3 className="text-sm font-medium text-[#C8A882] tracking-[0.2em] uppercase text-center">心情頻率</h3>
+                        {(() => {
+                            const monthMoodRecs = records.filter(r => r.date.startsWith(month) && r.type === 'mood');
+                            const moodCount = {};
+                            monthMoodRecs.forEach(r => Object.keys(r.moods || {}).forEach(k => { moodCount[k] = (moodCount[k] || 0) + 1; }));
+                            const sorted = Object.entries(moodCount).sort((a,b) => b[1]-a[1]);
+                            const maxVal = sorted[0]?.[1] || 1;
+                            return sorted.length === 0 ? (
+                                <div className="bg-white border border-[#F3E5D8] p-8 rounded-[2.5rem] text-center text-xs text-[#D1C4B9] tracking-wide">本月尚無心情紀錄</div>
+                            ) : (
+                                <div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] space-y-3">
+                                    {sorted.map(([mood, count]) => (
+                                        <div key={mood} className="flex items-center gap-3">
+                                            <span className="text-xs text-[#8D7B6D] w-14 text-right shrink-0 tracking-wide">{mood}</span>
+                                            <div className="flex-1 bg-[#FAF7F4] rounded-full h-2 overflow-hidden">
+                                                <div className="h-2 rounded-full bg-[#C8A882] transition-all" style={{width: (count/maxVal*100)+'%'}}></div>
+                                            </div>
+                                            <span className="text-xs text-[#A89080] w-6 shrink-0">{count}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            );
+                        })()}
+                    </section>
+                )}
                 {trendTab==='all' && <section className="space-y-4"><h3 className="text-sm font-medium text-[#C8A882] tracking-[0.2em] uppercase text-center">回應成效 (平均回應率 AVG)</h3><div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] h-56"><canvas id="chart-lab-trend"></canvas></div></section>}
 
                 {/* 事件 → 症狀關聯 */}
