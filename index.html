@@ -851,7 +851,7 @@
                             const BUILT_IN = { f1: '環境的質地', f2: '留白時刻', f3: '對自己的新發現', f4: '內在呼喚', f5: '溫柔回應', f6: '最深刻的一抹色彩' };
                             const DIARY_PH = { f1: '記下今天所處環境帶給你的感覺', f2: '記下今天把時間留給自己的時刻', f3: '記下過去未曾注意過的自己', f4: '記下今天想被幫忙的時刻', f5: '如果是你最重視的人需要你寫在上方的幫忙，你會如何回應', f6: '記下今天最印象深刻的事情' };
                             const df = edited.diaryFields || record.diaryFields || {};
-                            const customLabels = record.customLabels || {};
+                            const customLabels = edited.customLabels || record.customLabels || {};
                             // collect all keys that have content, or all when editing
                             const allKeys = [...Object.keys(BUILT_IN), ...Object.keys(customLabels)];
                             const displayKeys = isEditing ? allKeys : allKeys.filter(k => df[k]?.trim());
@@ -1165,11 +1165,11 @@
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-[#C8A882] tracking-wide">{e.label}</p>
-                                <p className="text-xs text-[#A89080] mt-0.5 tracking-wide">{e.desc}</p>
+                                <p className="text-xs text-[#D1C4B9] mt-0.5 tracking-wide">{e.desc}</p>
                             </div>
                             <div className="text-right shrink-0">
                                 <p className="text-lg font-light text-[#C8A882]">{e.count}</p>
-                                <p className="text-[10px] text-[#A89080] tracking-widest uppercase">筆</p>
+                                <p className="text-[10px] text-[#D1C4B9] tracking-widest uppercase">筆</p>
                             </div>
                         </button>
                     ))}
@@ -1623,8 +1623,8 @@
         const [customInput, setCustomInput] = useState('');
         const [selected, setSelected] = useState(null); // null=step1
         const setF = (k, v) => setFields(prev => ({...prev, [k]: v}));
-        const hasContent = Object.values(fields).some(v => v.trim()) ||
-            customGroups.some(cg => fields[cg.key]?.trim());
+        const hasContent = Object.values(fields).some(v => v && v.trim()) ||
+            customGroups.some(cg => fields[cg.key] && fields[cg.key].trim());
 
         const toggleSelect = (id) => {
             setSelected(prev => {
@@ -1713,7 +1713,7 @@
                                     <div key={f.key} className="space-y-2">
                                         <p className="text-xs font-medium text-[#D1C4B9] tracking-widest ml-2">{f.label}</p>
                                         <div className="bg-[#F3E5D8]/50 rounded-[2.5rem] p-6 border border-[#D1C4B9]">
-                                            <textarea value={fields[f.key]} onChange={e => setF(f.key, e.target.value)} placeholder={f.placeholder} className="w-full bg-transparent text-[#C8A882] text-sm outline-none h-20 resize-none leading-relaxed font-medium placeholder-[#D1C4B9]" />
+                                            <textarea value={fields[f.key] || ''} onChange={e => setF(f.key, e.target.value)} placeholder={f.placeholder} className="w-full bg-transparent text-[#C8A882] text-sm outline-none h-20 resize-none leading-relaxed font-medium placeholder-[#D1C4B9]" />
                                         </div>
                                     </div>
                                 ))}
