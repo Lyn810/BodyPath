@@ -541,7 +541,7 @@
                         {tab === 'mood_rec' && <MoodRecorder onSave={addRecord} onCancel={() => switchTab(prevTab === 'mood' ? 'mood' : 'home')} savedCustomTags={getMoodCustomTags()} onAddCustom={(tag) => { const t = getMoodCustomTags(); if(!t.includes(tag)) saveTags('mood',[...t,tag]); }} />}
                         {tab === 'diary_rec' && <DiaryRecorder onSave={addRecord} onCancel={() => switchTab(prevTab === 'diary' ? 'diary' : 'home')} />}
                         {tab === 'lab' && <MiniLab records={records} setRecords={setRecords} onDetail={openDetail} onSupplement={(r) => setSupplementRecord(r)} />}
-                        {tab === 'lab' && <CalendarPage records={records} setRecords={setRecords} onDetail={openDetail} />}
+                        
                         {tab === 'trend' && <TrendPage records={records} />}
                     </main>
 
@@ -1857,7 +1857,7 @@
         const [newLab, setNewLab] = useState({ action: '', effect: 0 });
 
         // 當月所有天（固定顯示當月）
-        const [viewMonth] = useState(today.slice(0, 7));
+        const [viewMonth, setViewMonth] = useState(today.slice(0, 7));
         const daysInMonth = new Date(parseInt(viewMonth.slice(0,4)), parseInt(viewMonth.slice(5,7)), 0).getDate();
         const monthPrefix = viewMonth; // e.g. "2026-03"
 
@@ -1884,9 +1884,13 @@
 
         return (
             <div className="p-8 space-y-8 animate-fade-in pb-32">
-                <header className="pt-4 flex items-center gap-3">
-                    <Icon.Calendar />
-                    <h2 className="text-2xl font-light text-[#C8A882] tracking-[0.3em]">調頻月曆</h2>
+                <header className="pt-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <Icon.Calendar />
+                        <h2 className="text-2xl font-light text-[#C8A882] tracking-[0.3em]">調頻月曆</h2>
+                    </div>
+                    <input type="month" value={viewMonth} onChange={e => setViewMonth(e.target.value)}
+                        className="bg-transparent text-base font-medium text-[#C8A882] tracking-widest outline-none text-right" />
                 </header>
 
                 {/* 月曆 */}
