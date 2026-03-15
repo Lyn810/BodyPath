@@ -1609,11 +1609,13 @@
                 <header className="pt-4 flex justify-between items-start text-[#C8A882] uppercase tracking-[0.2em] font-medium">
                     <h2 className="text-2xl font-light text-[#C8A882] tracking-[0.3em] uppercase">Calendar</h2>
                     <div className="relative">
-                        <button onClick={() => document.getElementById('cal-month-picker').showPicker ? document.getElementById('cal-month-picker').showPicker() : document.getElementById('cal-month-picker').click()} className="text-right">
+                        <div className="text-right pointer-events-none">
                             <p className="text-base font-bold text-[#C8A882] tracking-widest underline underline-offset-2">{viewMonth.slice(0,4)}</p>
                             <p className="text-sm font-bold text-[#C8A882] tracking-widest underline underline-offset-2">{['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][parseInt(viewMonth.slice(5,7))-1]}</p>
-                        </button>
-                        <input id="cal-month-picker" type="month" value={viewMonth} onChange={e => setViewMonth(e.target.value)} className="absolute opacity-0 w-0 h-0 pointer-events-none" tabIndex="-1" />
+                        </div>
+                        <input type="month" value={viewMonth} onChange={e => setViewMonth(e.target.value)}
+                            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                            style={{fontSize:'16px'}} />
                     </div>
                 </header>
                 <div className="grid grid-cols-7 gap-2">
@@ -1866,14 +1868,32 @@
                     </section>
                 )}
 
-                {trendTab==='body' && <section className="space-y-10 pt-10 border-t border-[#F3E5D8]">
+                {trendTab==='body' && <section className="space-y-6 pt-10 border-t border-[#F3E5D8]">
                     <h2 className="text-xl font-medium text-[#C8A882] tracking-[0.3em] uppercase text-center">局部頻率統計</h2>
-                    {["頭部", "頸部", "手部", "胸腹", "背腰部", "腿部"].map(cat => (
-                        <div key={cat} className="space-y-4">
-                            <h3 className="text-[13px] font-medium text-[#C8A882] tracking-widest uppercase text-center">— {cat} 感受頻率</h3>
-                            <div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] h-48"><canvas id={`chart-${cat}`}></canvas></div>
-                        </div>
-                    ))}
+                    {["頭部", "頸部", "手部", "胸腹", "背腰部", "腿部"].map(cat => {
+                        const catRecs = records.filter(r => r.type === 'body' && r.date.startsWith(month) && r.area === cat);
+                        const sensCount = {};
+                        catRecs.forEach(r => (r.sensationData || []).forEach(s => { sensCount[s.label] = (sensCount[s.label] || 0) + 1; }));
+                        const sorted = Object.entries(sensCount).sort((a,b) => b[1]-a[1]);
+                        const maxVal = sorted[0]?.[1] || 1;
+                        if (sorted.length === 0) return null;
+                        return (
+                            <div key={cat} className="space-y-3">
+                                <h3 className="text-[13px] font-medium text-[#C8A882] tracking-widest uppercase text-center">— {cat}</h3>
+                                <div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] space-y-3">
+                                    {sorted.map(([label, count]) => (
+                                        <div key={label} className="flex items-center gap-3">
+                                            <span className="text-xs text-[#8D7B6D] w-14 text-right shrink-0 tracking-wide">{label}</span>
+                                            <div className="flex-1 bg-[#FAF7F4] rounded-full h-2 overflow-hidden">
+                                                <div className="h-2 rounded-full bg-[#C8A882] transition-all" style={{width: (count/maxVal*100)+'%'}}></div>
+                                            </div>
+                                            <span className="text-xs text-[#A89080] w-6 shrink-0">{count}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    })}
                 </section>}
             </div>
         );
