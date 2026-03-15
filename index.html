@@ -857,6 +857,17 @@
                             const displayKeys = isEditing ? allKeys : allKeys.filter(k => df[k]?.trim());
                             // state for new custom field input in edit mode
                             const [editCustomInput, setEditCustomInput] = React.useState('');
+                            const [editCustomContent, setEditCustomContent] = React.useState('');
+                            const addCustomField = () => {
+                                if (!editCustomInput.trim()) return;
+                                const k = 'custom_' + Date.now();
+                                setEdited({...edited,
+                                    diaryFields: {...df, [k]: editCustomContent},
+                                    customLabels: {...(edited.customLabels||record.customLabels||{}), [k]: editCustomInput.trim()}
+                                });
+                                setEditCustomInput('');
+                                setEditCustomContent('');
+                            };
                             return (
                                 <div className="space-y-4">
                                     {/* f4+f5 shown as a pair if either appears */}
@@ -905,12 +916,18 @@
                                     })()}
                                     {/* 編輯模式：新增自訂標題 */}
                                     {isEditing && (
-                                        editCustomInput ? (
-                                            <div className="p-4 border border-dashed border-[#C8A882]/60 rounded-2xl flex items-center gap-3 animate-fade-in">
-                                                <input value={editCustomInput} onChange={e => setEditCustomInput(e.target.value)} placeholder="輸入標題名稱..." className="flex-1 text-sm font-medium outline-none text-[#C8A882] bg-transparent placeholder-[#C8A882]/40"
-                                                    onKeyDown={e => { if (e.key === 'Enter') { const k = 'custom_'+Date.now(); setEdited({...edited, diaryFields: {...df, [k]: ''}, customLabels: {...(edited.customLabels||record.customLabels||{}), [k]: editCustomInput.trim()}}); setEditCustomInput(''); }}} />
-                                                <button onClick={() => { const k = 'custom_'+Date.now(); setEdited({...edited, diaryFields: {...df, [k]: ''}, customLabels: {...(edited.customLabels||record.customLabels||{}), [k]: editCustomInput.trim()}}); setEditCustomInput(''); }} className="text-sm font-medium text-white bg-[#C8A882] px-3 py-1 rounded-full">確認</button>
-                                                <button onClick={() => setEditCustomInput('')} className="text-sm text-[#A89080]">✕</button>
+                                        editCustomInput !== '' ? (
+                                            <div className="space-y-2 p-4 border border-dashed border-[#C8A882]/60 rounded-2xl animate-fade-in">
+                                                <input value={editCustomInput} onChange={e => setEditCustomInput(e.target.value)}
+                                                    placeholder="輸入標題名稱..."
+                                                    className="w-full text-sm font-medium outline-none text-[#C8A882] bg-transparent border-b border-[#F3E5D8] pb-2 placeholder-[#C8A882]/40" />
+                                                <textarea value={editCustomContent} onChange={e => setEditCustomContent(e.target.value)}
+                                                    placeholder="寫下這個標題的內容..."
+                                                    className="w-full text-sm outline-none bg-transparent text-[#8D7B6D] placeholder-[#D1C4B9] resize-none h-16 mt-1" />
+                                                <div className="flex gap-2 justify-end pt-1">
+                                                    <button onClick={() => { setEditCustomInput(''); setEditCustomContent(''); }} className="text-xs text-[#A89080]">取消</button>
+                                                    <button onClick={addCustomField} disabled={!editCustomInput.trim()} className="text-xs text-white bg-[#C8A882] px-3 py-1 rounded-full disabled:opacity-40">確認新增</button>
+                                                </div>
                                             </div>
                                         ) : (
                                             <button onClick={() => setEditCustomInput(' ')} className="w-full py-3 border border-dashed border-[#C8A882]/40 rounded-2xl text-xs font-medium text-[#C8A882] tracking-wide">+ 新增日記標題</button>
