@@ -1815,8 +1815,32 @@
                         </button>
                     ))}
                 </div>
-                {(trendTab==='all'||trendTab==='body') && <section className="space-y-4"><h3 className="text-sm font-medium text-[#C8A882] tracking-[0.2em] uppercase text-center">身體覺察 (不適指數 MAX){topBodyStr && <span className="block text-xs font-light normal-case tracking-wide mt-1 text-[#A89080]">{topBodyStr}</span>}</h3><div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] h-56"><canvas id="chart-body-trend"></canvas></div></section>}
-                {(trendTab==='all'||trendTab==='mood') && <section className="space-y-4"><h3 className="text-sm font-medium text-[#C8A882] tracking-[0.2em] uppercase text-center">心情能量 (平均基調 AVG){topMoodStr && <span className="block text-xs font-light normal-case tracking-wide mt-1 text-[#A89080]">{topMoodStr}</span>}</h3><div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] h-56"><canvas id="chart-mood-trend"></canvas></div></section>}
+                {(trendTab==='all'||trendTab==='body') && <section className="space-y-4"><h3 className="text-sm font-medium text-[#C8A882] tracking-[0.2em] uppercase text-center">身體覺察 (不適指數 MAX)</h3>{topBodyStr && <p className="text-xs text-center text-[#A89080] -mt-2 tracking-wide">{topBodyStr}</p>}<div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] h-56"><canvas id="chart-body-trend"></canvas></div></section>}
+                {(trendTab==='all'||trendTab==='mood') && <section className="space-y-4"><h3 className="text-sm font-medium text-[#C8A882] tracking-[0.2em] uppercase text-center">心情能量 (平均基調 AVG)</h3>{topMoodStr && <p className="text-xs text-center text-[#A89080] -mt-2 tracking-wide">{topMoodStr}</p>}<div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] h-56"><canvas id="chart-mood-trend"></canvas></div></section>}
+                {trendTab==='mood' && (() => {
+                    const moodFreqRecs = records.filter(r => r.date.startsWith(month) && r.type === 'mood');
+                    const moodFreqCount = {};
+                    moodFreqRecs.forEach(r => Object.keys(r.moods || {}).forEach(k => { moodFreqCount[k] = (moodFreqCount[k] || 0) + 1; }));
+                    const moodFreqSorted = Object.entries(moodFreqCount).sort((a,b) => b[1]-a[1]);
+                    if (moodFreqSorted.length === 0) return <div className="bg-white border border-[#F3E5D8] p-8 rounded-[2.5rem] text-center text-xs text-[#D1C4B9] tracking-wide">本月尚無心情紀錄</div>;
+                    const moodMax = moodFreqSorted[0][1];
+                    return (
+                        <section className="space-y-4">
+                            <h3 className="text-sm font-medium text-[#C8A882] tracking-[0.2em] uppercase text-center">心情頻率</h3>
+                            <div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] space-y-3">
+                                {moodFreqSorted.map(([mood, count]) => (
+                                    <div key={mood} className="flex items-center gap-3">
+                                        <span className="text-xs text-[#8D7B6D] w-14 text-right shrink-0">{mood}</span>
+                                        <div className="flex-1 bg-[#FAF7F4] rounded-full h-2 overflow-hidden">
+                                            <div className="h-2 rounded-full bg-[#C8A882]" style={{width: (count/moodMax*100)+'%'}}></div>
+                                        </div>
+                                        <span className="text-xs text-[#A89080] w-4 shrink-0">{count}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    );
+                })()}
                 {trendTab==='all' && <section className="space-y-4"><h3 className="text-sm font-medium text-[#C8A882] tracking-[0.2em] uppercase text-center">回應成效 (平均回應率 AVG)</h3><div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] h-56"><canvas id="chart-lab-trend"></canvas></div></section>}
 
                 {/* 事件 → 症狀關聯 */}
@@ -1837,14 +1861,32 @@
                     </section>
                 )}
 
-                {trendTab==='body' && <section className="space-y-10 pt-10 border-t border-[#F3E5D8]">
+                {trendTab==='body' && <section className="space-y-6 pt-10 border-t border-[#F3E5D8]">
                     <h2 className="text-xl font-medium text-[#C8A882] tracking-[0.3em] uppercase text-center">局部頻率統計</h2>
-                    {["頭部", "頸部", "手部", "胸腹", "背腰部", "腿部"].map(cat => (
-                        <div key={cat} className="space-y-4">
-                            <h3 className="text-[13px] font-medium text-[#C8A882] tracking-widest uppercase text-center">— {cat} 感受頻率</h3>
-                            <div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] h-48"><canvas id={`chart-${cat}`}></canvas></div>
-                        </div>
-                    ))}
+                    {["頭部", "頸部", "手部", "胸腹", "背腰部", "腿部"].map(cat => {
+                        const catRecs = records.filter(r => r.type === 'body' && r.date.startsWith(month) && r.area === cat);
+                        const sensCount = {};
+                        catRecs.forEach(r => (r.sensationData || []).forEach(s => { sensCount[s.label] = (sensCount[s.label] || 0) + 1; }));
+                        const sorted = Object.entries(sensCount).sort((a,b) => b[1]-a[1]);
+                        if (sorted.length === 0) return null;
+                        const maxVal = sorted[0][1];
+                        return (
+                            <div key={cat} className="space-y-3">
+                                <h3 className="text-[13px] font-medium text-[#C8A882] tracking-widest uppercase text-center">— {cat}</h3>
+                                <div className="bg-white border border-[#F3E5D8] p-6 rounded-[2.5rem] space-y-3">
+                                    {sorted.map(([label, count]) => (
+                                        <div key={label} className="flex items-center gap-3">
+                                            <span className="text-xs text-[#8D7B6D] w-14 text-right shrink-0">{label}</span>
+                                            <div className="flex-1 bg-[#FAF7F4] rounded-full h-2 overflow-hidden">
+                                                <div className="h-2 rounded-full bg-[#C8A882]" style={{width: (count/maxVal*100)+'%'}}></div>
+                                            </div>
+                                            <span className="text-xs text-[#A89080] w-4 shrink-0">{count}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    })}
                 </section>}
             </div>
         );
@@ -1913,7 +1955,7 @@
                 </div>
 
                 {/* 日期標題 */}
-                <h3 className="text-xs font-medium text-[#C8A882] tracking-[0.2em] border-b border-[#F3E5D8] pb-2">{selectedDate} · 今日記事與溫柔回應</h3>
+                <h3 className="text-xs font-medium text-[#C8A882] tracking-[0.2em] border-b border-[#F3E5D8] pb-2 text-center">今日記事與溫柔回應</h3>
 
                 {/* 當日紀錄 */}
                 <div className="space-y-6">
