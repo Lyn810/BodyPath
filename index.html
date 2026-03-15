@@ -374,7 +374,7 @@
                                                         <div className="flex flex-wrap gap-2">
                                                             {tags.map(tag => (
                                                                 <button key={tag} onClick={() => toggleTag(tag)}
-                                                                    className={`px-3 py-1.5 rounded-full text-xs font-medium tracking-wide transition-all ${selected_tags.includes(tag) ? 'bg-[#C8A882] text-white' : 'border border-[#F3E5D8] text-[#A89080]'}`}>
+                                                                    className={`px-3 py-1.5 rounded-full text-xs font-medium tracking-wide transition-all ${selected_tags.includes(tag) ? 'bg-[#C8A882] text-white' : 'border border-[#F3E5D8] text-[#D1C4B9]'}`}>
                                                                     {tag}
                                                                 </button>
                                                             ))}
@@ -1281,7 +1281,7 @@
                         <button key={slot} onClick={() => onUpdate({timeSlot: slot})} className={`px-5 py-2 rounded-full text-xs font-medium transition-all border whitespace-nowrap ${timeSlot === slot ? 'bg-[#C8A882] text-white border-[#C8A882]' : 'bg-white text-[#D1C4B9] border-[#F3E5D8]'}`}>{slot}</button>
                     ))}
                 </div>
-                {timeSlot === '自定義' && <input value={customTime} onChange={e => onUpdate({customTime: e.target.value})} placeholder="填寫具體時間..." className="w-full bg-[#F3E5D8]/10 p-4 rounded-xl text-center text-sm outline-none border border-[#D1C4B9] placeholder-[#A89080] text-[#C8A882] font-medium" />}
+                {timeSlot === '自定義' && <input value={customTime} onChange={e => onUpdate({customTime: e.target.value})} placeholder="填寫具體時間..." className="w-full bg-[#F3E5D8]/10 p-4 rounded-xl text-center text-sm outline-none border border-[#D1C4B9] placeholder-[#D1C4B9] text-[#C8A882] font-medium" />}
                 <button onClick={onNext} className="w-full py-4 bg-[#C8A882] text-white rounded-2xl font-medium tracking-widest uppercase transition-transform active:scale-95 shadow-lg shadow-[#C8A882]/20">下一步</button>
             </div>
         );
