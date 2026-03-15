@@ -86,20 +86,73 @@
 
     const TIME_SLOTS = ["凌晨", "上午", "下午", "晚上", "半夜", "自定義"];
     const BODY_STRUCTURE = {
-        "頭部": ["眼", "耳", "鼻", "口", "額頭", "太陽穴", "臉頰", "下巴", "頭頂", "頭側", "後腦杓"],
-        "頸部": ["喉嚨", "頸部正面", "頸部側面", "後頸"],
-        "手部": ["肩", "上手臂", "手肘", "下手臂", "手腕", "手指"],
-        "胸腹": ["鎖骨", "上胸", "胸部", "上腹(胃)", "肚臍", "下腹", "私密處"],
-        "背腰部": ["肩胛骨", "上背", "後腰", "下背", "臀部"],
-        "腿部": ["大腿", "膝蓋", "小腿", "腳踝", "腳背", "腳掌"]
+        "頭頸": ["眼", "耳", "鼻", "喉嚨", "口腔", "額頭", "太陽穴", "臉頰", "下巴", "頭頂", "後腦", "頸部正面", "頸部側面", "後頸"],
+        "肩背": ["肩膀", "肩胛骨", "上背", "中背"],
+        "胸口": ["鎖骨", "上胸", "胸腔", "肋骨"],
+        "腹部": ["上腹(胃)", "肚臍周圍", "下腹", "側腹", "私密處"],
+        "腰臀": ["後腰", "下背", "腰側", "臀部"],
+        "手臂": ["肩以下", "上手臂", "手肘", "下手臂", "手腕", "手掌", "手指"],
+        "腿腳": ["大腿", "膝蓋", "小腿", "腳踝", "腳背", "腳掌"],
+        "全身": [],
     };
 
+    const SKIN_SENSATIONS = [
+        { label: "搔癢", sub: "皮膚表面有想抓撓的衝動。" },
+        { label: "紅疹", sub: "皮膚出現紅色斑塊或疹子。" },
+        { label: "痘痘", sub: "毛孔堵塞或發炎的突起。" },
+        { label: "乾燥", sub: "皮膚緊繃、脫屑或起皮。" },
+        { label: "出油", sub: "皮膚分泌過多油脂。" },
+        { label: "脫皮", sub: "皮膚表層剝落。" },
+    ];
+
+    const WHOLE_BODY_SENSATIONS = [
+        { label: "發燒", sub: "體溫升高，感覺燥熱。" },
+        { label: "發冷", sub: "全身發抖或感到寒意，即使環境不冷。" },
+        { label: "發抖", sub: "身體不受控制地顫抖。" },
+        { label: "虛弱", sub: "全身無力，感覺難以支撐自己。" },
+        { label: "頭暈", sub: "頭昏昏的，感覺不清醒或輕飄飄。" },
+        { label: "暈眩", sub: "天旋地轉，空間感失衡，如耳石脫落的感覺。" },
+        { label: "心跳加速", sub: "心臟跳得比平常快，感覺到明顯的心跳。" },
+        { label: "盜汗", sub: "非運動或高溫情境下大量出汗。" },
+        { label: "水腫", sub: "身體某部位或全身腫脹積水。" },
+        { label: "噁心", sub: "胃部翻騰，有想嘔吐的感覺。" },
+    ];
+
     const SENSATION_GROUPS = [
-        { title: "壓力的信使", desc: "這是現代人最常見的感受，通常與肌肉的長期收縮有關。", items: [{ label: "緊繃", sub: "像是一根拉太緊的琴弦，無法放鬆。" }, { label: "僵硬", sub: "像關節被膠水黏住，活動度受限。" }, { label: "沉重", sub: "感覺四肢像灌了鉛，或是肩膀上坐著一個人。" }, { label: "壓迫感", sub: "像是胸口壓著石頭，或是頭部被緊緊箍住。" }] },
-        { title: "神經的共鳴", desc: "這些感受通常比較尖銳或帶有電子感，指向神經系統的反應。", items: [{ label: "麻木", sub: "失去觸感，像是肢體「睡著了」。" }, { label: "發麻", sub: "像是有小螞蟻在皮膚上爬，或是微小的電流感。" }, { label: "刺痛", sub: "像被細針輕輕扎到。" }, { label: "抽痛", sub: "隨著心跳節奏一跳一跳的疼痛。" }] },
-        { title: "流動與能量", desc: "這些感受與血液循環或代謝有關。", items: [{ label: "發熱", sub: "某個部位燙燙的，或是內在的一團火。" }, { label: "冰冷", sub: "即使環境溫暖，手腳依然像冰塊。" }, { label: "腫脹", sub: "感覺皮膚被撐開，或是腹部充滿氣體。" }, { label: "虛弱", sub: "胃部或胸口有一種空空、虛弱的感覺。" }] },
-        { title: "質感的異樣", desc: "這些是比較難以言喻、具有特定物理質感的感受。", items: [{ label: "痠", sub: "運動後或疲勞累積的深層疲軟感。" }, { label: "癢", sub: "內在或表皮的騷動。" }, { label: "緊縮", sub: "喉嚨或胃部像被一隻手握住。" }, { label: "震動", sub: "內在極細微的顫抖。" }] },
-        { title: "節奏的失衡", desc: "能量與節奏感的紊亂。", items: [{ label: "悶", sub: "呼吸不順暢，或是空間感變窄。" }, { label: "虛脫", sub: "全身沒力氣，像是電力耗盡。" }, { label: "緊繃抽動", sub: "眼皮或肌肉不自覺地跳動。" }] }
+        { title: "疼痛類", desc: "各種形式的疼痛感受。", items: [
+            { label: "痛", sub: "明確的疼痛感，程度不一。" },
+            { label: "抽痛", sub: "隨著心跳一跳一跳的疼痛。" },
+            { label: "刺痛", sub: "像被細針扎到的尖銳短暫疼痛。" },
+            { label: "悶痛", sub: "深層沉悶的疼痛，難以精確指出位置。" },
+            { label: "燒灼感", sub: "像是灼熱的火燒感，有時伴隨發熱。" },
+        ]},
+        { title: "肌肉類", desc: "與肌肉狀態相關的感受。", items: [
+            { label: "痠", sub: "運動後或疲勞累積的深層疲軟感。" },
+            { label: "緊繃", sub: "像一根拉太緊的琴弦，肌肉無法放鬆。" },
+            { label: "僵硬", sub: "像關節被膠水黏住，活動度受限。" },
+            { label: "抽搐", sub: "肌肉不自覺地跳動或痙攣。" },
+            { label: "沉重", sub: "感覺肢體像灌了鉛，難以抬起。" },
+            { label: "壓迫感", sub: "像是被重物壓住，有擠壓的感覺。" },
+            { label: "疲勞", sub: "局部肌肉使用過度，感到疲軟無力。" },
+        ]},
+        { title: "神經類", desc: "與神經系統反應相關的感受。", items: [
+            { label: "麻木", sub: "失去觸感，像是肢體「睡著了」。" },
+            { label: "發麻", sub: "像小螞蟻爬過皮膚，或微弱的電流感。" },
+            { label: "刺麻", sub: "刺痛與麻木同時出現的混合感。" },
+            { label: "震顫", sub: "內在極細微的顫抖或震動感。" },
+        ]},
+        { title: "循環類", desc: "與血液循環或溫度相關的感受。", items: [
+            { label: "發熱", sub: "局部燙燙的，或內在一團火的感覺。" },
+            { label: "冰冷", sub: "即使環境溫暖，該部位依然像冰塊。" },
+            { label: "腫脹", sub: "感覺皮膚被撐開，或局部充血腫大。" },
+            { label: "發炎感", sub: "紅腫熱痛並存，感覺局部在發炎。" },
+        ]},
+        { title: "呼吸消化類", desc: "與呼吸或消化系統相關的感受。", items: [
+            { label: "悶", sub: "呼吸不順暢，或像有什麼堵在胸口/喉嚨。" },
+            { label: "腹脹", sub: "腹部充滿氣體，感覺撐脹不舒服。" },
+            { label: "噁心", sub: "胃部翻騰，有想嘔吐的感覺。" },
+            { label: "緊縮感", sub: "喉嚨或胃部像被一隻手握住。" },
+        ]},
     ];
 
     const MOOD_GROUPS = [
@@ -1198,7 +1251,7 @@
 
     function BodyRecorder({ onSave, onCancel }) {
         const [step, setStep] = useState(0);
-        const [data, setData] = useState({ date: new Date().toISOString().slice(0, 10), timeSlot: '上午', customTime: '', area: '', part: '', side: [], sensationData: {}, bodyLanguage: '', trueFeeling: '', timingBefore: '', timingDuring: '', timingAfter: '', customInput: '' });
+        const [data, setData] = useState({ date: new Date().toISOString().slice(0, 10), timeSlot: '上午', customTime: '', area: '', part: '', side: [], level: [], sensationData: {}, bodyLanguage: '', trueFeeling: '', timingBefore: '', timingDuring: '', timingAfter: '', customInput: '' });
 
         const toggleSensation = (label) => {
             const n = {...data.sensationData};
@@ -1219,7 +1272,7 @@
                 {step === 1 && (
                     <div className="space-y-8 animate-fade-in">
                         <p className="text-lg font-medium text-[#A89080] tracking-[0.2em] uppercase">在哪個區域？</p>
-                        <div className="grid grid-cols-2 gap-3">{Object.keys(BODY_STRUCTURE).map(area => (<button key={area} onClick={() => { setData({...data, area}); setStep(2); }} className="p-8 bg-white border border-[#F3E5D8] rounded-[2.5rem] text-sm text-[#C8A882] hover:bg-[#C8A882] hover:text-white transition-all font-medium uppercase tracking-widest">{area}</button>))}</div>
+                        <div className="grid grid-cols-2 gap-3">{Object.keys(BODY_STRUCTURE).map(area => (<button key={area} onClick={() => { setData({...data, area, part: area === '全身' ? '全身' : ''}); setStep(area === '全身' ? 3 : 2); }} className="p-8 bg-white border border-[#F3E5D8] rounded-[2.5rem] text-sm text-[#C8A882] hover:bg-[#C8A882] hover:text-white transition-all font-medium uppercase tracking-widest">{area}</button>))}</div>
                         <button onClick={() => setStep(0)} className="text-xs text-[#D1C4B9] font-medium uppercase tracking-widest">BACK</button>
                     </div>
                 )}
@@ -1239,34 +1292,49 @@
                 )}
 
                 {step === 3 && (
-                    <div className="space-y-8 animate-fade-in">
+                    <div className="space-y-6 animate-fade-in">
                         <h2 className="text-lg font-medium tracking-widest text-[#A89080] uppercase">{data.part} 的發生位置</h2>
-                        <div className="grid grid-cols-3 gap-3">
-                            {['不分', '左', '右', '上', '中', '下'].map(s => {
-                                const act = data.side.includes(s);
-                                return (<button key={s} onClick={() => {
-                                    if(s === '不分') setData({...data, side: ['不分']});
-                                    else setData({...data, side: data.side.filter(x => x !== '不分').includes(s) ? data.side.filter(x => x !== s) : [...data.side.filter(x => x !== '不分'), s]});
-                                }} className={`py-4 border rounded-2xl text-sm transition-all font-medium ${act ? 'bg-[#C8A882] text-white border-[#C8A882]' : 'bg-white text-[#C8A882] border-[#F3E5D8]'}`}>{s}</button>)
-                            })}
+                        {data.area !== '全身' && (<>
+                        <div className="space-y-2 text-left">
+                            <p className="text-xs text-[#A89080] tracking-widest pl-1">1. 身體哪一側</p>
+                            <div className="grid grid-cols-5 gap-2">
+                                {['不分', '前', '後', '左', '右'].map(s => {
+                                    const act = data.side.includes(s);
+                                    return (<button key={s} onClick={() => {
+                                        if(s === '不分') setData({...data, side: ['不分']});
+                                        else setData({...data, side: data.side.filter(x => x !== '不分').includes(s) ? data.side.filter(x => x !== s) : [...data.side.filter(x => x !== '不分'), s]});
+                                    }} className={"py-3 border rounded-2xl text-sm transition-all font-medium " + (act ? 'bg-[#C8A882] text-white border-[#C8A882]' : 'bg-white text-[#C8A882] border-[#F3E5D8]')}>{s}</button>)
+                                })}
+                            </div>
                         </div>
-                        <div className="space-y-2">
-                            <input value={data.customSide || ''} onChange={e => setData({...data, customSide: e.target.value})} placeholder="自定義位置" className="w-full bg-[#F3E5D8]/20 p-4 rounded-xl text-center text-sm outline-none border border-[#F3E5D8] text-[#C8A882] font-medium placeholder-[#C8A882]/50" />
-                            {data.customSide && (
-                                <button onClick={() => {
-                                    if (!data.side.includes(data.customSide)) setData({...data, side: [...data.side.filter(x => x !== '不分'), data.customSide], customSide: ''});
-                                }} className="text-sm font-medium text-[#C8A882] uppercase">加入此位置 →</button>
-                            )}
-                            {data.side.filter(s => !['不分','左','右','上','中','下'].includes(s)).length > 0 && (
-                                <div className="flex flex-wrap gap-2 pt-1">
-                                    {data.side.filter(s => !['不分','左','右','上','中','下'].includes(s)).map(s => (
-                                        <span key={s} className="px-3 py-1 bg-[#C8A882] text-white rounded-full text-xs font-medium flex items-center gap-1">{s}<button onClick={() => setData({...data, side: data.side.filter(x => x !== s)})} className="text-white/70 ml-1">✕</button></span>
-                                    ))}
-                                </div>
-                            )}
+                        <div className="h-px bg-[#F3E5D8]" />
+                        <div className="space-y-2 text-left">
+                            <p className="text-xs text-[#A89080] tracking-widest pl-1">2. 該部位的哪個位置</p>
+                            <div className="grid grid-cols-5 gap-2">
+                                {['上', '下', '左', '右', '中'].map(s => {
+                                    const act = data.side.includes(s);
+                                    return (<button key={s} onClick={() => {
+                                        setData({...data, side: data.side.includes(s) ? data.side.filter(x => x !== s) : [...data.side.filter(x => x !== '不分'), s]});
+                                    }} className={"py-3 border rounded-2xl text-sm transition-all font-medium " + (act ? 'bg-[#C8A882] text-white border-[#C8A882]' : 'bg-white text-[#C8A882] border-[#F3E5D8]')}>{s}</button>)
+                                })}
+                            </div>
                         </div>
-                        <button onClick={() => setStep(4)} disabled={data.side.length === 0} className="w-full py-4 bg-[#C8A882] text-white rounded-2xl font-medium tracking-widest transition-transform active:scale-95 disabled:opacity-30 uppercase">確認位置</button>
-                        <button onClick={() => setStep(2)} className="text-xs text-[#D1C4B9] font-medium uppercase tracking-widest">BACK</button>
+                        <div className="h-px bg-[#F3E5D8]" />
+                        </>)}
+                        <div className="space-y-2 text-left">
+                            <p className="text-xs text-[#A89080] tracking-widest pl-1">{data.area !== '全身' ? '3.' : ''} 層級</p>
+                            <div className="grid grid-cols-2 gap-3">
+                                {['淺層組織（皮膚）', '深層組織（肌肉、內臟、骨頭）'].map(s => {
+                                    const act = (data.level || []).includes(s);
+                                    return (<button key={s} onClick={() => {
+                                        const cur = data.level || [];
+                                        setData({...data, level: cur.includes(s) ? cur.filter(x => x !== s) : [...cur, s]});
+                                    }} className={"py-3 px-2 border rounded-2xl text-xs transition-all font-medium leading-snug " + (act ? 'bg-[#C8A882] text-white border-[#C8A882]' : 'bg-white text-[#C8A882] border-[#F3E5D8]')}>{s}</button>)
+                                })}
+                            </div>
+                        </div>
+                        <button onClick={() => setStep(4)} disabled={data.area !== '全身' && data.side.length === 0} className={"w-full py-4 rounded-2xl font-medium tracking-widest transition-transform active:scale-95 uppercase " + (data.area === '全身' || data.side.length > 0 ? 'bg-[#C8A882] text-white' : 'bg-[#F3E5D8] text-[#D1C4B9] cursor-not-allowed')}>確認位置</button>
+                        <button onClick={() => setStep(data.area === '全身' ? 1 : 2)} className="text-xs text-[#D1C4B9] font-medium uppercase tracking-widest">BACK</button>
                     </div>
                 )}
 
@@ -1281,9 +1349,15 @@
                                 </button>
                             </div>
                         )}
-                        <h2 className="text-lg font-medium tracking-widest text-center text-[#A89080] uppercase">{data.part} {data.side.join('')} 的感受</h2>
+                        <h2 className="text-lg font-medium tracking-widest text-center text-[#A89080] uppercase">{data.area === '全身' ? '全身' : data.part + ' ' + data.side.join('')} 的感受</h2>
                         <SensationSelector
-                            groups={SENSATION_GROUPS}
+                            groups={data.area === '全身'
+                                ? [{ title: "全身症狀", desc: "整體性的身體狀態。", items: WHOLE_BODY_SENSATIONS, defaultOpen: true },
+                                   ...SENSATION_GROUPS.map(g => ({...g, defaultOpen: false}))]
+                                : [
+                                   ...SENSATION_GROUPS,
+                                   ...((data.level || []).includes('淺層組織（皮膚）') ? [{ title: "皮膚類", desc: "皮膚表層的感受。", items: SKIN_SENSATIONS }] : [])
+                                  ]}
                             selected={data.sensationData}
                             onToggle={toggleSensation}
                             onIntensityChange={(label, val) => setData({...data, sensationData: {...data.sensationData, [label]: val}})}
@@ -1299,7 +1373,7 @@
                         />
                         <div className="space-y-3 mt-6">
                             <button id="body-save-btn" onClick={() => onSave({...data, type: 'body', sensationData: sensationArr, timeSlot: data.timeSlot === '自定義' && data.customTime ? data.customTime : data.timeSlot})}
-                                className={`w-full py-5 rounded-2xl font-medium tracking-widest transition-all ${sensationArr.length > 0 ? 'bg-[#C8A882] text-white shadow-lg shadow-[#C8A882]/20 active:scale-95' : 'bg-[#F3E5D8] text-[#D1C4B9] cursor-not-allowed'}`}
+                                className={"w-full py-5 rounded-2xl font-medium tracking-widest transition-all " + (sensationArr.length > 0 ? 'bg-[#C8A882] text-white shadow-lg shadow-[#C8A882]/20 active:scale-95' : 'bg-[#F3E5D8] text-[#D1C4B9] cursor-not-allowed')}
                                 disabled={sensationArr.length === 0}>儲存紀錄</button>
                             <button onClick={() => setStep(3)} className="w-full py-2 text-xs text-[#D1C4B9] font-medium uppercase tracking-widest text-center">BACK</button>
                         </div>
