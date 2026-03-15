@@ -1599,6 +1599,7 @@
         function CalendarPage({ records, setRecords, onDetail }) {
         const today = new Date().toISOString().slice(0, 10);
         const [viewMonth, setViewMonth] = useState(today.slice(0, 7));
+        const [showPicker, setShowPicker] = useState(false);
         const [labDetail, setLabDetail] = useState(null);
         const [selectedDate, setSelectedDate] = useState(today);
         const filtered = records.filter(r => r.date === selectedDate);
@@ -1609,13 +1610,32 @@
                 <header className="pt-4 flex justify-between items-start text-[#C8A882] uppercase tracking-[0.2em] font-medium">
                     <h2 className="text-2xl font-light text-[#C8A882] tracking-[0.3em] uppercase">Calendar</h2>
                     <div className="relative">
-                        <div className="text-right pointer-events-none">
+                        <button onClick={() => setShowPicker(p => !p)} className="text-right">
                             <p className="text-base font-bold text-[#C8A882] tracking-widest underline underline-offset-2">{viewMonth.slice(0,4)}</p>
                             <p className="text-sm font-bold text-[#C8A882] tracking-widest underline underline-offset-2">{['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][parseInt(viewMonth.slice(5,7))-1]}</p>
-                        </div>
-                        <input type="month" value={viewMonth} onChange={e => setViewMonth(e.target.value)}
-                            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                            style={{fontSize:'16px'}} />
+                        </button>
+                        {showPicker && (
+                            <div className="absolute right-0 top-12 z-50 bg-white border border-[#F3E5D8] rounded-[1.5rem] shadow-xl p-4 w-56" onClick={e => e.stopPropagation()}>
+                                <div className="flex items-center justify-between mb-3">
+                                    <button onClick={() => { const y = parseInt(viewMonth.slice(0,4))-1; setViewMonth(y+viewMonth.slice(4)); }} className="text-[#A89080] text-lg px-2">‹</button>
+                                    <span className="text-sm font-bold text-[#C8A882] tracking-widest">{viewMonth.slice(0,4)}</span>
+                                    <button onClick={() => { const y = parseInt(viewMonth.slice(0,4))+1; setViewMonth(y+viewMonth.slice(4)); }} className="text-[#A89080] text-lg px-2">›</button>
+                                </div>
+                                <div className="grid grid-cols-3 gap-1">
+                                    {['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'].map((mn, i) => {
+                                        const mm = String(i+1).padStart(2,'0');
+                                        const isSelected = viewMonth.slice(5,7) === mm;
+                                        return (
+                                            <button key={mn} onClick={() => { setViewMonth(viewMonth.slice(0,4)+'-'+mm); setShowPicker(false); }}
+                                                className={"text-xs py-1.5 rounded-xl tracking-widest font-medium transition-all " + (isSelected ? 'bg-[#C8A882] text-white' : 'text-[#A89080] active:bg-[#F3E5D8]')}>
+                                                {mn}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+                        {showPicker && <div className="fixed inset-0 z-40" onClick={() => setShowPicker(false)} />}
                     </div>
                 </header>
                 <div className="grid grid-cols-7 gap-2">
@@ -1690,6 +1710,7 @@
                         }}
                     />
                 )}
+            </div>
             </div>
         );
     }
