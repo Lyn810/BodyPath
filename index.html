@@ -541,7 +541,7 @@
                         {tab === 'mood_rec' && <MoodRecorder onSave={addRecord} onCancel={() => switchTab(prevTab === 'mood' ? 'mood' : 'home')} savedCustomTags={getMoodCustomTags()} onAddCustom={(tag) => { const t = getMoodCustomTags(); if(!t.includes(tag)) saveTags('mood',[...t,tag]); }} />}
                         {tab === 'diary_rec' && <DiaryRecorder onSave={addRecord} onCancel={() => switchTab(prevTab === 'diary' ? 'diary' : 'home')} />}
                         {tab === 'lab' && <MiniLab records={records} setRecords={setRecords} onDetail={openDetail} onSupplement={(r) => setSupplementRecord(r)} />}
-                        {tab === 'calendar' && <CalendarPage records={records} setRecords={setRecords} onDetail={openDetail} />}
+                        {tab === 'lab' && <CalendarPage records={records} setRecords={setRecords} onDetail={openDetail} />}
                         {tab === 'trend' && <TrendPage records={records} />}
                     </main>
 
@@ -1607,8 +1607,12 @@
             <div className="p-8 space-y-10 animate-fade-in pb-32">
                 <header className="pt-4 flex justify-between items-center">
                     <h2 className="text-2xl font-light text-[#C8A882] tracking-[0.3em] uppercase">Calendar</h2>
-                    <input type="month" value={viewMonth} onChange={e => setViewMonth(e.target.value)}
-                        className="bg-transparent text-base font-bold text-[#C8A882] tracking-widest outline-none text-right underline underline-offset-2" />
+                    <label className="flex flex-col items-end cursor-pointer">
+                        <span className="text-xs text-[#A89080] tracking-widest mb-0.5">切換年月</span>
+                        <input type="month" value={viewMonth} onChange={e => setViewMonth(e.target.value)}
+                            style={{colorScheme:'light', fontSize:'16px'}}
+                            className="bg-transparent text-base font-bold text-[#C8A882] tracking-widest outline-none text-right border-b border-[#C8A882] pb-0.5" />
+                    </label>
                 </header>
                 <div className="grid grid-cols-7 gap-2">
                     {Array.from({length: daysInMonth}, (_, i) => {
