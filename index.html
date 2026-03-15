@@ -246,7 +246,7 @@
         );
     }
 
-    function SupplementPage({ record, onSave, onClose }) {
+    function SupplementPage({ record, records = [], onSave, onClose }) {
         const hasTiming = !!(record.timingBefore || record.timingDuring || record.timingAfter);
         const hasFeeling = !!record.trueFeeling;
         const hasBody = !!record.bodyLanguage;
@@ -257,14 +257,41 @@
         const [timingAfter, setTimingAfter] = React.useState(record.timingAfter || '');
         const [bodyLanguage, setBodyLanguage] = React.useState(record.bodyLanguage || '');
         const [trueFeeling, setTrueFeeling] = React.useState(record.trueFeeling || '');
+        const [linkedIds, setLinkedIds] = React.useState(record.links || []);
 
         const toggle = (key) => setSelected(s => s.includes(key) ? s.filter(k => k !== key) : [...s, key]);
+
+        // 可關聯的紀錄：相反類型（body↔mood），排除自己
+        const oppositeType = record.type === 'body' ? 'mood' : 'body';
+        const linkableRecords = records
+            .filter(r => r.type === oppositeType && r.id !== record.id)
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        const toggleLink = (id) => {
+            setLinkedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+        };
+
+        const getRecordSummary = (r) => {
+            if (r.type === 'body') {
+                const area = r.area || '';
+                const part = r.part || '';
+                const sensations = (r.sensationData || []).map(s => s.label).slice(0, 2).join('、');
+                return `${area} ${part} · ${sensations || '身體記錄'}`;
+            }
+            if (r.type === 'mood') {
+                const moods = Object.keys(r.moods || {}).slice(0, 3).join('、');
+                return moods || '心情記錄';
+            }
+            return '紀錄';
+        };
 
         const handleSave = () => {
             onSave({
                 ...record,
                 timingBefore, timingDuring, timingAfter,
                 bodyLanguage, trueFeeling,
+                links: linkedIds,
+                _linkedIds: linkedIds, // flag for App to sync
             });
         };
 
@@ -403,6 +430,45 @@
                                 )}
                             </div>
                         </div>
+
+                        {/* 相關性 */}
+                        {(record.type === 'body' || record.type === 'mood') && (
+                        <div className="border border-[#F3E5D8] rounded-[2rem] overflow-hidden">
+                            <button onClick={() => toggle('links')} className="w-full flex items-center justify-between px-6 py-5 text-left">
+                                <div>
+                                    <p className="text-sm font-medium text-[#A89080] tracking-wide">相關性</p>
+                                    {linkedIds.length > 0 && !selected.includes('links') && (
+                                        <p className="text-xs text-[#C8A882] mt-1">已關聯 {linkedIds.length} 筆{oppositeType === 'mood' ? '心情' : '身體'}紀錄</p>
+                                    )}
+                                </div>
+                                <span className="text-[#C8A882] text-xl font-light">{selected.includes('links') ? '−' : '+'}</span>
+                            </button>
+                            {selected.includes('links') && (
+                                <div className="px-6 pb-6 space-y-3">
+                                    <p className="text-xs text-[#D1C4B9] tracking-wide">選擇要串聯的{oppositeType === 'mood' ? '心情' : '身體'}紀錄</p>
+                                    {linkableRecords.length === 0 ? (
+                                        <p className="text-xs text-[#D1C4B9] text-center py-4">尚無可關聯的紀錄</p>
+                                    ) : (
+                                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                                            {linkableRecords.map(r => {
+                                                const linked = linkedIds.includes(r.id);
+                                                return (
+                                                    <button key={r.id} onClick={() => toggleLink(r.id)}
+                                                        className={"w-full flex items-center justify-between px-4 py-3 rounded-2xl border text-left transition-all " + (linked ? 'bg-[#C8A882]/10 border-[#C8A882]' : 'bg-white border-[#F3E5D8]')}>
+                                                        <div>
+                                                            <p className={"text-xs font-medium " + (linked ? 'text-[#C8A882]' : 'text-[#8D7B6D]')}>{getRecordSummary(r)}</p>
+                                                            <p className="text-[10px] text-[#D1C4B9] mt-0.5">{r.date} · {r.timeSlot}</p>
+                                                        </div>
+                                                        {linked && <span className="text-[#C8A882] text-sm">🔗</span>}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                        )}
 
                         <div className="space-y-3 pt-2">
                             <button onClick={handleSave} disabled={!hasContent}
@@ -579,7 +645,27 @@
         };
 
         const saveSupplementRecord = (updatedR) => {
-            const newList = records.map(r => r.id === updatedR.id ? updatedR : r);
+            const newLinkedIds = updatedR.links || [];
+            const oldLinkedIds = supplementRecord?.links || [];
+            // removed links
+            const removed = oldLinkedIds.filter(id => !newLinkedIds.includes(id));
+            // added links
+            const added = newLinkedIds.filter(id => !oldLinkedIds.includes(id));
+
+            let newList = records.map(r => {
+                if (r.id === updatedR.id) return updatedR;
+                // add back-link
+                if (added.includes(r.id)) {
+                    const links = [...(r.links || [])];
+                    if (!links.includes(updatedR.id)) links.push(updatedR.id);
+                    return {...r, links};
+                }
+                // remove back-link
+                if (removed.includes(r.id)) {
+                    return {...r, links: (r.links || []).filter(id => id !== updatedR.id)};
+                }
+                return r;
+            });
             newList.sort((a, b) => new Date(b.date) - new Date(a.date));
             setRecords(newList);
             setSupplementRecord(null);
@@ -622,11 +708,12 @@
                     {supplementRecord && (
                         <SupplementPage
                             record={supplementRecord}
+                            records={records}
                             onSave={saveSupplementRecord}
                             onClose={() => setSupplementRecord(null)}
                         />
                     )}
-                    {selectedDetail && <DetailModal record={selectedDetail} clickY={detailClickY} onClose={() => setSelectedDetail(null)} onUpdate={updateRecord} onDelete={deleteRecord} />}
+                    {selectedDetail && <DetailModal record={selectedDetail} records={records} clickY={detailClickY} onClose={() => setSelectedDetail(null)} onUpdate={updateRecord} onDelete={deleteRecord} />}
 
                     <nav className="fixed bottom-0 w-full max-w-[428px] h-20 bg-white border-t border-[#F3E5D8] flex items-center justify-around px-2 z-50">
                         <NavBtn active={tab === 'home'} onClick={() => switchTab('home')} label="首頁" icon={<Icon.Home />} />
@@ -655,7 +742,7 @@
     }
 
     // --- 詳情 Modal ---
-    function DetailModal({ record, onClose, onUpdate, onDelete, clickY }) {
+    function DetailModal({ record, records = [], onClose, onUpdate, onDelete, clickY }) {
         const [isEditing, setIsEditing] = useState(false);
         const [edited, setEdited] = useState({...record});
         const cnType = record.type === 'body' ? '身體覺察' : record.type === 'mood' ? '心情能量' : '日記隨想';
@@ -902,7 +989,27 @@
                             <button onClick={() => {onUpdate(edited); setIsEditing(false);}} className="flex-[2] py-3 bg-[#C8A882] text-white rounded-2xl font-medium tracking-widest transition-transform active:scale-95">儲存修改</button>
                         </div>
                     ) : (
+                        <>
+                        {record.links && record.links.length > 0 && (
+                            <div className="space-y-3 pt-2">
+                                <p className="text-xs text-[#A89080] tracking-widest font-medium">🔗 已關聯紀錄</p>
+                                {record.links.map(id => {
+                                    const linked = records.find(r => r.id === id);
+                                    if (!linked) return null;
+                                    const summary = linked.type === 'body'
+                                        ? `${linked.area || ''} ${linked.part || ''} · ${(linked.sensationData||[]).map(s=>s.label).slice(0,2).join('、') || '身體記錄'}`
+                                        : Object.keys(linked.moods||{}).slice(0,3).join('、') || '心情記錄';
+                                    return (
+                                        <div key={id} className="flex items-center gap-3 px-4 py-3 bg-[#FAF7F4] rounded-2xl">
+                                            <span className="text-xs text-[#8D7B6D] flex-1">{summary}</span>
+                                            <span className="text-[10px] text-[#D1C4B9]">{linked.date}</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                         <button onClick={onClose} className="w-full py-4 bg-[#C8A882] text-white rounded-2xl font-medium tracking-widest uppercase transition-transform active:scale-95">關閉</button>
+                        </>
                     )}
                 </div>
             </div>
@@ -1097,7 +1204,10 @@
                 <div className="space-y-4">
                     {filtered.map(r => (
                         <div key={r.id} onClick={(e) => onDetail(r, e)} className="p-6 border border-[#F3E5D8] rounded-[2rem] bg-white cursor-pointer active:bg-[#F3E5D8]/10 transition-all space-y-3">
-                            <span className="text-xs font-medium text-[#D1C4B9] uppercase tracking-widest">{r.date} · {r.timeSlot}</span>
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-[#D1C4B9] uppercase tracking-widest">{r.date} · {r.timeSlot}</span>
+                                {r.links && r.links.length > 0 && <span className="text-xs text-[#C8A882]">🔗 {r.links.length}</span>}
+                            </div>
                             {r.type === 'body' ? (
                                 <div className="space-y-3">
                                     <p className="text-sm font-medium text-[#C8A882] tracking-wide">{[r.area, r.part, r.side?.join('')].filter(Boolean).join(' · ')}</p>
@@ -1146,7 +1256,7 @@
                         {(r.type === 'body' || r.type === 'mood') && !(r.timingBefore && r.timingDuring && r.timingAfter && r.bodyLanguage && r.trueFeeling) && (
                                 <div className="pt-2 flex justify-end" onClick={e => e.stopPropagation()}>
                                     <button onClick={() => onSupplement(r)}
-                                        className="text-xs text-[#C8A882] border border-[#C8A882] rounded-full px-4 py-1.5 font-medium tracking-widest transition-transform active:scale-95">
+                                        className="text-xs text-[#C8A882] border border-[#F3E5D8] rounded-full px-4 py-1.5 font-medium tracking-widest transition-transform active:scale-95">
                                         + 補充
                                     </button>
                                 </div>
@@ -2168,7 +2278,7 @@
                         {(r.type === 'body' || r.type === 'mood') && !(r.timingBefore && r.timingDuring && r.timingAfter && r.bodyLanguage && r.trueFeeling) && (
                                 <div className="pt-2 flex justify-end" onClick={e => e.stopPropagation()}>
                                     <button onClick={() => onSupplement(r)}
-                                        className="text-xs text-[#C8A882] border border-[#C8A882] rounded-full px-4 py-1.5 font-medium tracking-widest transition-transform active:scale-95">
+                                        className="text-xs text-[#C8A882] border border-[#F3E5D8] rounded-full px-4 py-1.5 font-medium tracking-widest transition-transform active:scale-95">
                                         + 補充
                                     </button>
                                 </div>
