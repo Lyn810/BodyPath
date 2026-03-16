@@ -205,89 +205,6 @@
     }
     // ──────────────────────────────────────────────────────────────
 
-    function Onboarding({ onDone }) {
-        const slides = [
-            { lines: ['我們每天都有很多身體感受', '但很少停下來注意它們'] },
-            { lines: ['Body Path 讓你用簡單方式', '記錄身體與情緒'] },
-            { lines: ['每一次記錄', '都是更了解自己的線索'] },
-            { lines: ['試著開始第一次觀察'] },
-        ];
-        const [slide, setSlide] = React.useState(0);
-        const [fadeOut, setFadeOut] = React.useState(false);
-        // lineVisible[i] = true means line i is shown
-        const [lineVisible, setLineVisible] = React.useState([]);
-
-        // Web Audio melody
-        React.useEffect(() => {
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const notes = [261.63, 329.63, 392, 523.25, 392, 329.63, 261.63, 329.63];
-                let t = ctx.currentTime + 0.1;
-                notes.forEach(freq => {
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.connect(gain); gain.connect(ctx.destination);
-                    osc.type = 'sine'; osc.frequency.value = freq;
-                    gain.gain.setValueAtTime(0, t);
-                    gain.gain.linearRampToValueAtTime(0.06, t + 0.05);
-                    gain.gain.linearRampToValueAtTime(0, t + 0.6);
-                    osc.start(t); osc.stop(t + 0.7);
-                    t += 0.65;
-                });
-                return () => { try { ctx.close(); } catch(e) {} };
-            } catch(e) {}
-        }, []);
-
-        // When slide changes: use a single counter (shownCount) to reveal lines
-        React.useEffect(() => {
-            setLineVisible([]);
-            setFadeOut(false);
-            const nLines = slides[slide].lines.length;
-            const timers = [];
-            for (let i = 0; i < nLines; i++) {
-                timers.push(setTimeout(() => {
-                    setLineVisible(prev => [...prev, i]);
-                }, i * 900 + 500));
-            }
-            const totalShow = (nLines - 1) * 900 + 500 + 2800;
-            timers.push(setTimeout(() => {
-                setFadeOut(true);
-                setTimeout(() => {
-                    if (slide < slides.length - 1) {
-                        setSlide(s => s + 1);
-                    } else {
-                        localStorage.setItem('bp_onboarded', '1');
-                        onDone();
-                    }
-                }, 700);
-            }, totalShow));
-            return () => timers.forEach(clearTimeout);
-        }, [slide]);
-
-        return (
-            <div className="fixed inset-0 z-[500] flex items-center justify-center"
-                style={{background: 'linear-gradient(160deg, rgba(250,248,244,0.97) 0%, rgba(240,228,212,0.97) 100%)'}}>
-                {/* decorative blobs for visual depth */}
-                <div style={{position:'absolute',top:'15%',left:'10%',width:'200px',height:'200px',borderRadius:'50%',background:'rgba(201,169,110,0.12)',filter:'blur(40px)'}} />
-                <div style={{position:'absolute',bottom:'20%',right:'8%',width:'160px',height:'160px',borderRadius:'50%',background:'rgba(201,169,110,0.10)',filter:'blur(30px)'}} />
-                <div className={"text-center px-10 space-y-5 transition-opacity duration-700 " + (fadeOut ? 'opacity-0' : 'opacity-100')}>
-                    {slides[slide].lines.map((line, i) => (
-                        <p key={slide + '-' + i}
-                            style={{transition: 'opacity 0.8s ease'}}
-                            className={"text-xl font-light text-[#8D7B6D] tracking-wide leading-relaxed " + (lineVisible.includes(i) ? 'opacity-100' : 'opacity-0')}>
-                            {line}
-                        </p>
-                    ))}
-                    <div className="flex justify-center gap-2 pt-8">
-                        {slides.map((_, i) => (
-                            <div key={i} style={{transition:'all 0.3s'}} className={"h-1 rounded-full " + (i === slide ? 'bg-[#C8A882] w-5' : 'bg-[#C8A882]/25 w-1')} />
-                        ))}
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
     function SavedModal({ justSaved, onSupplement, onClose }) {
         if (!justSaved) return null;
         return (
@@ -678,12 +595,8 @@
         const [records, setRecords] = useState(JSON.parse(localStorage.getItem('bp_v25_all') || '[]'));
         const [selectedDetail, setSelectedDetail] = useState(null);
         const [detailClickY, setDetailClickY] = useState(null);
-        const [justSaved, setJustSaved] = useState(null);
-        const [supplementRecord, setSupplementRecord] = useState(null);
-        const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('bp_onboarded'));
-        const [hasUsedCard, setHasUsedCard] = useState(() => !!localStorage.getItem('bp_onboarded'));
-        const [trendGuideSeen, setTrendGuideSeen] = useState(() => !!localStorage.getItem('bp_guide_trend'));
-        const [labGuideSeen, setLabGuideSeen] = useState(() => !!localStorage.getItem('bp_guide_lab'));
+        const [justSaved, setJustSaved] = useState(null); // { id, type } for post-save toast
+        const [supplementRecord, setSupplementRecord] = useState(null); // record open in SupplementPage
 
         const switchTab = (newTab) => {
             setPrevTab(tab);
@@ -769,20 +682,18 @@
             <div className="flex justify-center min-h-screen bg-[#f8f8f8]">
                 <div className="app-container shadow-2xl">
                     <main className="flex-1 overflow-y-auto no-scrollbar pb-24">
-                        <HomePage switchTab={(t) => { if (!hasUsedCard) { setHasUsedCard(true); } switchTab(t); }} records={records} onDetail={openDetail} showTooltip={!hasUsedCard && !showOnboarding} style={{display: tab === 'home' ? undefined : 'none'}} />
-                        {tab === 'home' ? null : (<>
+                        {tab === 'home' && <HomePage switchTab={switchTab} records={records} onDetail={openDetail} />}
+                        
                         {tab === 'body' && <CategoryLog records={records} type="body" onBack={() => switchTab('home')} onDetail={openDetail} onAdd={() => switchTab('body_rec')} onSupplement={(r) => setSupplementRecord(r)} />}
                         {tab === 'mood' && <CategoryLog records={records} type="mood" onBack={() => switchTab('home')} onDetail={openDetail} onAdd={() => switchTab('mood_rec')} onSupplement={(r) => setSupplementRecord(r)} />}
                         {tab === 'diary' && <CategoryLog records={records} type="diary" onBack={() => switchTab('home')} onDetail={openDetail} onAdd={() => switchTab('diary_rec')} />}
                         {tab === 'body_rec' && <BodyRecorder onSave={addRecord} onCancel={() => switchTab(prevTab === 'body' ? 'body' : 'home')} savedCustomTags={getBodyCustomTags()} onAddCustom={(tag) => { const t = getBodyCustomTags(); if(!t.includes(tag)) saveTags('body',[...t,tag]); }} />}
                         {tab === 'mood_rec' && <MoodRecorder onSave={addRecord} onCancel={() => switchTab(prevTab === 'mood' ? 'mood' : 'home')} savedCustomTags={getMoodCustomTags()} onAddCustom={(tag) => { const t = getMoodCustomTags(); if(!t.includes(tag)) saveTags('mood',[...t,tag]); }} />}
                         {tab === 'diary_rec' && <DiaryRecorder onSave={addRecord} onCancel={() => switchTab(prevTab === 'diary' ? 'diary' : 'home')} />}
-                        {tab === 'lab' && <MiniLab records={records} setRecords={setRecords} onDetail={openDetail} onSupplement={(r) => setSupplementRecord(r)} showGuide={!labGuideSeen} onGuideDone={() => { localStorage.setItem('bp_guide_lab','1'); setLabGuideSeen(true); }} />}
+                        {tab === 'lab' && <MiniLab records={records} setRecords={setRecords} onDetail={openDetail} onSupplement={(r) => setSupplementRecord(r)} />}
                         
-                        {tab === 'trend' && <TrendPage records={records} showGuide={!trendGuideSeen} onGuideDone={() => { localStorage.setItem('bp_guide_trend','1'); setTrendGuideSeen(true); }} />}
-                        </>)}
+                        {tab === 'trend' && <TrendPage records={records} />}
                     </main>
-                    {showOnboarding && <Onboarding onDone={() => setShowOnboarding(false)} />}
 
                     <SavedModal
                         justSaved={justSaved}
@@ -1125,7 +1036,7 @@
         );
     }
 
-    function HomePage({ switchTab, records, onDetail, showTooltip = false }) {
+    function HomePage({ switchTab, records, onDetail }) {
         const sections = [{ type: 'body', label: '身體覺察' }, { type: 'mood', label: '心情能量' }, { type: 'diary', label: '日記隨想' }];
 
 
@@ -1247,7 +1158,6 @@
                                 <button onClick={exportJSON} className="w-full px-5 py-3.5 text-left text-sm text-[#A89080] tracking-wide flex items-center gap-3 active:bg-[#FAF7F4]">
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
                                     備份資料
-                                    <span className="ml-auto text-[10px] text-[#D1C4B9] font-normal tracking-normal">匯出 JSON</span>
                                 </button>
                                 <div className="h-px bg-[#F3E5D8] mx-4"></div>
                                 <button onClick={importJSON} className="w-full px-5 py-3.5 text-left text-sm text-[#A89080] tracking-wide flex items-center gap-3 active:bg-[#FAF7F4]">
@@ -1266,16 +1176,7 @@
                 </div>
 
                 {/* 三個記錄入口 */}
-                <div className="relative space-y-3">
-                    {showTooltip && (
-                        <div className="absolute -inset-3 rounded-[2.5rem] border-2 border-[#C8A882] border-dashed animate-pulse pointer-events-none z-10" />
-                    )}
-                    {showTooltip && (
-                        <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-20 bg-[#C8A882] text-white text-xs font-medium tracking-wide px-4 py-2 rounded-full shadow-lg whitespace-nowrap">
-                            從這裡開始你的第一次記錄 ✦
-                            <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-[#C8A882]" />
-                        </div>
-                    )}
+                <div className="space-y-3">
                     {entries.map(e => (
                         <button key={e.type} onClick={() => switchTab(e.type)}
                             className="w-full flex items-center gap-5 p-5 bg-white border border-[#F3E5D8] rounded-[2rem] active:bg-[#F3E5D8]/30 transition-all text-left">
@@ -2034,7 +1935,7 @@
         );
     }
 
-    function TrendPage({ records, showGuide = false, onGuideDone = () => {} }) {
+    function TrendPage({ records }) {
         const [month, setMonth] = useState('2026-03');
         const [trendTab, setTrendTab] = useState('all');
         useEffect(() => {
@@ -2144,12 +2045,6 @@
 
         return (
             <div className="p-8 space-y-12 animate-fade-in pb-32 text-center">
-                {showGuide && (
-                    <button onClick={onGuideDone} className="w-full text-left bg-[#C8A882]/10 border border-[#C8A882]/30 rounded-2xl px-5 py-4 space-y-1 active:bg-[#C8A882]/20 transition-all">
-                        <p className="text-xs font-medium text-[#C8A882] tracking-widest">✦ 趨勢圖</p>
-                        <p className="text-xs text-[#A89080] leading-relaxed">記錄累積後，這裡會顯示你的身體與心情變化曲線、各部位頻率統計，以及事件與症狀的關聯。點此關閉提示。</p>
-                    </button>
-                )}
                 <header className="pt-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Icon.Trend />
@@ -2245,7 +2140,7 @@
         );
     }
 
-    function MiniLab({ records, setRecords, onDetail, onSupplement, showGuide = false, onGuideDone = () => {} }) {
+    function MiniLab({ records, setRecords, onDetail, onSupplement }) {
         const today = new Date().toISOString().slice(0, 10);
         const [selectedDate, setSelectedDate] = useState(today);
         const [expId, setExpId] = useState(null);
@@ -2279,12 +2174,6 @@
 
         return (
             <div className="p-8 space-y-8 animate-fade-in pb-32">
-                {showGuide && (
-                    <button onClick={onGuideDone} className="w-full text-left bg-[#C8A882]/10 border border-[#C8A882]/30 rounded-2xl px-5 py-4 space-y-1 active:bg-[#C8A882]/20 transition-all">
-                        <p className="text-xs font-medium text-[#C8A882] tracking-widest">✦ 調頻月曆</p>
-                        <p className="text-xs text-[#A89080] leading-relaxed">在月曆上查看每天的紀錄，點選日期可展開當天的身體與心情詳情，也可以在這裡補充回應。點此關閉提示。</p>
-                    </button>
-                )}
                 <header className="pt-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Icon.Calendar />
