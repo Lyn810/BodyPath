@@ -2285,16 +2285,21 @@
                                             })}
                                         </div>
                                     )}
-                                    {/* timing tags */}
+                                </div>
+                                {r.type !== 'diary' && <button onClick={() => setExpId(expId === r.id ? null : r.id)} className="text-xs font-medium text-white bg-[#C8A882] px-4 py-1.5 rounded-full tracking-widests transition-transform active:scale-95 shrink-0 whitespace-nowrap mt-1">+ 回應</button>}
+                                {r.type === 'diary' && (
+                                    <button onClick={() => onDetail(r)} className="text-xs font-medium text-[#C8A882] border border-[#F3E5D8] px-4 py-1.5 rounded-full tracking-widest transition-transform active:scale-95 shrink-0 whitespace-nowrap mt-1">串聯</button>
+                                )}
+                            </div>
                                     {(r.timingBefore||r.timingDuring||r.timingAfter) && (
-                                        <div className="flex flex-wrap gap-1 pt-2">
+                                        <div className="flex flex-wrap gap-1 pt-1">
                                             {r.timingBefore && r.timingBefore.split(',').map(t=><span key={t} className="text-[10px] bg-[#F3E5D8]/60 text-[#A89080] px-2 py-0.5 rounded-full">{t.trim()}</span>)}
                                             {r.timingDuring && r.timingDuring.split(',').map(t=><span key={t} className="text-[10px] bg-[#F3E5D8]/60 text-[#A89080] px-2 py-0.5 rounded-full">{t.trim()}</span>)}
                                             {r.timingAfter && r.timingAfter.split(',').map(t=><span key={t} className="text-[10px] bg-[#F3E5D8]/60 text-[#A89080] px-2 py-0.5 rounded-full">{t.trim()}</span>)}
                                         </div>
                                     )}
                                     {r.links && r.links.length > 0 && (
-                                        <div className="pt-1.5 space-y-1 border-t border-[#F3E5D8] mt-2">
+                                        <div className="pt-1.5 space-y-1">
                                             {r.links.map(id => {
                                                 const lr = records.find(x => x.id === id);
                                                 if (!lr) return null;
