@@ -748,6 +748,7 @@
     function DetailModal({ record, records = [], onClose, onUpdate, onDelete, clickY }) {
         const [isEditing, setIsEditing] = useState(false);
         const [edited, setEdited] = useState({...record});
+        const [moodEditNames, setMoodEditNames] = useState({});
         const cnType = record.type === 'body' ? '身體覺察' : record.type === 'mood' ? '心情能量' : '日記隨想';
 
         // 計算 modal 頂部位置：以點擊位置為起點，但確保不超出畫面
@@ -822,16 +823,20 @@
                             <div className="space-y-4">
                                 <div className="space-y-2">
                                     {Object.entries(edited.moods).map(([m,v], idx) => (
-                                        <div key={m} className="space-y-2 bg-[#FAF7F4] p-4 rounded-2xl border border-[#F3E5D8]">
+                                        <div key={idx} className="space-y-2 bg-[#FAF7F4] p-4 rounded-2xl border border-[#F3E5D8]">
                                             {isEditing ? (
                                                 <div className="space-y-2">
-                                                    <input value={m} onChange={e => {
-                                                        const entries = Object.entries(edited.moods);
-                                                        entries[idx][0] = e.target.value;
-                                                        setEdited({...edited, moods: Object.fromEntries(entries)});
-                                                    }} className="w-full bg-white p-2 rounded-xl text-sm font-medium text-[#C8A882] border border-[#F3E5D8] outline-none focus:border-[#C8A882]" />
+                                                    <input
+                                                        value={moodEditNames[idx] !== undefined ? moodEditNames[idx] : m}
+                                                        onChange={e => setMoodEditNames({...moodEditNames, [idx]: e.target.value})}
+                                                        className="w-full bg-white p-2 rounded-xl text-sm font-medium text-[#C8A882] border border-[#F3E5D8] outline-none focus:border-[#C8A882]" />
                                                     <div className="flex items-center gap-2">
-                                                        <input type="range" className="flex-1" value={v} onChange={e => setEdited({...edited, moods: {...edited.moods, [m]: e.target.value}})} />
+                                                        <input type="range" className="flex-1" value={v} onChange={e => {
+                                                            const entries = Object.entries(edited.moods);
+                                                            const newMoods = {};
+                                                            entries.forEach(([k,val], i) => { newMoods[k] = i === idx ? parseInt(e.target.value) : val; });
+                                                            setEdited({...edited, moods: newMoods});
+                                                        }} />
                                                         <span className="text-xs text-[#D1C4B9] w-10 text-right">{v}%</span>
                                                         <button onClick={() => { const n = {...edited.moods}; delete n[m]; setEdited({...edited, moods: n}); }} className="text-xs text-[#A89080] px-2 py-1 rounded-full border border-[#F3E5D8]">✕</button>
                                                     </div>
@@ -842,7 +847,7 @@
                                         </div>
                                     ))}
                                     {isEditing && (
-                                        <button onClick={() => setEdited({...edited, moods: {...edited.moods, ['新心情']: 50}})} className="w-full py-2.5 text-xs text-[#C8A882] border border-dashed border-[#C8A882]/40 rounded-2xl tracking-wide">+ 新增心情</button>
+                                        <button onClick={() => { const key = '新心情' + Date.now(); setEdited({...edited, moods: {...edited.moods, [key]: 50}}); }} className="w-full py-2.5 text-xs text-[#C8A882] border border-dashed border-[#C8A882]/40 rounded-2xl tracking-wide">+ 新增心情</button>
                                     )}
                                 </div>
                                 <div className="border-t border-[#F3E5D8]"></div>
@@ -1006,7 +1011,16 @@
                     {isEditing ? (
                         <div className="flex gap-4 pt-2">
                             <button onClick={() => setIsEditing(false)} className="flex-1 py-3 text-[#A89080] font-medium text-sm uppercase tracking-widest">取消</button>
-                            <button onClick={() => {onUpdate(edited); setIsEditing(false);}} className="flex-[2] py-3 bg-[#C8A882] text-white rounded-2xl font-medium tracking-widest transition-transform active:scale-95">儲存修改</button>
+                            <button onClick={() => {
+                                    // merge moodEditNames into moods before saving
+                                    const finalMoods = {};
+                                    Object.entries(edited.moods||{}).forEach(([k,val], i) => {
+                                        const newKey = (moodEditNames[i] !== undefined && moodEditNames[i].trim()) ? moodEditNames[i].trim() : k;
+                                        finalMoods[newKey] = val;
+                                    });
+                                    onUpdate({...edited, moods: finalMoods});
+                                    setIsEditing(false);
+                                }} className="flex-[2] py-3 bg-[#C8A882] text-white rounded-2xl font-medium tracking-widest transition-transform active:scale-95">儲存修改</button>
                         </div>
                     ) : (
                         <>
@@ -1271,6 +1285,25 @@
                                     {r.timingAfter && <p className="text-xs leading-relaxed line-clamp-1"><span className="text-[#A89080] font-medium">即將發生 · </span><span className="text-[#8D7B6D]">{r.timingAfter}</span></p>}
                                     {r.trueFeeling && <p className="text-xs leading-relaxed line-clamp-2"><span className="text-[#A89080] font-medium">真實感受 · </span><span className="text-[#8D7B6D]">{r.trueFeeling}</span></p>}
                                     {r.bodyLanguage && <p className="text-xs leading-relaxed line-clamp-2"><span className="text-[#A89080] font-medium">身體想告訴我 · </span><span className="text-[#8D7B6D]">{r.bodyLanguage}</span></p>}
+                                </div>
+                            )}
+                            {r.links && r.links.length > 0 && (
+                                <div className="pt-1.5 space-y-1 border-t border-[#F3E5D8]">
+                                    {r.links.map(id => {
+                                        const lr = records.find(x => x.id === id);
+                                        if (!lr) return null;
+                                        const lrSum = lr.type === 'body'
+                                            ? `${[lr.area, (lr.side||[]).filter(s=>s!=='不分').join(' '), lr.part].filter(Boolean).join(' ')}${(lr.sensationData||[]).length ? ' · ' + lr.sensationData.slice(0,2).map(s=>s.label+(s.intensity?` ${s.intensity}%`:'')).join('、') : ''}`
+                                            : lr.type === 'mood'
+                                            ? Object.entries(lr.moods||{}).slice(0,3).map(([k,v])=>`${k} ${v}%`).join('、')
+                                            : '日記';
+                                        return (
+                                            <p key={id} className="text-xs flex items-start gap-1.5">
+                                                <svg className="w-3 h-3 inline-block shrink-0 mt-0.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" d="M6 8h4M3.5 5.5A2.5 2.5 0 016 8a2.5 2.5 0 01-2.5 2.5M12.5 5.5A2.5 2.5 0 0110 8a2.5 2.5 0 002.5 2.5" /></svg>
+                                                <span><span className="font-medium text-[#A89080]">已串聯 · </span><span className="font-light text-[#8D7B6D]">{lrSum}</span></span>
+                                            </p>
+                                        );
+                                    })}
                                 </div>
                             )}
                         {(r.type === 'body' || r.type === 'mood') && !(r.timingBefore && r.timingDuring && r.timingAfter && r.bodyLanguage && r.trueFeeling) && (
@@ -1763,8 +1796,9 @@
     function LabDetailModal({ record, onClose, onDeleteLab, onUpdateLab }) {
         const [editingId, setEditingId] = useState(null);
         const [editVal, setEditVal] = useState({ action: '', effect: 0 });
-        const [editLabId, setEditLabId] = React.useState(null); // {recordId, labId}
+        const [editLabId, setEditLabId] = React.useState(null);
         const [editLabText, setEditLabText] = React.useState('');
+        const [editLabEffect, setEditLabEffect] = React.useState(0);
 
         const startEdit = (l) => {
             setEditingId(l.id);
@@ -2147,8 +2181,9 @@
         const [selectedDate, setSelectedDate] = useState(today);
         const [expId, setExpId] = useState(null);
         const [newLab, setNewLab] = useState({ action: '', effect: 0 });
-        const [editLabId, setEditLabId] = React.useState(null); // {recordId, labId}
+        const [editLabId, setEditLabId] = React.useState(null);
         const [editLabText, setEditLabText] = React.useState('');
+        const [editLabEffect, setEditLabEffect] = React.useState(0);
 
         // 當月所有天（固定顯示當月）
         const [viewMonth, setViewMonth] = useState(today.slice(0, 7));
@@ -2258,31 +2293,25 @@
                                             {r.timingAfter && r.timingAfter.split(',').map(t=><span key={t} className="text-[10px] bg-[#F3E5D8]/60 text-[#A89080] px-2 py-0.5 rounded-full">{t.trim()}</span>)}
                                         </div>
                                     )}
-                                    {/* links badge */}
                                     {r.links && r.links.length > 0 && (
-                                        <div className="flex items-center gap-1 pt-1">
-                                            <svg className="w-3 h-3 text-[#C8A882]" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" d="M6 8h4M3.5 5.5A2.5 2.5 0 016 8a2.5 2.5 0 01-2.5 2.5M12.5 5.5A2.5 2.5 0 0110 8a2.5 2.5 0 002.5 2.5" /></svg>
-                                            <span className="text-[10px] text-[#C8A882]">已串聯 {r.links.length} 筆</span>
+                                        <div className="pt-1.5 space-y-1 border-t border-[#F3E5D8] mt-2">
+                                            {r.links.map(id => {
+                                                const lr = records.find(x => x.id === id);
+                                                if (!lr) return null;
+                                                const lrSummary = lr.type === 'body'
+                                                    ? `${[lr.area, (lr.side||[]).filter(s=>s!=='不分').join(' '), lr.part].filter(Boolean).join(' ')}${(lr.sensationData||[]).length ? ' · ' + lr.sensationData.slice(0,2).map(s=>s.label+(s.intensity?` ${s.intensity}%`:'')).join('、') : ''}`
+                                                    : lr.type === 'mood'
+                                                    ? Object.entries(lr.moods||{}).slice(0,3).map(([k,v])=>`${k} ${v}%`).join('、')
+                                                    : '日記';
+                                                return (
+                                                    <p key={id} className="text-xs flex items-start gap-1.5">
+                                                        <svg className="w-3 h-3 inline-block shrink-0 mt-0.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" d="M6 8h4M3.5 5.5A2.5 2.5 0 016 8a2.5 2.5 0 01-2.5 2.5M12.5 5.5A2.5 2.5 0 0110 8a2.5 2.5 0 002.5 2.5" /></svg>
+                                                        <span><span className="font-medium text-[#A89080]">已串聯 · </span><span className="font-light text-[#8D7B6D]">{lrSummary}</span></span>
+                                                    </p>
+                                                );
+                                            })}
                                         </div>
                                     )}
-                                </div>
-                                {r.type !== 'diary' && <button onClick={() => setExpId(expId === r.id ? null : r.id)} className="text-xs font-medium text-white bg-[#C8A882] px-4 py-1.5 rounded-full tracking-widest transition-transform active:scale-95 shrink-0 whitespace-nowrap mt-1">+ 回應</button>}
-                                {r.type === 'diary' && (
-                                    <button onClick={() => onDetail(r)} className="text-xs font-medium text-[#C8A882] border border-[#F3E5D8] px-4 py-1.5 rounded-full tracking-widest transition-transform active:scale-95 shrink-0 whitespace-nowrap mt-1">串聯</button>
-                                )}
-                            </div>
-
-                            {/* 身體想告訴我 / 真實感受 */}
-                            {(r.bodyLanguage || r.trueFeeling) && (
-                                <div className="pt-2 border-t border-[#F3E5D8] space-y-1.5">
-                                    {r.trueFeeling && (
-                                        <p className="text-xs leading-relaxed"><span className="text-[#A89080] font-medium">真實感受 · </span><span className="text-[#8D7B6D] font-light">{r.trueFeeling}</span></p>
-                                    )}
-                                    {r.bodyLanguage && (
-                                        <p className="text-xs leading-relaxed"><span className="text-[#A89080] font-medium">身體想告訴我 · </span><span className="text-[#8D7B6D] font-light">{r.bodyLanguage}</span></p>
-                                    )}
-                                </div>
-                            )}
 
                             {/* 回應清單 */}
                             {(r.lab || []).length > 0 && (
@@ -2295,7 +2324,7 @@
                                                     <p className="text-sm font-light text-[#8D7B6D] leading-relaxed">{l.action}</p>
                                                 </div>
                                                 <div className="flex gap-2 shrink-0">
-                                                    <button onClick={() => { setEditLabId({recordId:r.id,labId:l.id}); setEditLabText(l.action); }} className="text-xs text-[#C8A882] px-2 py-0.5">編輯</button>
+                                                    <button onClick={() => { setEditLabId({recordId:r.id,labId:l.id}); setEditLabText(l.action); setEditLabEffect(l.effect || 0); }} className="text-xs text-[#C8A882] underline px-2 py-0.5 shrink-0">編輯</button>
                                                     <button onClick={() => deleteLab(r.id, l.id)} className="text-xs text-[#D1C4B9] px-2 py-0.5">✕</button>
                                                 </div>
                                             </div>
@@ -2316,11 +2345,22 @@
                                     <p className="text-xs text-[#A89080] tracking-wide font-medium">編輯回應</p>
                                     <textarea value={editLabText} onChange={e => setEditLabText(e.target.value)}
                                         className="w-full bg-[#FAF7F4] p-4 rounded-2xl text-sm outline-none border border-[#F3E5D8] h-20 leading-relaxed text-[#8D7B6D] placeholder-[#D1C4B9]" />
+                                    <div className="space-y-1.5">
+                                        <p className="text-xs text-[#A89080] font-medium">回應後的程度</p>
+                                        <div className="flex gap-2">
+                                            {[{v:-1,label:'更差'},{v:0,label:'沒變'},{v:1,label:'好轉'}].map(opt => (
+                                                <button key={opt.v} onClick={() => setEditLabEffect(opt.v)}
+                                                    className={"flex-1 py-2 rounded-xl text-xs font-medium border transition-all " + (editLabEffect === opt.v ? 'bg-[#C8A882] text-white border-[#C8A882]' : 'text-[#A89080] border-[#F3E5D8]')}>
+                                                    {opt.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
                                     <div className="flex gap-2 justify-end">
                                         <button onClick={() => setEditLabId(null)} className="text-xs text-[#D1C4B9] px-3 py-1.5">取消</button>
                                         <button onClick={() => {
                                             if (!editLabText.trim()) return;
-                                            setRecords(records.map(rec => rec.id !== editLabId.recordId ? rec : {...rec, lab: (rec.lab||[]).map(l => l.id !== editLabId.labId ? l : {...l, action: editLabText.trim()})}));
+                                            setRecords(records.map(rec => rec.id !== editLabId.recordId ? rec : {...rec, lab: (rec.lab||[]).map(l => l.id !== editLabId.labId ? l : {...l, action: editLabText.trim(), effect: editLabEffect})}));
                                             setEditLabId(null);
                                         }} className="text-xs text-white bg-[#C8A882] px-3 py-1.5 rounded-full">儲存</button>
                                     </div>
