@@ -638,7 +638,23 @@
         };
 
         const updateRecord = (updatedR) => {
-            const newList = records.map(r => r.id === updatedR.id ? updatedR : r);
+            const oldR = records.find(r => r.id === updatedR.id);
+            const newLinkedIds = updatedR.links || [];
+            const oldLinkedIds = oldR?.links || [];
+            const added = newLinkedIds.filter(id => !oldLinkedIds.includes(id));
+            const removed = oldLinkedIds.filter(id => !newLinkedIds.includes(id));
+            let newList = records.map(r => {
+                if (r.id === updatedR.id) return updatedR;
+                if (added.includes(r.id)) {
+                    const links = [...(r.links || [])];
+                    if (!links.includes(updatedR.id)) links.push(updatedR.id);
+                    return {...r, links};
+                }
+                if (removed.includes(r.id)) {
+                    return {...r, links: (r.links || []).filter(id => id !== updatedR.id)};
+                }
+                return r;
+            });
             newList.sort((a, b) => new Date(b.date) - new Date(a.date));
             setRecords(newList);
             setSelectedDetail(null);
@@ -895,7 +911,7 @@
                                                                 <div className="p-4 rounded-[1.5rem] border border-[#F3E5D8]">
                                                                     {isEditing
                                                                         ? <textarea value={df[fk]||''} onChange={e => setEdited({...edited, diaryFields: {...df, [fk]: e.target.value}})} placeholder={DIARY_PH[fk] || ''} className="w-full bg-transparent text-sm border-none outline-none text-[#8D7B6D] placeholder-[#D1C4B9] h-16 leading-relaxed resize-none" />
-                                                                        : <p className="text-sm font-light text-[#8D7B6D] leading-relaxed">{df[fk]}</p>
+                                                                        : <p className="text-sm font-light text-[#8D7B6D] leading-relaxed whitespace-pre-wrap">{df[fk]}</p>
                                                                     }
                                                                 </div>
                                                             </div>
@@ -913,7 +929,7 @@
                                                         <div className="p-5 rounded-[1.5rem] border border-[#F3E5D8]">
                                                             {isEditing
                                                                 ? <textarea value={df[k]||''} onChange={e => setEdited({...edited, diaryFields: {...df, [k]: e.target.value}})} placeholder={DIARY_PH[k] || '寫下你的想法...'} className="w-full bg-transparent text-sm border-none outline-none text-[#8D7B6D] placeholder-[#D1C4B9] h-20 leading-relaxed resize-none" />
-                                                                : <p className="text-sm font-light text-[#8D7B6D] leading-relaxed">{df[k]}</p>
+                                                                : <p className="text-sm font-light text-[#8D7B6D] leading-relaxed whitespace-pre-wrap">{df[k]}</p>
                                                             }
                                                         </div>
                                                     </div>
@@ -946,7 +962,7 @@
                                         <div className="space-y-3">
                                             <p className="text-sm font-medium text-[#A89080] tracking-wide">對自己的新發現</p>
                                             <div className="p-5 rounded-[1.5rem] border border-[#F3E5D8]">
-                                                <p className="text-sm font-light text-[#8D7B6D] leading-relaxed">{record.sentence}</p>
+                                                <p className="text-sm font-light text-[#8D7B6D] leading-relaxed whitespace-pre-wrap">{record.sentence}</p>
                                             </div>
                                         </div>
                                     )}
@@ -971,7 +987,7 @@
                                                     <input value={edited[key]||''} onChange={e => setEdited({...edited, [key]: e.target.value})} placeholder={placeholder}
                                                         className="w-full bg-transparent text-sm border-b border-[#F3E5D8] outline-none text-[#8D7B6D] placeholder-[#D1C4B9] pb-1" />
                                                 ) : (
-                                                    <p className="text-sm text-[#8D7B6D]">{record[key]}</p>
+                                                    <p className="text-sm text-[#8D7B6D] whitespace-pre-wrap">{record[key]}</p>
                                                 )}
                                             </div>
                                         )
@@ -987,7 +1003,7 @@
                                     {isEditing ? (
                                         <textarea value={edited.trueFeeling || ''} onChange={e => setEdited({...edited, trueFeeling: e.target.value})} placeholder="此刻你內心真實的感受是什麼？" className="w-full bg-transparent text-sm border-none outline-none font-light text-[#8D7B6D] placeholder-[#D1C4B9] h-20 leading-relaxed" />
                                     ) : (
-                                        <p className="text-sm font-light text-[#8D7B6D] leading-relaxed tracking-wide">{record.trueFeeling || "未紀錄"}</p>
+                                        <p className="text-sm font-light text-[#8D7B6D] leading-relaxed tracking-wide whitespace-pre-wrap">{record.trueFeeling || "未紀錄"}</p>
                                     )}
                                 </div>
                             </div>
@@ -1001,7 +1017,7 @@
                                     {isEditing ? (
                                         <textarea value={edited.bodyLanguage} onChange={e => setEdited({...edited, bodyLanguage: e.target.value})} placeholder="如果身體會說話，你覺得它想告訴你什麼呢？" className="w-full bg-transparent text-sm border-none outline-none font-light text-[#8D7B6D] placeholder-[#D1C4B9] h-20 leading-relaxed" />
                                     ) : (
-                                        <p className="text-sm font-light text-[#8D7B6D] leading-relaxed tracking-wide">{record.bodyLanguage || "未紀錄"}</p>
+                                        <p className="text-sm font-light text-[#8D7B6D] leading-relaxed tracking-wide whitespace-pre-wrap">{record.bodyLanguage || "未紀錄"}</p>
                                     )}
                                 </div>
                             </div>
@@ -1009,6 +1025,34 @@
                     </div>
 
                     {isEditing ? (
+                        <>
+                        {(record.type === 'body' || record.type === 'mood' || record.type === 'diary') && (() => {
+                            const oppositeType = record.type === 'body' ? 'mood' : record.type === 'mood' ? 'body' : null;
+                            const linkableRecs = records.filter(r => (oppositeType ? r.type === oppositeType : (r.type === 'body' || r.type === 'mood')) && r.id !== record.id).sort((a,b) => new Date(b.date)-new Date(a.date));
+                            const curLinks = edited.links || [];
+                            const toggleLink = (id) => setEdited({...edited, links: curLinks.includes(id) ? curLinks.filter(x=>x!==id) : [...curLinks, id]});
+                            const getSummary = (r) => r.type === 'body' ? `${[r.area,r.part].filter(Boolean).join(' ')}${(r.sensationData||[]).length?' · '+r.sensationData.slice(0,2).map(s=>s.label).join('、'):''}` : Object.keys(r.moods||{}).slice(0,3).join('、')||'心情記錄';
+                            return (
+                                <div className="border border-[#F3E5D8] rounded-2xl overflow-hidden mb-3">
+                                    <p className="text-xs font-medium text-[#A89080] tracking-wide px-4 py-3 border-b border-[#F3E5D8]">串聯</p>
+                                    <div className="px-4 py-3 space-y-2 max-h-52 overflow-y-auto">
+                                        {linkableRecs.length === 0 ? <p className="text-xs text-[#D1C4B9]">尚無可串聯的紀錄</p> : linkableRecs.map(r => {
+                                            const linked = curLinks.includes(r.id);
+                                            return (
+                                                <button key={r.id} onClick={() => toggleLink(r.id)}
+                                                    className={"w-full flex items-center justify-between px-3 py-2 rounded-xl border text-left transition-all " + (linked ? 'bg-[#C8A882]/10 border-[#C8A882]' : 'bg-white border-[#F3E5D8]')}>
+                                                    <div>
+                                                        <p className={"text-xs font-medium " + (linked?'text-[#C8A882]':'text-[#8D7B6D]')}>{getSummary(r)}</p>
+                                                        <p className="text-[10px] text-[#D1C4B9]">{r.date} · {r.timeSlot}</p>
+                                                    </div>
+                                                    {linked && <svg className="w-3.5 h-3.5 text-[#C8A882] shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" d="M6 8h4M3.5 5.5A2.5 2.5 0 016 8a2.5 2.5 0 01-2.5 2.5M12.5 5.5A2.5 2.5 0 0110 8a2.5 2.5 0 002.5 2.5" /></svg>}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        })()}
                         <div className="flex gap-4 pt-2">
                             <button onClick={() => setIsEditing(false)} className="flex-1 py-3 text-[#A89080] font-medium text-sm uppercase tracking-widest">取消</button>
                             <button onClick={() => {
@@ -1022,6 +1066,7 @@
                                     setIsEditing(false);
                                 }} className="flex-[2] py-3 bg-[#C8A882] text-white rounded-2xl font-medium tracking-widest transition-transform active:scale-95">儲存修改</button>
                         </div>
+                        </>
                     ) : (
                         <>
                         {record.links && record.links.length > 0 && (
@@ -1047,6 +1092,7 @@
                     )}
                 </div>
             </div>
+        </div>
         );
     }
 
@@ -1270,7 +1316,7 @@
                                             return entries.length > 0 ? entries.map(([k, v]) => (
                                                 <p key={k} className="text-sm leading-relaxed line-clamp-1">
                                                     <span className="font-medium text-[#A89080]">{BUILT_IN_LABELS[k] || (r.customLabels?.[k] || k)}．</span>
-                                                    <span className="font-light text-[#8D7B6D]">{v}</span>
+                                                    <span className="font-light text-[#8D7B6D] whitespace-pre-wrap">{v}</span>
                                                 </p>
                                             )) : <p className="text-sm font-light text-[#D1C4B9]">Gently Left Blank</p>;
                                         })() : (
@@ -1280,11 +1326,11 @@
                             )}
                             {(r.timingBefore || r.timingDuring || r.timingAfter || r.bodyLanguage || r.trueFeeling) && (
                                 <div className="pt-1 border-t border-[#F3E5D8] space-y-1.5">
-                                    {r.timingBefore && <p className="text-xs leading-relaxed line-clamp-1"><span className="text-[#A89080] font-medium">發生前 · </span><span className="text-[#8D7B6D]">{r.timingBefore}</span></p>}
-                                    {r.timingDuring && <p className="text-xs leading-relaxed line-clamp-1"><span className="text-[#A89080] font-medium">發生時 · </span><span className="text-[#8D7B6D]">{r.timingDuring}</span></p>}
-                                    {r.timingAfter && <p className="text-xs leading-relaxed line-clamp-1"><span className="text-[#A89080] font-medium">即將發生 · </span><span className="text-[#8D7B6D]">{r.timingAfter}</span></p>}
-                                    {r.trueFeeling && <p className="text-xs leading-relaxed line-clamp-2"><span className="text-[#A89080] font-medium">真實感受 · </span><span className="text-[#8D7B6D]">{r.trueFeeling}</span></p>}
-                                    {r.bodyLanguage && <p className="text-xs leading-relaxed line-clamp-2"><span className="text-[#A89080] font-medium">身體想告訴我 · </span><span className="text-[#8D7B6D]">{r.bodyLanguage}</span></p>}
+                                    {r.timingBefore && <p className="text-xs leading-relaxed line-clamp-1"><span className="text-[#A89080] font-medium">不適出現前 · </span><span className="text-[#8D7B6D] whitespace-pre-wrap">{r.timingBefore}</span></p>}
+                                    {r.timingDuring && <p className="text-xs leading-relaxed line-clamp-1"><span className="text-[#A89080] font-medium">不適發生時 · </span><span className="text-[#8D7B6D] whitespace-pre-wrap">{r.timingDuring}</span></p>}
+                                    {r.timingAfter && <p className="text-xs leading-relaxed line-clamp-1"><span className="text-[#A89080] font-medium">預期事件 · </span><span className="text-[#8D7B6D] whitespace-pre-wrap">{r.timingAfter}</span></p>}
+                                    {r.trueFeeling && <p className="text-xs leading-relaxed line-clamp-2"><span className="text-[#A89080] font-medium">真實感受 · </span><span className="text-[#8D7B6D] whitespace-pre-wrap">{r.trueFeeling}</span></p>}
+                                    {r.bodyLanguage && <p className="text-xs leading-relaxed line-clamp-2"><span className="text-[#A89080] font-medium">身體想告訴我 · </span><span className="text-[#8D7B6D] whitespace-pre-wrap">{r.bodyLanguage}</span></p>}
                                 </div>
                             )}
                             {r.links && r.links.length > 0 && (
@@ -1842,7 +1888,42 @@
                                             <div className="flex justify-between text-xs font-medium text-[#C8A882] uppercase tracking-widest"><span>回應成效</span><span style={{color: editVal.effect < 0 ? '#A89080' : '#C8A882'}}>{editVal.effect * 10}%</span></div>
                                             <div className="flex items-center gap-2 text-[10px] text-[#D1C4B9]"><span>負面</span><input type="range" min="-10" max="10" step="1" className="flex-1" value={editVal.effect} onChange={e => setEditVal({...editVal, effect: parseInt(e.target.value)})} /><span>正面</span></div>
                                         </div>
-                                        <div className="flex gap-3">
+                                        {isEditing && (record.type === 'body' || record.type === 'mood') && (
+                            <div className="border border-[#F3E5D8] rounded-[2rem] overflow-hidden">
+                                <div className="px-5 py-4 space-y-3">
+                                    <p className="text-xs font-medium text-[#A89080] tracking-wide flex items-center gap-1.5">
+                                        <svg className="w-3 h-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" d="M6 8h4M3.5 5.5A2.5 2.5 0 016 8a2.5 2.5 0 01-2.5 2.5M12.5 5.5A2.5 2.5 0 0110 8a2.5 2.5 0 002.5 2.5" /></svg>
+                                        串聯
+                                    </p>
+                                    {(() => {
+                                        const oppositeType = record.type === 'body' ? 'mood' : 'body';
+                                        const currentLinks = edited.links || [];
+                                        const linkable = records.filter(r => r.type === oppositeType && r.id !== record.id).sort((a,b) => new Date(b.date)-new Date(a.date));
+                                        return linkable.length === 0
+                                            ? <p className="text-xs text-[#D1C4B9]">尚無可串聯的紀錄</p>
+                                            : <div className="space-y-2 max-h-48 overflow-y-auto">
+                                                {linkable.map(r => {
+                                                    const linked = currentLinks.includes(r.id);
+                                                    const sum = r.type === 'body'
+                                                        ? `${[r.area, r.part].filter(Boolean).join(' ')}${(r.sensationData||[]).length ? ' · ' + r.sensationData.slice(0,2).map(s=>s.label).join('、') : ''}`
+                                                        : Object.keys(r.moods||{}).slice(0,3).join('、') || '心情記錄';
+                                                    return (
+                                                        <button key={r.id} onClick={() => setEdited({...edited, links: linked ? currentLinks.filter(x=>x!==r.id) : [...currentLinks, r.id]})}
+                                                            className={"w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-left transition-all " + (linked ? 'bg-[#C8A882]/10 border-[#C8A882]' : 'bg-white border-[#F3E5D8]')}>
+                                                            <div>
+                                                                <p className={"text-xs font-medium " + (linked ? 'text-[#C8A882]' : 'text-[#8D7B6D]')}>{sum}</p>
+                                                                <p className="text-[10px] text-[#D1C4B9] mt-0.5">{r.date} · {r.timeSlot}</p>
+                                                            </div>
+                                                            {linked && <svg className="w-3 h-3 text-[#C8A882] shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" d="M6 8h4M3.5 5.5A2.5 2.5 0 016 8a2.5 2.5 0 01-2.5 2.5M12.5 5.5A2.5 2.5 0 0110 8a2.5 2.5 0 002.5 2.5" /></svg>}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>;
+                                    })()}
+                                </div>
+                            </div>
+                        )}
+                        <div className="flex gap-3">
                                             <button onClick={() => setEditingId(null)} className="flex-1 py-2 text-xs text-[#A89080] font-medium uppercase tracking-widest">取消</button>
                                             <button onClick={() => saveEdit(l.id)} className="flex-[2] py-2 bg-[#C8A882] text-white rounded-2xl text-xs font-medium tracking-widest">儲存</button>
                                         </div>
@@ -1852,7 +1933,7 @@
                                         <div className="flex justify-between items-start gap-2">
                                             <div className="space-y-1 flex-1">
                                                 <p className="text-xs font-medium text-[#A89080] tracking-wide">回應方式</p>
-                                                <p className="text-sm font-light text-[#8D7B6D] leading-relaxed">{l.action}</p>
+                                                <p className="text-sm font-light text-[#8D7B6D] leading-relaxed whitespace-pre-wrap">{l.action}</p>
                                             </div>
                                             <div className="flex gap-2 shrink-0">
                                                 <button onClick={() => startEdit(l)} className="px-3 py-1 border border-[#C8A882] rounded-full text-xs font-medium text-[#C8A882] tracking-wide">編輯</button>
@@ -2278,45 +2359,51 @@
                                     ) : (
                                         <div className="space-y-2 mt-1">
                                             <p className="text-sm font-medium text-[#C8A882] tracking-wide">日記隨想</p>
-                                            {r.diaryFields && Object.entries(r.diaryFields).filter(([,v])=>v?.trim()).slice(0,2).map(([k,v]) => {
+                                            {r.diaryFields && Object.entries(r.diaryFields).filter(([,v])=>v?.trim()).map(([k,v]) => {
                                                 const BL = {f1:'環境的質地',f2:'留白時刻',f3:'對自己的新發現',f4:'內在呼喚',f5:'溫柔回應',f6:'最深刻的一抹色彩'};
                                                 const label = BL[k] || (r.customLabels||{})[k] || k;
-                                                return <p key={k} className="text-xs text-[#8D7B6D] line-clamp-1"><span className="text-[#A89080] font-medium">{label}：</span>{v}</p>;
+                                                return <p key={k} className="text-xs text-[#8D7B6D] leading-relaxed"><span className="text-[#A89080] font-medium">{label}：</span>{v}</p>;
                                             })}
                                         </div>
                                     )}
                                 </div>
-                                {r.type !== 'diary' && <button onClick={() => setExpId(expId === r.id ? null : r.id)} className="text-xs font-medium text-white bg-[#C8A882] px-4 py-1.5 rounded-full tracking-widests transition-transform active:scale-95 shrink-0 whitespace-nowrap mt-1">+ 回應</button>}
+                                {r.type !== 'diary' && <button onClick={() => setExpId(expId === r.id ? null : r.id)} className="text-xs font-medium text-white bg-[#C8A882] px-4 py-1.5 rounded-full tracking-widest transition-transform active:scale-95 shrink-0 whitespace-nowrap mt-1">+ 回應</button>}
                                 {r.type === 'diary' && (
                                     <button onClick={() => onDetail(r)} className="text-xs font-medium text-[#C8A882] border border-[#F3E5D8] px-4 py-1.5 rounded-full tracking-widest transition-transform active:scale-95 shrink-0 whitespace-nowrap mt-1">串聯</button>
                                 )}
                             </div>
-                                    {(r.timingBefore||r.timingDuring||r.timingAfter) && (
-                                        <div className="flex flex-wrap gap-1 pt-1">
-                                            {r.timingBefore && r.timingBefore.split(',').map(t=><span key={t} className="text-[10px] bg-[#F3E5D8]/60 text-[#A89080] px-2 py-0.5 rounded-full">{t.trim()}</span>)}
-                                            {r.timingDuring && r.timingDuring.split(',').map(t=><span key={t} className="text-[10px] bg-[#F3E5D8]/60 text-[#A89080] px-2 py-0.5 rounded-full">{t.trim()}</span>)}
-                                            {r.timingAfter && r.timingAfter.split(',').map(t=><span key={t} className="text-[10px] bg-[#F3E5D8]/60 text-[#A89080] px-2 py-0.5 rounded-full">{t.trim()}</span>)}
-                                        </div>
-                                    )}
-                                    {r.links && r.links.length > 0 && (
-                                        <div className="pt-1.5 space-y-1">
-                                            {r.links.map(id => {
-                                                const lr = records.find(x => x.id === id);
-                                                if (!lr) return null;
-                                                const lrSummary = lr.type === 'body'
-                                                    ? `${[lr.area, (lr.side||[]).filter(s=>s!=='不分').join(' '), lr.part].filter(Boolean).join(' ')}${(lr.sensationData||[]).length ? ' · ' + lr.sensationData.slice(0,2).map(s=>s.label+(s.intensity?` ${s.intensity}%`:'')).join('、') : ''}`
-                                                    : lr.type === 'mood'
-                                                    ? Object.entries(lr.moods||{}).slice(0,3).map(([k,v])=>`${k} ${v}%`).join('、')
-                                                    : '日記';
-                                                return (
-                                                    <p key={id} className="text-xs flex items-start gap-1.5">
-                                                        <svg className="w-3 h-3 inline-block shrink-0 mt-0.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" d="M6 8h4M3.5 5.5A2.5 2.5 0 016 8a2.5 2.5 0 01-2.5 2.5M12.5 5.5A2.5 2.5 0 0110 8a2.5 2.5 0 002.5 2.5" /></svg>
-                                                        <span><span className="font-medium text-[#A89080]">已串聯 · </span><span className="font-light text-[#8D7B6D]">{lrSummary}</span></span>
-                                                    </p>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
+                            {(r.trueFeeling || r.bodyLanguage) && (
+                                <div className="pt-1 border-t border-[#F3E5D8] space-y-1">
+                                    {r.trueFeeling && <p className="text-xs leading-relaxed"><span className="text-[#A89080] font-medium">真實感受 · </span><span className="font-light text-[#8D7B6D] whitespace-pre-wrap">{r.trueFeeling}</span></p>}
+                                    {r.bodyLanguage && <p className="text-xs leading-relaxed"><span className="text-[#A89080] font-medium">身體想告訴我 · </span><span className="font-light text-[#8D7B6D] whitespace-pre-wrap">{r.bodyLanguage}</span></p>}
+                                </div>
+                            )}
+                            {(r.timingBefore||r.timingDuring||r.timingAfter) && (
+                                <div className="pt-1 border-t border-[#F3E5D8] space-y-1">
+                                    {r.timingBefore && <p className="text-xs leading-relaxed line-clamp-1"><span className="text-[#A89080] font-medium">不適出現前 · </span><span className="font-light text-[#8D7B6D] whitespace-pre-wrap">{r.timingBefore}</span></p>}
+                                    {r.timingDuring && <p className="text-xs leading-relaxed line-clamp-1"><span className="text-[#A89080] font-medium">不適發生時 · </span><span className="font-light text-[#8D7B6D] whitespace-pre-wrap">{r.timingDuring}</span></p>}
+                                    {r.timingAfter && <p className="text-xs leading-relaxed line-clamp-1"><span className="text-[#A89080] font-medium">預期事件 · </span><span className="font-light text-[#8D7B6D] whitespace-pre-wrap">{r.timingAfter}</span></p>}
+                                </div>
+                            )}
+                            {r.links && r.links.length > 0 && (
+                                <div className="pt-1 border-t border-[#F3E5D8] space-y-1">
+                                    {r.links.map(id => {
+                                        const lr = records.find(x => x.id === id);
+                                        if (!lr) return null;
+                                        const lrSummary = lr.type === 'body'
+                                            ? `${[lr.area, (lr.side||[]).filter(s=>s!=='不分').join(' '), lr.part].filter(Boolean).join(' ')}${(lr.sensationData||[]).length ? ' · ' + lr.sensationData.slice(0,2).map(s=>s.label+(s.intensity?` ${s.intensity}%`:'')).join('、') : ''}`
+                                            : lr.type === 'mood'
+                                            ? Object.entries(lr.moods||{}).slice(0,3).map(([k,v])=>`${k} ${v}%`).join('、')
+                                            : '日記';
+                                        return (
+                                            <p key={id} className="text-xs flex items-start gap-1.5">
+                                                <svg className="w-3 h-3 inline-block shrink-0 mt-0.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" d="M6 8h4M3.5 5.5A2.5 2.5 0 016 8a2.5 2.5 0 01-2.5 2.5M12.5 5.5A2.5 2.5 0 0110 8a2.5 2.5 0 002.5 2.5" /></svg>
+                                                <span><span className="font-medium text-[#A89080]">已串聯 · </span><span className="font-light text-[#8D7B6D]">{lrSummary}</span></span>
+                                            </p>
+                                        );
+                                    })}
+                                </div>
+                            )}
 
                             {/* 回應清單 */}
                             {(r.lab || []).length > 0 && (
@@ -2326,7 +2413,7 @@
                                             <div className="flex justify-between items-start gap-2">
                                                 <div className="space-y-1 flex-1">
                                                     <p className="text-xs font-medium text-[#A89080] tracking-wide">回應方式</p>
-                                                    <p className="text-sm font-light text-[#8D7B6D] leading-relaxed">{l.action}</p>
+                                                    <p className="text-sm font-light text-[#8D7B6D] leading-relaxed whitespace-pre-wrap">{l.action}</p>
                                                 </div>
                                                 <div className="flex gap-2 shrink-0">
                                                     <button onClick={() => { setEditLabId({recordId:r.id,labId:l.id}); setEditLabText(l.action); setEditLabEffect(l.effect || 0); }} className="text-xs text-[#C8A882] underline px-2 py-0.5 shrink-0">編輯</button>
@@ -2353,12 +2440,14 @@
                                     <div className="space-y-1.5">
                                         <p className="text-xs text-[#A89080] font-medium">回應後的程度</p>
                                         <div className="flex gap-2">
-                                            {[{v:-1,label:'更差'},{v:0,label:'沒變'},{v:1,label:'好轉'}].map(opt => (
-                                                <button key={opt.v} onClick={() => setEditLabEffect(opt.v)}
-                                                    className={"flex-1 py-2 rounded-xl text-xs font-medium border transition-all " + (editLabEffect === opt.v ? 'bg-[#C8A882] text-white border-[#C8A882]' : 'text-[#A89080] border-[#F3E5D8]')}>
-                                                    {opt.label}
-                                                </button>
-                                            ))}
+                                            <div className="flex items-center gap-2 text-[10px] text-[#D1C4B9]">
+                                                <span>負面</span>
+                                                <input type="range" min="-10" max="10" step="1" className="flex-1"
+                                                    value={editLabEffect}
+                                                    onChange={e => setEditLabEffect(parseInt(e.target.value))} />
+                                                <span>正面</span>
+                                            </div>
+                                            <p className="text-xs text-center text-[#C8A882] font-medium">{editLabEffect > 0 ? '+' : ''}{editLabEffect * 10}%</p>
                                         </div>
                                     </div>
                                     <div className="flex gap-2 justify-end">
