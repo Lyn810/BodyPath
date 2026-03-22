@@ -2052,7 +2052,7 @@
     }
 
     function TrendPage({ records }) {
-        const [month, setMonth] = useState('2026-03');
+        const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
         const [trendTab, setTrendTab] = useState('all');
         useEffect(() => {
             const CATEGORIES = ["頭部", "肩頸", "背部", "腰臀", "胸部", "腹部", "手臂", "腿腳"];
