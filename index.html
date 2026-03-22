@@ -177,6 +177,7 @@
         body:   'bp_tags_body',
         mood:   'bp_tags_mood',
         timing: 'bp_tags_timing',
+        diary:  'bp_tags_diary',
     };
 
     const DEFAULT_TIMING_TAGS = {
@@ -202,6 +203,15 @@
     }
     function getMoodCustomTags() {
         return loadTags('mood') || [];
+    }
+    function getDiaryCustomTitles() {
+        return loadTags('diary') || [];
+    }
+    function saveDiaryCustomTitle(label) {
+        const current = getDiaryCustomTitles();
+        if (!current.includes(label)) {
+            saveTags('diary', [...current, label]);
+        }
     }
     // ──────────────────────────────────────────────────────────────
 
@@ -490,23 +500,27 @@
     const [bodyTags, setBodyTagsState] = React.useState(() => getBodyCustomTags());
     const [moodTags, setMoodTagsState] = React.useState(() => getMoodCustomTags());
     const [timingTags, setTimingTagsState] = React.useState(() => getTimingTags());
+    const [diaryTitles, setDiaryTitlesState] = React.useState(() => getDiaryCustomTitles());
     const [editingTag, setEditingTag] = React.useState(null);
     const [newInput, setNewInput] = React.useState('');
 
     const saveBody = (tags) => { setBodyTagsState(tags); saveTags('body', tags); };
     const saveMood = (tags) => { setMoodTagsState(tags); saveTags('mood', tags); };
     const saveTiming = (tt) => { setTimingTagsState(tt); saveTags('timing', tt); };
+    const saveDiary = (tags) => { setDiaryTitlesState(tags); saveTags('diary', tags); };
 
     const deleteTag = (type, slot, idx, tagName) => {
         if (!window.confirm(`確定要刪除「${tagName}」嗎？`)) return;
         if (type === 'body') { const t = [...bodyTags]; t.splice(idx, 1); saveBody(t); }
         else if (type === 'mood') { const t = [...moodTags]; t.splice(idx, 1); saveMood(t); }
+        else if (type === 'diary') { const t = [...diaryTitles]; t.splice(idx, 1); saveDiary(t); }
         else { const tt = {...timingTags, [slot]: timingTags[slot].filter((_,i)=>i!==idx) }; saveTiming(tt); }
     };
     const renameTag = (type, slot, idx, newVal) => {
         if (!newVal.trim()) return;
         if (type === 'body') { const t = [...bodyTags]; t[idx] = newVal.trim(); saveBody(t); }
         else if (type === 'mood') { const t = [...moodTags]; t[idx] = newVal.trim(); saveMood(t); }
+        else if (type === 'diary') { const t = [...diaryTitles]; t[idx] = newVal.trim(); saveDiary(t); }
         else { const sl = [...timingTags[slot]]; sl[idx] = newVal.trim(); saveTiming({...timingTags, [slot]: sl}); }
         setEditingTag(null);
     };
@@ -515,6 +529,7 @@
         const v = newInput.trim();
         if (type === 'body' && !bodyTags.includes(v)) saveBody([...bodyTags, v]);
         else if (type === 'mood' && !moodTags.includes(v)) saveMood([...moodTags, v]);
+        else if (type === 'diary' && !diaryTitles.includes(v)) saveDiary([...diaryTitles, v]);
         else if (type === 'timing' && !timingTags[slot].includes(v)) saveTiming({...timingTags, [slot]: [...timingTags[slot], v]});
         setNewInput('');
     };
@@ -566,8 +581,8 @@
                 <h2 className="text-lg font-light text-[#C8A882] tracking-[0.2em]">標籤管理</h2>
                 <button onClick={onClose} className="text-[#A89080] text-xl">✕</button>
             </div>
-            <div className="flex gap-2 px-8 py-4 border-b border-[#F3E5D8]">
-                {[['body','身體感受'],['mood','心情'],['timing','情境脈絡']].map(([key,label]) => (
+            <div className="flex gap-2 px-8 py-4 border-b border-[#F3E5D8] flex-wrap">
+                {[['body','身體感受'],['mood','心情'],['timing','情境脈絡'],['diary','日記標題']].map(([key,label]) => (
                     <button key={key} onClick={() => { setTab(key); setNewInput(''); setEditingTag(null); }}
                         className={"px-4 py-1.5 rounded-full text-xs font-medium tracking-widest transition-all " + (tab===key ? 'bg-[#C8A882] text-white' : 'border border-[#F3E5D8] text-[#A89080]')}>
                         {label}
@@ -577,6 +592,12 @@
             <div className="flex-1 overflow-y-auto px-8 py-6 space-y-4">
                 {tab === 'body' && renderTagList(bodyTags, 'body', null)}
                 {tab === 'mood' && renderTagList(moodTags, 'mood', null)}
+                {tab === 'diary' && (
+                    <div className="space-y-3">
+                        <p className="text-xs text-[#D1C4B9] tracking-widest text-center pb-1">在日記新增過的自訂標題，下次可快速套用</p>
+                        {renderTagList(diaryTitles, 'diary', null)}
+                    </div>
+                )}
                 {tab === 'timing' && TIMING_SLOTS.map(({ key, label }) => (
                     <div key={key} className="space-y-3">
                         <p className="text-xs font-medium text-[#C8A882] tracking-widest">{label}</p>
@@ -1101,6 +1122,8 @@
 
     const [menuOpen, setMenuOpen] = useState(false);
         const [tagManagerOpen, setTagManagerOpen] = useState(false);
+        const [exportRangeOpen, setExportRangeOpen] = useState(false);
+        const [exportRange, setExportRange] = useState({ from: '', to: '' });
 
         const exportJSON = () => {
             const data = localStorage.getItem('bp_v25_all') || '[]';
@@ -1111,6 +1134,26 @@
             a.download = `BodyPath_備份_${new Date().toISOString().slice(0,10)}.json`;
             a.click();
             URL.revokeObjectURL(url);
+            setMenuOpen(false);
+        };
+
+        const exportJSONRange = () => {
+            const { from, to } = exportRange;
+            const all = JSON.parse(localStorage.getItem('bp_v25_all') || '[]');
+            const filtered = all.filter(r => {
+                if (from && r.date < from) return false;
+                if (to && r.date > to) return false;
+                return true;
+            });
+            const suffix = from && to ? `${from}_至_${to}` : from ? `${from}起` : to ? `至_${to}` : '全部';
+            const blob = new Blob([JSON.stringify(filtered)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `BodyPath_${suffix}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            setExportRangeOpen(false);
             setMenuOpen(false);
         };
 
@@ -1216,7 +1259,11 @@
                                 <div className="h-px bg-[#F3E5D8] mx-4"></div>
                                 <button onClick={exportJSON} className="w-full px-5 py-3.5 text-left text-sm text-[#A89080] tracking-wide flex items-center gap-3 active:bg-[#FAF7F4]">
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
-                                    備份資料
+                                    備份全部資料
+                                </button>
+                                <button onClick={() => { setExportRangeOpen(true); setMenuOpen(false); }} className="w-full px-5 py-3.5 text-left text-sm text-[#A89080] tracking-wide flex items-center gap-3 active:bg-[#FAF7F4]">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
+                                    指定區間匯出
                                 </button>
                                 <div className="h-px bg-[#F3E5D8] mx-4"></div>
                                 <button onClick={importJSON} className="w-full px-5 py-3.5 text-left text-sm text-[#A89080] tracking-wide flex items-center gap-3 active:bg-[#FAF7F4]">
@@ -1254,6 +1301,52 @@
                     ))}
                 </div>
             </div>
+            {/* 指定區間匯出彈窗 */}
+            {exportRangeOpen && (
+                <div className="fixed inset-0 z-[300] flex items-end justify-center" style={{background:'rgba(250,247,244,0.7)', backdropFilter:'blur(6px)'}}>
+                    <div className="bg-white rounded-t-[2.5rem] w-full max-w-[428px] px-8 pt-8 pb-12 border-t border-[#F3E5D8] shadow-xl" style={{animation:'slideUp 0.3s ease'}}>
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-base font-light text-[#C8A882] tracking-[0.2em]">指定區間匯出</h2>
+                            <button onClick={() => setExportRangeOpen(false)} className="text-[#A89080] text-xl">✕</button>
+                        </div>
+                        <p className="text-xs text-[#D1C4B9] tracking-wide mb-6 leading-relaxed">選擇要匯出的日期範圍，空白則不限制該端。匯出的 JSON 可直接給 AI 進行分析。</p>
+                        <div className="space-y-4 mb-8">
+                            <div className="flex items-center gap-4">
+                                <span className="text-xs text-[#A89080] tracking-widest w-8 shrink-0">從</span>
+                                <input type="date" value={exportRange.from}
+                                    onChange={e => setExportRange(r => ({...r, from: e.target.value}))}
+                                    className="flex-1 text-sm text-[#8D7B6D] border border-[#F3E5D8] rounded-2xl px-4 py-3 outline-none bg-white" />
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <span className="text-xs text-[#A89080] tracking-widest w-8 shrink-0">到</span>
+                                <input type="date" value={exportRange.to}
+                                    onChange={e => setExportRange(r => ({...r, to: e.target.value}))}
+                                    className="flex-1 text-sm text-[#8D7B6D] border border-[#F3E5D8] rounded-2xl px-4 py-3 outline-none bg-white" />
+                            </div>
+                        </div>
+                        {/* 快捷區間選項 */}
+                        <div className="flex flex-wrap gap-2 mb-8">
+                            {[
+                                { label: '近 7 天', days: 7 },
+                                { label: '近 30 天', days: 30 },
+                                { label: '近 3 個月', days: 90 },
+                            ].map(({ label, days }) => (
+                                <button key={label} onClick={() => {
+                                    const to = new Date().toISOString().slice(0,10);
+                                    const from = new Date(Date.now() - days * 86400000).toISOString().slice(0,10);
+                                    setExportRange({ from, to });
+                                }} className="px-4 py-1.5 rounded-full border border-[#F3E5D8] text-xs text-[#A89080] active:bg-[#F3E5D8]/50 transition-all">
+                                    {label}
+                                </button>
+                            ))}
+                            <button onClick={() => setExportRange({ from: '', to: '' })} className="px-4 py-1.5 rounded-full border border-[#F3E5D8] text-xs text-[#D1C4B9] active:bg-[#F3E5D8]/50 transition-all">全部</button>
+                        </div>
+                        <button onClick={exportJSONRange} className="w-full py-4 rounded-[1.5rem] bg-[#C8A882] text-white text-sm font-medium tracking-widest active:opacity-80 transition-all">
+                            匯出 JSON
+                        </button>
+                    </div>
+                </div>
+            )}
             {tagManagerOpen && (
                 <TagManagerPage onClose={() => setTagManagerOpen(false)} />
             )}
@@ -1720,6 +1813,7 @@
         const [customGroups, setCustomGroups] = useState([]); // [{id, label, key}]
         const [customInput, setCustomInput] = useState('');
         const [selected, setSelected] = useState(null); // null=step1
+        const [savedDiaryTitles] = useState(() => getDiaryCustomTitles());
         const setF = (k, v) => setFields(prev => ({...prev, [k]: v}));
         const hasContent = Object.values(fields).some(v => v && v.trim()) ||
             customGroups.some(cg => fields[cg.key] && fields[cg.key].trim());
@@ -1736,6 +1830,7 @@
             if (!label) return;
             const key = 'custom_' + Date.now();
             setCustomGroups(prev => [...prev, { id: key, label, key }]);
+            saveDiaryCustomTitle(label); // 記憶到標籤庫
             if (!selected) setSelected([key]);
             else setSelected(prev => [...(prev||[]), key]);
             setCustomInput('');
@@ -1776,6 +1871,23 @@
                                 </div>
                             ) : (
                                 <button onClick={() => setCustomInput(' ')} className="w-full py-3 border border-dashed border-[#C8A882]/40 rounded-2xl text-xs font-medium text-[#C8A882] tracking-wide">+ 新增日記標題</button>
+                            )}
+                            {/* 歷史自訂標題快捷選 */}
+                            {savedDiaryTitles.filter(t => !customGroups.some(cg => cg.label === t)).length > 0 && (
+                                <div className="pt-2 space-y-2">
+                                    <p className="text-[10px] text-[#D1C4B9] tracking-widest text-center">曾經使用過的標題</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {savedDiaryTitles.filter(t => !customGroups.some(cg => cg.label === t)).map(title => (
+                                            <button key={title} onClick={() => {
+                                                const key = 'custom_' + Date.now() + Math.random();
+                                                setCustomGroups(prev => [...prev, { id: key, label: title, key }]);
+                                                setSelected(prev => [...(prev||[]), key]);
+                                            }} className="px-3 py-1.5 rounded-full border border-[#C8A882]/40 text-xs text-[#C8A882] bg-white active:bg-[#F3E5D8]/50 transition-all">
+                                                {title}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -2052,7 +2164,7 @@
     }
 
     function TrendPage({ records }) {
-        const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
+        const [month, setMonth] = useState('2026-03');
         const [trendTab, setTrendTab] = useState('all');
         useEffect(() => {
             const CATEGORIES = ["頭部", "肩頸", "背部", "腰臀", "胸部", "腹部", "手臂", "腿腳"];
