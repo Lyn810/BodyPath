@@ -177,6 +177,7 @@
         body:   'bp_tags_body',
         mood:   'bp_tags_mood',
         timing: 'bp_tags_timing',
+        diary:  'bp_tags_diary',
     };
 
     const DEFAULT_TIMING_TAGS = {
@@ -202,6 +203,15 @@
     }
     function getMoodCustomTags() {
         return loadTags('mood') || [];
+    }
+    function getDiaryCustomTitles() {
+        return loadTags('diary') || [];
+    }
+    function saveDiaryCustomTitle(label) {
+        const current = getDiaryCustomTitles();
+        if (!current.includes(label)) {
+            saveTags('diary', [...current, label]);
+        }
     }
     // ──────────────────────────────────────────────────────────────
 
@@ -431,21 +441,21 @@
                             </div>
                         </div>
 
-                        {/* 相關性 */}
+                        {/* 串聯 */}
                         {(record.type === 'body' || record.type === 'mood') && (
                         <div className="border border-[#F3E5D8] rounded-[2rem] overflow-hidden">
                             <button onClick={() => toggle('links')} className="w-full flex items-center justify-between px-6 py-5 text-left">
                                 <div>
-                                    <p className="text-sm font-medium text-[#A89080] tracking-wide">相關性</p>
+                                    <p className="text-sm font-medium text-[#A89080] tracking-wide">串聯</p>
                                     {linkedIds.length > 0 && !selected.includes('links') && (
-                                        <p className="text-xs text-[#C8A882] mt-1">已關聯 {linkedIds.length} 筆{oppositeType === 'mood' ? '心情' : '身體'}紀錄</p>
+                                        <p className="text-xs text-[#C8A882] mt-1">已串聯 {linkedIds.length} 筆{oppositeType === 'mood' ? '心情' : '身體'}紀錄</p>
                                     )}
                                 </div>
                                 <span className="text-[#C8A882] text-xl font-light">{selected.includes('links') ? '−' : '+'}</span>
                             </button>
                             {selected.includes('links') && (
                                 <div className="px-6 pb-6 space-y-3">
-                                    <p className="text-xs text-[#D1C4B9] tracking-wide">選擇要串聯的{oppositeType === 'mood' ? '心情' : '身體'}紀錄</p>
+                                    <p className="text-xs text-[#D1C4B9] tracking-wide">{record.type === 'body' ? '選擇與這筆資料相關的心情紀錄' : '選擇與這筆資料相關的身體紀錄'}</p>
                                     {linkableRecords.length === 0 ? (
                                         <p className="text-xs text-[#D1C4B9] text-center py-4">尚無可關聯的紀錄</p>
                                     ) : (
@@ -490,23 +500,27 @@
     const [bodyTags, setBodyTagsState] = React.useState(() => getBodyCustomTags());
     const [moodTags, setMoodTagsState] = React.useState(() => getMoodCustomTags());
     const [timingTags, setTimingTagsState] = React.useState(() => getTimingTags());
+    const [diaryTitles, setDiaryTitlesState] = React.useState(() => getDiaryCustomTitles());
     const [editingTag, setEditingTag] = React.useState(null);
     const [newInput, setNewInput] = React.useState('');
 
     const saveBody = (tags) => { setBodyTagsState(tags); saveTags('body', tags); };
     const saveMood = (tags) => { setMoodTagsState(tags); saveTags('mood', tags); };
     const saveTiming = (tt) => { setTimingTagsState(tt); saveTags('timing', tt); };
+    const saveDiary = (tags) => { setDiaryTitlesState(tags); saveTags('diary', tags); };
 
     const deleteTag = (type, slot, idx, tagName) => {
         if (!window.confirm(`確定要刪除「${tagName}」嗎？`)) return;
         if (type === 'body') { const t = [...bodyTags]; t.splice(idx, 1); saveBody(t); }
         else if (type === 'mood') { const t = [...moodTags]; t.splice(idx, 1); saveMood(t); }
+        else if (type === 'diary') { const t = [...diaryTitles]; t.splice(idx, 1); saveDiary(t); }
         else { const tt = {...timingTags, [slot]: timingTags[slot].filter((_,i)=>i!==idx) }; saveTiming(tt); }
     };
     const renameTag = (type, slot, idx, newVal) => {
         if (!newVal.trim()) return;
         if (type === 'body') { const t = [...bodyTags]; t[idx] = newVal.trim(); saveBody(t); }
         else if (type === 'mood') { const t = [...moodTags]; t[idx] = newVal.trim(); saveMood(t); }
+        else if (type === 'diary') { const t = [...diaryTitles]; t[idx] = newVal.trim(); saveDiary(t); }
         else { const sl = [...timingTags[slot]]; sl[idx] = newVal.trim(); saveTiming({...timingTags, [slot]: sl}); }
         setEditingTag(null);
     };
@@ -515,6 +529,7 @@
         const v = newInput.trim();
         if (type === 'body' && !bodyTags.includes(v)) saveBody([...bodyTags, v]);
         else if (type === 'mood' && !moodTags.includes(v)) saveMood([...moodTags, v]);
+        else if (type === 'diary' && !diaryTitles.includes(v)) saveDiary([...diaryTitles, v]);
         else if (type === 'timing' && !timingTags[slot].includes(v)) saveTiming({...timingTags, [slot]: [...timingTags[slot], v]});
         setNewInput('');
     };
@@ -566,8 +581,8 @@
                 <h2 className="text-lg font-light text-[#C8A882] tracking-[0.2em]">標籤管理</h2>
                 <button onClick={onClose} className="text-[#A89080] text-xl">✕</button>
             </div>
-            <div className="flex gap-2 px-8 py-4 border-b border-[#F3E5D8]">
-                {[['body','身體感受'],['mood','心情'],['timing','情境脈絡']].map(([key,label]) => (
+            <div className="flex gap-2 px-8 py-4 border-b border-[#F3E5D8] flex-wrap">
+                {[['body','身體感受'],['mood','心情'],['timing','情境脈絡'],['diary','日記標題']].map(([key,label]) => (
                     <button key={key} onClick={() => { setTab(key); setNewInput(''); setEditingTag(null); }}
                         className={"px-4 py-1.5 rounded-full text-xs font-medium tracking-widest transition-all " + (tab===key ? 'bg-[#C8A882] text-white' : 'border border-[#F3E5D8] text-[#A89080]')}>
                         {label}
@@ -577,6 +592,12 @@
             <div className="flex-1 overflow-y-auto px-8 py-6 space-y-4">
                 {tab === 'body' && renderTagList(bodyTags, 'body', null)}
                 {tab === 'mood' && renderTagList(moodTags, 'mood', null)}
+                {tab === 'diary' && (
+                    <div className="space-y-3">
+                        <p className="text-xs text-[#D1C4B9] tracking-widest text-center pb-1">在日記新增過的自訂標題，下次可快速套用</p>
+                        {renderTagList(diaryTitles, 'diary', null)}
+                    </div>
+                )}
                 {tab === 'timing' && TIMING_SLOTS.map(({ key, label }) => (
                     <div key={key} className="space-y-3">
                         <p className="text-xs font-medium text-[#C8A882] tracking-widest">{label}</p>
@@ -1101,6 +1122,190 @@
 
     const [menuOpen, setMenuOpen] = useState(false);
         const [tagManagerOpen, setTagManagerOpen] = useState(false);
+        const [exportRangeOpen, setExportRangeOpen] = useState(false);
+        const [exportRange, setExportRange] = useState({ from: '', to: '' });
+
+        const exportReport = (from, to) => {
+            const all = JSON.parse(localStorage.getItem('bp_v25_all') || '[]');
+            const filtered = all.filter(r => {
+                if (from && r.date < from) return false;
+                if (to && r.date > to) return false;
+                return true;
+            }).sort((a,b) => new Date(a.date) - new Date(b.date));
+
+            const rangeLabel = from && to ? `${from} 至 ${to}` : from ? `${from} 起` : to ? `至 ${to}` : '全部紀錄';
+
+            const BUILT_IN_LABELS = { f1:'環境的質地', f2:'留白時刻', f3:'對自己的新發現', f4:'內在呼喚', f5:'溫柔回應', f6:'最深刻的一抹色彩' };
+
+            const typeLabel = t => t === 'body' ? '身體覺察' : t === 'mood' ? '心情能量' : '日記隨想';
+            const typeColor = t => t === 'body' ? '#C8A882' : t === 'mood' ? '#B8A0C8' : '#A0B8C8';
+
+            const bodyRecords = filtered.filter(r => r.type === 'body');
+            const moodRecords = filtered.filter(r => r.type === 'mood');
+            const diaryRecords = filtered.filter(r => r.type === 'diary');
+
+            // 身體部位頻率統計
+            const partFreq = {};
+            bodyRecords.forEach(r => {
+                const key = [r.area, r.part].filter(Boolean).join(' ');
+                if (key) partFreq[key] = (partFreq[key] || 0) + 1;
+            });
+            const topParts = Object.entries(partFreq).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+            // 心情頻率統計
+            const moodFreq = {};
+            moodRecords.forEach(r => {
+                Object.keys(r.moods||{}).forEach(m => { moodFreq[m] = (moodFreq[m]||0)+1; });
+            });
+            const topMoods = Object.entries(moodFreq).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+            const renderRecord = (r) => {
+                let content = '';
+                if (r.type === 'body') {
+                    const loc = [r.area, (r.side||[]).filter(s=>s!=='不分').join(' '), r.part].filter(Boolean).join(' · ');
+                    content += loc ? `<p class="rec-loc">📍 ${loc}</p>` : '';
+                    if ((r.sensationData||[]).length) {
+                        content += `<p class="rec-sub">感受：${r.sensationData.map(s=>`${s.label} ${s.intensity}%`).join('、')}</p>`;
+                    }
+                    if (r.timingBefore) content += `<p class="rec-sub">不適出現前：${r.timingBefore}</p>`;
+                    if (r.timingDuring) content += `<p class="rec-sub">不適發生時：${r.timingDuring}</p>`;
+                    if (r.timingAfter) content += `<p class="rec-sub">預期事件：${r.timingAfter}</p>`;
+                    if (r.bodyLanguage) content += `<p class="rec-sub">身體想告訴我：${r.bodyLanguage}</p>`;
+                    if (r.trueFeeling) content += `<p class="rec-sub">真實感受：${r.trueFeeling}</p>`;
+                } else if (r.type === 'mood') {
+                    const moods = Object.entries(r.moods||{}).map(([k,v])=>`${k} ${v}%`).join('、');
+                    if (moods) content += `<p class="rec-loc">💭 ${moods}</p>`;
+                    if (r.bodyLanguage) content += `<p class="rec-sub">身體想告訴我：${r.bodyLanguage}</p>`;
+                    if (r.trueFeeling) content += `<p class="rec-sub">真實感受：${r.trueFeeling}</p>`;
+                } else if (r.type === 'diary') {
+                    const df = r.diaryFields || {};
+                    const cl = r.customLabels || {};
+                    Object.entries(df).filter(([,v])=>v?.trim()).forEach(([k,v]) => {
+                        const label = BUILT_IN_LABELS[k] || cl[k] || k;
+                        content += `<p class="rec-sub"><span class="rec-field">${label}：</span>${v}</p>`;
+                    });
+                    if (!Object.keys(df).length && r.sentence) content += `<p class="rec-sub">${r.sentence}</p>`;
+                }
+                if ((r.lab||[]).length) {
+                    content += `<div class="rec-lab">`;
+                    r.lab.forEach(l => {
+                        const eff = l.effect * 10;
+                        const effStr = eff > 0 ? `+${eff}%` : eff < 0 ? `${eff}%` : '中性';
+                        content += `<p class="rec-sub">🧪 ${l.action}　成效：${effStr}</p>`;
+                    });
+                    content += `</div>`;
+                }
+                return `
+                    <div class="rec-card" style="border-left:3px solid ${typeColor(r.type)}">
+                        <div class="rec-header">
+                            <span class="rec-type" style="color:${typeColor(r.type)}">${typeLabel(r.type)}</span>
+                            <span class="rec-date">${r.date}　${r.timeSlot||''}</span>
+                        </div>
+                        ${content}
+                    </div>`;
+            };
+
+            const statBar = (label, count, max, color) =>
+                `<div class="stat-row"><span class="stat-label">${label}</span><div class="stat-bar-wrap"><div class="stat-bar" style="width:${Math.round((count/max)*100)}%;background:${color}"></div></div><span class="stat-num">${count} 次</span></div>`;
+
+            const html = `<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BodyPath 健康報告　${rangeLabel}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; background: #FAF7F4; color: #5C4D42; font-size: 14px; line-height: 1.7; }
+  .print-hint { background: #C8A882; color: white; text-align: center; padding: 12px 20px; font-size: 13px; letter-spacing: 0.05em; }
+  .print-hint strong { display: block; font-size: 12px; opacity: 0.85; margin-top: 2px; font-weight: normal; }
+  .container { max-width: 800px; margin: 0 auto; padding: 40px 24px 80px; }
+  .header { text-align: center; padding: 40px 0 32px; border-bottom: 1px solid #F3E5D8; margin-bottom: 32px; }
+  .logo { font-size: 11px; letter-spacing: 0.3em; color: #C8A882; text-transform: uppercase; margin-bottom: 12px; }
+  .title { font-size: 22px; font-weight: 300; color: #C8A882; letter-spacing: 0.1em; margin-bottom: 8px; }
+  .subtitle { font-size: 13px; color: #A89080; letter-spacing: 0.05em; }
+  .counts { display: flex; justify-content: center; gap: 32px; margin-top: 24px; }
+  .count-item { text-align: center; }
+  .count-num { font-size: 28px; font-weight: 200; color: #C8A882; }
+  .count-label { font-size: 11px; color: #A89080; letter-spacing: 0.1em; margin-top: 2px; }
+  .section { margin-bottom: 40px; }
+  .section-title { font-size: 11px; letter-spacing: 0.25em; color: #C8A882; text-transform: uppercase; border-bottom: 1px solid #F3E5D8; padding-bottom: 10px; margin-bottom: 20px; }
+  .stat-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .stat-label { width: 120px; font-size: 13px; color: #8D7B6D; flex-shrink: 0; }
+  .stat-bar-wrap { flex: 1; height: 6px; background: #F3E5D8; border-radius: 3px; overflow: hidden; }
+  .stat-bar { height: 100%; border-radius: 3px; transition: width 0.3s; }
+  .stat-num { font-size: 12px; color: #A89080; width: 36px; text-align: right; flex-shrink: 0; }
+  .rec-card { background: white; border-radius: 16px; padding: 16px 20px; margin-bottom: 12px; border: 1px solid #F3E5D8; page-break-inside: avoid; }
+  .rec-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .rec-type { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; }
+  .rec-date { font-size: 11px; color: #A89080; }
+  .rec-loc { font-size: 13px; font-weight: 500; color: #8D7B6D; margin-bottom: 6px; }
+  .rec-sub { font-size: 12px; color: #8D7B6D; margin-top: 4px; line-height: 1.6; }
+  .rec-field { font-weight: 500; color: #A89080; }
+  .rec-lab { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #F3E5D8; }
+  .day-group { margin-bottom: 28px; }
+  .day-label { font-size: 12px; font-weight: 500; color: #A89080; letter-spacing: 0.1em; margin-bottom: 10px; padding: 6px 0; border-bottom: 1px solid #F3E5D8; }
+  .no-data { text-align: center; color: #D1C4B9; font-size: 13px; padding: 20px 0; }
+  @media print {
+    .print-hint { display: none; }
+    body { background: white; }
+    .rec-card { border: 1px solid #eee; }
+    .container { padding: 20px 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="print-hint">
+  列印或儲存為 PDF：點擊瀏覽器右上角選單 → 列印
+  <strong>目的地請選「另存為 PDF」，版面配置建議選「直向」</strong>
+</div>
+<div class="container">
+  <div class="header">
+    <p class="logo">BodyPath</p>
+    <h1 class="title">健康覺察報告</h1>
+    <p class="subtitle">${rangeLabel}</p>
+    <div class="counts">
+      <div class="count-item"><div class="count-num">${bodyRecords.length}</div><div class="count-label">身體覺察</div></div>
+      <div class="count-item"><div class="count-num">${moodRecords.length}</div><div class="count-label">心情能量</div></div>
+      <div class="count-item"><div class="count-num">${diaryRecords.length}</div><div class="count-label">日記隨想</div></div>
+    </div>
+  </div>
+
+  ${topParts.length ? `
+  <div class="section">
+    <p class="section-title">身體熱區　Top 5</p>
+    ${topParts.map(([k,v]) => statBar(k, v, topParts[0][1], '#C8A882')).join('')}
+  </div>` : ''}
+
+  ${topMoods.length ? `
+  <div class="section">
+    <p class="section-title">常見心情　Top 5</p>
+    ${topMoods.map(([k,v]) => statBar(k, v, topMoods[0][1], '#B8A0C8')).join('')}
+  </div>` : ''}
+
+  <div class="section">
+    <p class="section-title">完整紀錄　共 ${filtered.length} 筆</p>
+    ${filtered.length === 0 ? '<p class="no-data">此區間無紀錄</p>' : (() => {
+        const byDay = {};
+        filtered.forEach(r => { if (!byDay[r.date]) byDay[r.date] = []; byDay[r.date].push(r); });
+        return Object.entries(byDay).sort((a,b)=>a[0]>b[0]?-1:1).map(([date, recs]) =>
+            `<div class="day-group"><p class="day-label">${date}</p>${recs.map(renderRecord).join('')}</div>`
+        ).join('');
+    })()}
+  </div>
+</div>
+</body>
+</html>`;
+
+            const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const suffix = from && to ? `${from}_至_${to}` : from ? `${from}起` : to ? `至_${to}` : '全部';
+            a.download = `BodyPath_報告_${suffix}.html`;
+            a.click();
+            URL.revokeObjectURL(url);
+        };
 
         const exportJSON = () => {
             const data = localStorage.getItem('bp_v25_all') || '[]';
@@ -1111,6 +1316,26 @@
             a.download = `BodyPath_備份_${new Date().toISOString().slice(0,10)}.json`;
             a.click();
             URL.revokeObjectURL(url);
+            setMenuOpen(false);
+        };
+
+        const exportJSONRange = () => {
+            const { from, to } = exportRange;
+            const all = JSON.parse(localStorage.getItem('bp_v25_all') || '[]');
+            const filtered = all.filter(r => {
+                if (from && r.date < from) return false;
+                if (to && r.date > to) return false;
+                return true;
+            });
+            const suffix = from && to ? `${from}_至_${to}` : from ? `${from}起` : to ? `至_${to}` : '全部';
+            const blob = new Blob([JSON.stringify(filtered)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `BodyPath_${suffix}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            setExportRangeOpen(false);
             setMenuOpen(false);
         };
 
@@ -1216,7 +1441,11 @@
                                 <div className="h-px bg-[#F3E5D8] mx-4"></div>
                                 <button onClick={exportJSON} className="w-full px-5 py-3.5 text-left text-sm text-[#A89080] tracking-wide flex items-center gap-3 active:bg-[#FAF7F4]">
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
-                                    備份資料
+                                    備份全部資料
+                                </button>
+                                <button onClick={() => { setExportRangeOpen(true); setMenuOpen(false); }} className="w-full px-5 py-3.5 text-left text-sm text-[#A89080] tracking-wide flex items-center gap-3 active:bg-[#FAF7F4]">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
+                                    指定區間匯出
                                 </button>
                                 <div className="h-px bg-[#F3E5D8] mx-4"></div>
                                 <button onClick={importJSON} className="w-full px-5 py-3.5 text-left text-sm text-[#A89080] tracking-wide flex items-center gap-3 active:bg-[#FAF7F4]">
@@ -1254,6 +1483,55 @@
                     ))}
                 </div>
             </div>
+            {/* 指定區間匯出彈窗 */}
+            {exportRangeOpen && (
+                <div className="fixed inset-0 z-[300] flex items-end justify-center" style={{background:'rgba(250,247,244,0.7)', backdropFilter:'blur(6px)'}}>
+                    <div className="bg-white rounded-t-[2.5rem] w-full max-w-[428px] px-8 pt-8 pb-12 border-t border-[#F3E5D8] shadow-xl" style={{animation:'slideUp 0.3s ease'}}>
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-base font-light text-[#C8A882] tracking-[0.2em]">指定區間匯出</h2>
+                            <button onClick={() => setExportRangeOpen(false)} className="text-[#A89080] text-xl">✕</button>
+                        </div>
+                        <p className="text-xs text-[#D1C4B9] tracking-wide mb-6 leading-relaxed">選擇要匯出的日期範圍，空白則不限制該端。<br/>健康報告可用瀏覽器開啟後列印成 PDF；JSON 用於備份或 AI 分析。</p>
+                        <div className="space-y-4 mb-8">
+                            <div className="flex items-center gap-4">
+                                <span className="text-xs text-[#A89080] tracking-widest w-8 shrink-0">從</span>
+                                <input type="date" value={exportRange.from}
+                                    onChange={e => setExportRange(r => ({...r, from: e.target.value}))}
+                                    className="flex-1 text-sm text-[#8D7B6D] border border-[#F3E5D8] rounded-2xl px-4 py-3 outline-none bg-white" />
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <span className="text-xs text-[#A89080] tracking-widest w-8 shrink-0">到</span>
+                                <input type="date" value={exportRange.to}
+                                    onChange={e => setExportRange(r => ({...r, to: e.target.value}))}
+                                    className="flex-1 text-sm text-[#8D7B6D] border border-[#F3E5D8] rounded-2xl px-4 py-3 outline-none bg-white" />
+                            </div>
+                        </div>
+                        {/* 快捷區間選項 */}
+                        <div className="flex flex-wrap gap-2 mb-8">
+                            {[
+                                { label: '近 7 天', days: 7 },
+                                { label: '近 30 天', days: 30 },
+                                { label: '近 3 個月', days: 90 },
+                            ].map(({ label, days }) => (
+                                <button key={label} onClick={() => {
+                                    const to = new Date().toISOString().slice(0,10);
+                                    const from = new Date(Date.now() - days * 86400000).toISOString().slice(0,10);
+                                    setExportRange({ from, to });
+                                }} className="px-4 py-1.5 rounded-full border border-[#F3E5D8] text-xs text-[#A89080] active:bg-[#F3E5D8]/50 transition-all">
+                                    {label}
+                                </button>
+                            ))}
+                            <button onClick={() => setExportRange({ from: '', to: '' })} className="px-4 py-1.5 rounded-full border border-[#F3E5D8] text-xs text-[#D1C4B9] active:bg-[#F3E5D8]/50 transition-all">全部</button>
+                        </div>
+                        <button onClick={exportJSONRange} className="w-full py-4 rounded-[1.5rem] bg-white border border-[#C8A882] text-[#C8A882] text-sm font-medium tracking-widest active:opacity-80 transition-all mb-3">
+                            匯出 JSON（備份用）
+                        </button>
+                        <button onClick={() => { exportReport(exportRange.from, exportRange.to); setExportRangeOpen(false); }} className="w-full py-4 rounded-[1.5rem] bg-[#C8A882] text-white text-sm font-medium tracking-widest active:opacity-80 transition-all">
+                            匯出健康報告（HTML）
+                        </button>
+                    </div>
+                </div>
+            )}
             {tagManagerOpen && (
                 <TagManagerPage onClose={() => setTagManagerOpen(false)} />
             )}
@@ -1720,6 +1998,7 @@
         const [customGroups, setCustomGroups] = useState([]); // [{id, label, key}]
         const [customInput, setCustomInput] = useState('');
         const [selected, setSelected] = useState(null); // null=step1
+        const [savedDiaryTitles] = useState(() => getDiaryCustomTitles());
         const setF = (k, v) => setFields(prev => ({...prev, [k]: v}));
         const hasContent = Object.values(fields).some(v => v && v.trim()) ||
             customGroups.some(cg => fields[cg.key] && fields[cg.key].trim());
@@ -1736,6 +2015,7 @@
             if (!label) return;
             const key = 'custom_' + Date.now();
             setCustomGroups(prev => [...prev, { id: key, label, key }]);
+            saveDiaryCustomTitle(label); // 記憶到標籤庫
             if (!selected) setSelected([key]);
             else setSelected(prev => [...(prev||[]), key]);
             setCustomInput('');
@@ -1776,6 +2056,23 @@
                                 </div>
                             ) : (
                                 <button onClick={() => setCustomInput(' ')} className="w-full py-3 border border-dashed border-[#C8A882]/40 rounded-2xl text-xs font-medium text-[#C8A882] tracking-wide">+ 新增日記標題</button>
+                            )}
+                            {/* 歷史自訂標題快捷選 */}
+                            {savedDiaryTitles.filter(t => !customGroups.some(cg => cg.label === t)).length > 0 && (
+                                <div className="pt-2 space-y-2">
+                                    <p className="text-[10px] text-[#D1C4B9] tracking-widest text-center">曾經使用過的標題</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {savedDiaryTitles.filter(t => !customGroups.some(cg => cg.label === t)).map(title => (
+                                            <button key={title} onClick={() => {
+                                                const key = 'custom_' + Date.now() + Math.random();
+                                                setCustomGroups(prev => [...prev, { id: key, label: title, key }]);
+                                                setSelected(prev => [...(prev||[]), key]);
+                                            }} className="px-3 py-1.5 rounded-full border border-[#C8A882]/40 text-xs text-[#C8A882] bg-white active:bg-[#F3E5D8]/50 transition-all">
+                                                {title}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -2260,6 +2557,7 @@
         const today = new Date().toISOString().slice(0, 10);
         const [selectedDate, setSelectedDate] = useState(today);
         const [expId, setExpId] = useState(null);
+        const [diaryLinkId, setDiaryLinkId] = useState(null);
         const [newLab, setNewLab] = useState({ action: '', effect: 0 });
         const [editLabId, setEditLabId] = React.useState(null);
         const [editLabText, setEditLabText] = React.useState('');
@@ -2280,6 +2578,7 @@
                 return { ...r, lab: [...existing, { ...newLab, id: Date.now() }] };
             }));
             setExpId(null);
+            setDiaryLinkId(null);
             setNewLab({ action: '', effect: 0 });
         };
 
@@ -2361,14 +2660,14 @@
                                             {r.diaryFields && Object.entries(r.diaryFields).filter(([,v])=>v?.trim()).map(([k,v]) => {
                                                 const BL = {f1:'環境的質地',f2:'留白時刻',f3:'對自己的新發現',f4:'內在呼喚',f5:'溫柔回應',f6:'最深刻的一抹色彩'};
                                                 const label = BL[k] || (r.customLabels||{})[k] || k;
-                                                return <p key={k} className="text-xs text-[#8D7B6D] leading-relaxed whitespace-pre-wrap"><span className="text-[#A89080] font-medium">{label}：</span>{v}</p>;
+                                                return <p key={k} className="text-xs text-[#8D7B6D] leading-relaxed"><span className="text-[#A89080] font-medium">{label}：</span>{v}</p>;
                                             })}
                                         </div>
                                     )}
                                 </div>
                                 {r.type !== 'diary' && <button onClick={() => setExpId(expId === r.id ? null : r.id)} className="text-xs font-medium text-white bg-[#C8A882] px-4 py-1.5 rounded-full tracking-widest transition-transform active:scale-95 shrink-0 whitespace-nowrap mt-1">+ 回應</button>}
                                 {r.type === 'diary' && (
-                                    <button onClick={() => onDetail(r)} className="text-xs font-medium text-[#C8A882] border border-[#F3E5D8] px-4 py-1.5 rounded-full tracking-widest transition-transform active:scale-95 shrink-0 whitespace-nowrap mt-1">串聯</button>
+                                    <button onClick={() => setDiaryLinkId(diaryLinkId === r.id ? null : r.id)} className="text-xs font-medium text-[#C8A882] border border-[#C8A882]/40 px-4 py-1.5 rounded-full tracking-widest transition-transform active:scale-95 shrink-0 whitespace-nowrap mt-1">串聯</button>
                                 )}
                             </div>
                             {(r.trueFeeling || r.bodyLanguage) && (
@@ -2384,6 +2683,44 @@
                                     {r.timingAfter && <p className="text-xs leading-relaxed line-clamp-1"><span className="text-[#A89080] font-medium">預期事件 · </span><span className="font-light text-[#8D7B6D] whitespace-pre-wrap">{r.timingAfter}</span></p>}
                                 </div>
                             )}
+                            {/* 日記串聯展開選項 */}
+                            {r.type === 'diary' && diaryLinkId === r.id && (() => {
+                                const linkable = records.filter(x => (x.type === 'body' || x.type === 'mood') && x.id !== r.id).sort((a,b) => new Date(b.date)-new Date(a.date));
+                                const currentLinks = r.links || [];
+                                const toggleDiaryLink = (linkId) => {
+                                    const updated = currentLinks.includes(linkId)
+                                        ? currentLinks.filter(x => x !== linkId)
+                                        : [...currentLinks, linkId];
+                                    setRecords(prev => prev.map(x => x.id === r.id ? {...x, links: updated} : x));
+                                };
+                                return (
+                                    <div className="pt-3 border-t border-dashed border-[#F3E5D8] space-y-2 animate-fade-in">
+                                        <p className="text-xs text-[#D1C4B9] tracking-wide">選擇與這筆日記相關的身體或心情紀錄</p>
+                                        {linkable.length === 0
+                                            ? <p className="text-xs text-[#D1C4B9] text-center py-3">尚無可串聯的紀錄</p>
+                                            : <div className="space-y-2 max-h-48 overflow-y-auto">
+                                                {linkable.map(x => {
+                                                    const linked = currentLinks.includes(x.id);
+                                                    const sum = x.type === 'body'
+                                                        ? `${[x.area, x.part].filter(Boolean).join(' ')}${(x.sensationData||[]).length ? ' · ' + x.sensationData.slice(0,2).map(s=>s.label).join('、') : ''}`
+                                                        : Object.keys(x.moods||{}).slice(0,3).join('、') || '心情記錄';
+                                                    return (
+                                                        <button key={x.id} onClick={() => toggleDiaryLink(x.id)}
+                                                            className={"w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-left transition-all " + (linked ? 'bg-[#C8A882]/10 border-[#C8A882]' : 'bg-white border-[#F3E5D8]')}>
+                                                            <div>
+                                                                <p className={"text-xs font-medium " + (linked ? 'text-[#C8A882]' : 'text-[#8D7B6D]')}>{sum}</p>
+                                                                <p className="text-[10px] text-[#D1C4B9] mt-0.5">{x.date} · {x.timeSlot}</p>
+                                                            </div>
+                                                            {linked && <svg className="w-3 h-3 text-[#C8A882] shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" d="M6 8h4M3.5 5.5A2.5 2.5 0 016 8a2.5 2.5 0 01-2.5 2.5M12.5 5.5A2.5 2.5 0 0110 8a2.5 2.5 0 002.5 2.5" /></svg>}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        }
+                                        <button onClick={() => setDiaryLinkId(null)} className="w-full text-xs text-[#A89080] font-medium tracking-widest pt-1">完成</button>
+                                    </div>
+                                );
+                            })()}
                             {r.links && r.links.length > 0 && (
                                 <div className="pt-1 border-t border-[#F3E5D8] space-y-1">
                                     {r.links.map(id => {
