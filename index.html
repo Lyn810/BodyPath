@@ -2563,10 +2563,89 @@
         const [editLabText, setEditLabText] = React.useState('');
         const [editLabEffect, setEditLabEffect] = React.useState(0);
 
+        // 搜尋狀態
+        const [searchOpen, setSearchOpen] = React.useState(false);
+        const [searchKeyword, setSearchKeyword] = React.useState('');
+        const [searchType, setSearchType] = React.useState(''); // '' | 'body' | 'mood' | 'diary'
+        const isSearching = searchOpen && (searchKeyword.trim() || searchType);
+
         // 當月所有天（固定顯示當月）
         const [viewMonth, setViewMonth] = useState(today.slice(0, 7));
         const daysInMonth = new Date(parseInt(viewMonth.slice(0,4)), parseInt(viewMonth.slice(5,7)), 0).getDate();
         const monthPrefix = viewMonth; // e.g. "2026-03"
+
+        // 搜尋邏輯：跨所有日期
+        const BUILT_IN_DIARY_LABELS = { f1:'環境的質地', f2:'留白時刻', f3:'對自己的新發現', f4:'內在呼喚', f5:'溫柔回應', f6:'最深刻的一抹色彩' };
+
+        // 「標題類」欄位 key（有標題意義的欄位名稱）
+        const TITLE_FIELDS = {
+            body: ['area', 'part'],
+            mood: [], // mood 的「標題」是情緒名
+            diary: ['diaryField_labels'], // 特殊處理
+        };
+
+        const matchRecord = (r) => {
+            // 1. 類型篩選
+            if (searchType && r.type !== searchType) return false;
+
+            const kw = searchKeyword.trim().toLowerCase();
+            if (!kw) return true; // 只有類型篩選，無關鍵字
+
+            // 收集「內容文字」（排除欄位標題本身）
+            const contentParts = [];
+            if (r.type === 'body') {
+                (r.sensationData || []).forEach(s => { contentParts.push(s.label); });
+                if (r.bodyLanguage) contentParts.push(r.bodyLanguage);
+                if (r.trueFeeling) contentParts.push(r.trueFeeling);
+                if (r.timingBefore) contentParts.push(r.timingBefore);
+                if (r.timingDuring) contentParts.push(r.timingDuring);
+                if (r.timingAfter) contentParts.push(r.timingAfter);
+                // 標題類（部位）也可搜尋
+                if (r.area) contentParts.push(r.area);
+                if (r.part) contentParts.push(r.part);
+            } else if (r.type === 'mood') {
+                Object.keys(r.moods || {}).forEach(m => contentParts.push(m));
+                if (r.bodyLanguage) contentParts.push(r.bodyLanguage);
+                if (r.trueFeeling) contentParts.push(r.trueFeeling);
+                if (r.timingBefore) contentParts.push(r.timingBefore);
+                if (r.timingDuring) contentParts.push(r.timingDuring);
+                if (r.timingAfter) contentParts.push(r.timingAfter);
+            } else if (r.type === 'diary') {
+                const df = r.diaryFields || {};
+                const cl = r.customLabels || {};
+                // 日記標題（欄位名稱）也可搜尋
+                Object.keys(BUILT_IN_DIARY_LABELS).forEach(k => {
+                    if (df[k] !== undefined) contentParts.push(BUILT_IN_DIARY_LABELS[k]);
+                });
+                Object.entries(cl).forEach(([, label]) => contentParts.push(label));
+                // 日記內容
+                Object.values(df).forEach(v => { if (v) contentParts.push(v); });
+                if (r.sentence) contentParts.push(r.sentence);
+            }
+            // 回應對策
+            (r.lab || []).forEach(l => { if (l.action) contentParts.push(l.action); });
+
+            return contentParts.some(p => p.toLowerCase().includes(kw));
+        };
+
+        const searchResults = isSearching
+            ? [...records].filter(matchRecord).sort((a, b) => new Date(b.date) - new Date(a.date))
+            : [];
+
+        // 高亮關鍵字
+        const highlight = (text) => {
+            if (!searchKeyword.trim() || !text) return text;
+            const kw = searchKeyword.trim();
+            const idx = text.toLowerCase().indexOf(kw.toLowerCase());
+            if (idx === -1) return text;
+            return (
+                <>
+                    {text.slice(0, idx)}
+                    <mark className="bg-[#C8A882]/20 text-[#8D7B6D] rounded px-0.5">{text.slice(idx, idx + kw.length)}</mark>
+                    {text.slice(idx + kw.length)}
+                </>
+            );
+        };
 
         const filtered = records.filter(r => r.date === selectedDate);
 
@@ -2597,9 +2676,140 @@
                         <Icon.Calendar />
                         <h2 className="text-2xl font-light text-[#C8A882] tracking-[0.3em]">調頻月曆</h2>
                     </div>
-                    <input type="month" value={viewMonth} onChange={e => setViewMonth(e.target.value)}
-                        className="bg-transparent text-base font-medium text-[#C8A882] tracking-widest outline-none text-right" />
+                    <div className="flex items-center gap-2">
+                        <button onClick={() => { setSearchOpen(o => !o); if (searchOpen) { setSearchKeyword(''); setSearchType(''); } }}
+                            className={`w-9 h-9 flex items-center justify-center rounded-full border transition-all ${searchOpen ? 'bg-[#C8A882] border-[#C8A882]' : 'border-[#F3E5D8]'}`}>
+                            <svg className={`w-4 h-4 ${searchOpen ? 'text-white' : 'text-[#C8A882]'}`} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                            </svg>
+                        </button>
+                        <input type="month" value={viewMonth} onChange={e => setViewMonth(e.target.value)}
+                            className="bg-transparent text-base font-medium text-[#C8A882] tracking-widest outline-none text-right" />
+                    </div>
                 </header>
+
+                {/* 搜尋面板 */}
+                {searchOpen && (
+                    <div className="space-y-3 animate-fade-in">
+                        {/* 關鍵字輸入 */}
+                        <div className="flex items-center gap-3 px-5 py-3.5 bg-[#FAF7F4] rounded-[2rem] border border-[#F3E5D8]">
+                            <svg className="w-4 h-4 text-[#D1C4B9] shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                            </svg>
+                            <input
+                                value={searchKeyword}
+                                onChange={e => setSearchKeyword(e.target.value)}
+                                placeholder="搜尋關鍵字：部位、感受、心情、內容..."
+                                className="flex-1 bg-transparent text-sm outline-none text-[#8D7B6D] placeholder-[#D1C4B9] font-light"
+                                autoFocus
+                            />
+                            {searchKeyword && (
+                                <button onClick={() => setSearchKeyword('')} className="text-[#D1C4B9] text-lg leading-none shrink-0">×</button>
+                            )}
+                        </div>
+                        {/* 類型篩選（標題層） */}
+                        <div className="flex gap-2 flex-wrap">
+                            <p className="w-full text-[10px] text-[#D1C4B9] tracking-widest pl-1">篩選類型</p>
+                            {[['', '全部'], ['body', '身體覺察'], ['mood', '心情能量'], ['diary', '日記隨想']].map(([val, label]) => (
+                                <button key={val} onClick={() => setSearchType(val)}
+                                    className={`px-4 py-1.5 rounded-full text-xs font-medium tracking-wide transition-all border ${searchType === val ? 'bg-[#C8A882] text-white border-[#C8A882]' : 'border-[#F3E5D8] text-[#A89080]'}`}>
+                                    {label}
+                                </button>
+                            ))}
+                        </div>
+                        {/* 搜尋結果統計 */}
+                        {isSearching && (
+                            <p className="text-[10px] text-[#D1C4B9] tracking-widest pl-1">
+                                找到 {searchResults.length} 筆紀錄
+                                {searchKeyword.trim() && <span>（關鍵字：<span className="text-[#C8A882]">{searchKeyword.trim()}</span>）</span>}
+                                {searchType && <span>（類型：<span className="text-[#C8A882]">{{ body:'身體覺察', mood:'心情能量', diary:'日記隨想' }[searchType]}</span>）</span>}
+                            </p>
+                        )}
+                    </div>
+                )}
+
+                {/* 搜尋模式：結果列表 */}
+                {isSearching ? (
+                    <div className="space-y-4">
+                        {searchResults.length === 0 ? (
+                            <div className="text-center py-16 space-y-2">
+                                <p className="text-xs text-[#D1C4B9] tracking-widest">沒有符合的紀錄</p>
+                                <p className="text-[10px] text-[#D1C4B9]">試試其他關鍵字，或取消類型篩選</p>
+                            </div>
+                        ) : (
+                            searchResults.map(r => {
+                                const kw = searchKeyword.trim().toLowerCase();
+                                const typeLabel = { body: '身體覺察', mood: '心情能量', diary: '日記隨想' }[r.type];
+                                const typeColor = { body: '#C8A882', mood: '#B8A0C8', diary: '#A0B8C8' }[r.type];
+                                // 摘要文字
+                                let summary = '';
+                                let snippets = [];
+                                if (r.type === 'body') {
+                                    summary = [r.area, (r.side||[]).filter(s=>s!=='不分').join(''), r.part].filter(Boolean).join(' · ');
+                                    snippets = (r.sensationData||[]).map(s=>`${s.label} ${s.intensity}%`);
+                                } else if (r.type === 'mood') {
+                                    summary = Object.entries(r.moods||{}).slice(0,3).map(([k,v])=>`${k} ${v}%`).join('・');
+                                } else if (r.type === 'diary') {
+                                    const df = r.diaryFields || {};
+                                    const cl = r.customLabels || {};
+                                    const BUILT_IN = { f1:'環境的質地', f2:'留白時刻', f3:'對自己的新發現', f4:'內在呼喚', f5:'溫柔回應', f6:'最深刻的一抹色彩' };
+                                    const filledEntries = Object.entries(df).filter(([,v])=>v?.trim());
+                                    if (filledEntries.length > 0) {
+                                        const [k0, v0] = filledEntries[0];
+                                        summary = BUILT_IN[k0] || cl[k0] || k0;
+                                        snippets = [v0.slice(0, 60) + (v0.length > 60 ? '…' : '')];
+                                    }
+                                }
+                                // 找出符合關鍵字的欄位作為命中片段
+                                const hitFields = [];
+                                if (kw) {
+                                    const checks = [
+                                        { label: null, val: summary },
+                                        ...(r.bodyLanguage ? [{ label: '身體想告訴我', val: r.bodyLanguage }] : []),
+                                        ...(r.trueFeeling ? [{ label: '真實感受', val: r.trueFeeling }] : []),
+                                        ...(r.timingBefore ? [{ label: '不適出現前', val: r.timingBefore }] : []),
+                                        ...(r.timingDuring ? [{ label: '不適發生時', val: r.timingDuring }] : []),
+                                        ...(r.timingAfter ? [{ label: '預期事件', val: r.timingAfter }] : []),
+                                        ...(r.type === 'diary' ? Object.entries(r.diaryFields || {}).filter(([,v])=>v?.trim()).map(([k,v]) => ({ label: ({ f1:'環境的質地', f2:'留白時刻', f3:'對自己的新發現', f4:'內在呼喚', f5:'溫柔回應', f6:'最深刻的一抹色彩' })[k] || (r.customLabels||{})[k] || k, val: v })) : []),
+                                    ];
+                                    checks.forEach(({ label, val }) => {
+                                        if (val && val.toLowerCase().includes(kw)) {
+                                            hitFields.push({ label, val });
+                                        }
+                                    });
+                                }
+                                return (
+                                    <div key={r.id} onClick={() => onDetail(r)}
+                                        className="p-5 border border-[#F3E5D8] rounded-[2rem] bg-white cursor-pointer active:bg-[#FAF7F4] transition-all space-y-2.5">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="text-[10px] font-medium tracking-widest" style={{color: typeColor}}>{typeLabel}</span>
+                                            <span className="text-[10px] text-[#D1C4B9] tracking-widest">{r.date} · {r.timeSlot}</span>
+                                        </div>
+                                        {summary && (
+                                            <p className="text-sm font-medium text-[#C8A882] tracking-wide leading-snug">
+                                                {highlight(summary)}
+                                            </p>
+                                        )}
+                                        {snippets.length > 0 && (
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {snippets.slice(0,4).map((s, i) => (
+                                                    <span key={i} className="text-xs bg-[#F3E5D8]/60 text-[#C8A882] px-2.5 py-1 rounded-full font-medium">{highlight(s)}</span>
+                                                ))}
+                                            </div>
+                                        )}
+                                        {hitFields.filter(f => f.label !== null).map((f, i) => (
+                                            <p key={i} className="text-xs text-[#8D7B6D] leading-relaxed border-t border-[#F3E5D8] pt-2 first:border-0 first:pt-0">
+                                                {f.label && <span className="text-[#A89080] font-medium">{f.label}：</span>}
+                                                <span className="font-light">{highlight(f.val.slice(0, 80) + (f.val.length > 80 ? '…' : ''))}</span>
+                                            </p>
+                                        ))}
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
+                ) : (
+                <>
 
                 {/* 月曆 */}
                 <div className="grid grid-cols-7 gap-2">
@@ -2825,6 +3035,8 @@
                         </div>
                     ))}
                 </div>
+                </>
+                )}
             </div>
         );
     }
