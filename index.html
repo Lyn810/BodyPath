@@ -2566,8 +2566,11 @@
         // 搜尋狀態
         const [searchOpen, setSearchOpen] = React.useState(false);
         const [searchKeyword, setSearchKeyword] = React.useState('');
-        const [searchType, setSearchType] = React.useState(''); // '' | 'body' | 'mood' | 'diary'
-        const isSearching = searchOpen && (searchKeyword.trim() || searchType);
+        // row1: '' | 'body' | 'mood' | 'diary'
+        // row2: '' | 'part' | 'emotion' | 'diary_title'
+        const [filterRow1, setFilterRow1] = React.useState('');
+        const [filterRow2, setFilterRow2] = React.useState('');
+        const isSearching = searchOpen && (searchKeyword.trim() || filterRow1 || filterRow2);
 
         // 當月所有天（固定顯示當月）
         const [viewMonth, setViewMonth] = useState(today.slice(0, 7));
@@ -2577,53 +2580,62 @@
         // 搜尋邏輯：跨所有日期
         const BUILT_IN_DIARY_LABELS = { f1:'環境的質地', f2:'留白時刻', f3:'對自己的新發現', f4:'內在呼喚', f5:'溫柔回應', f6:'最深刻的一抹色彩' };
 
-        // 「標題類」欄位 key（有標題意義的欄位名稱）
-        const TITLE_FIELDS = {
-            body: ['area', 'part'],
-            mood: [], // mood 的「標題」是情緒名
-            diary: ['diaryField_labels'], // 特殊處理
-        };
-
         const matchRecord = (r) => {
-            // 1. 類型篩選
-            if (searchType && r.type !== searchType) return false;
+            // row1 類型篩選
+            if (filterRow1 && r.type !== filterRow1) return false;
+
+            // row2 維度篩選：只保留符合維度的紀錄類型
+            if (filterRow2 === 'part' && r.type !== 'body') return false;
+            if (filterRow2 === 'emotion' && r.type !== 'mood') return false;
+            if (filterRow2 === 'diary_title' && r.type !== 'diary') return false;
 
             const kw = searchKeyword.trim().toLowerCase();
-            if (!kw) return true; // 只有類型篩選，無關鍵字
+            if (!kw) return true; // 只有篩選，無關鍵字
 
-            // 收集「內容文字」（排除欄位標題本身）
+            // 根據 row2 維度決定搜尋範圍
             const contentParts = [];
-            if (r.type === 'body') {
-                (r.sensationData || []).forEach(s => { contentParts.push(s.label); });
-                if (r.bodyLanguage) contentParts.push(r.bodyLanguage);
-                if (r.trueFeeling) contentParts.push(r.trueFeeling);
-                if (r.timingBefore) contentParts.push(r.timingBefore);
-                if (r.timingDuring) contentParts.push(r.timingDuring);
-                if (r.timingAfter) contentParts.push(r.timingAfter);
-                // 標題類（部位）也可搜尋
+
+            if (filterRow2 === 'part') {
+                // 只搜尋部位（area / part）
                 if (r.area) contentParts.push(r.area);
                 if (r.part) contentParts.push(r.part);
-            } else if (r.type === 'mood') {
+            } else if (filterRow2 === 'emotion') {
+                // 只搜尋情緒標籤
                 Object.keys(r.moods || {}).forEach(m => contentParts.push(m));
-                if (r.bodyLanguage) contentParts.push(r.bodyLanguage);
-                if (r.trueFeeling) contentParts.push(r.trueFeeling);
-                if (r.timingBefore) contentParts.push(r.timingBefore);
-                if (r.timingDuring) contentParts.push(r.timingDuring);
-                if (r.timingAfter) contentParts.push(r.timingAfter);
-            } else if (r.type === 'diary') {
+            } else if (filterRow2 === 'diary_title') {
+                // 只搜尋日記標題（欄位名稱）
                 const df = r.diaryFields || {};
                 const cl = r.customLabels || {};
-                // 日記標題（欄位名稱）也可搜尋
-                Object.keys(BUILT_IN_DIARY_LABELS).forEach(k => {
-                    if (df[k] !== undefined) contentParts.push(BUILT_IN_DIARY_LABELS[k]);
-                });
+                Object.keys(BUILT_IN_DIARY_LABELS).forEach(k => { if (df[k] !== undefined) contentParts.push(BUILT_IN_DIARY_LABELS[k]); });
                 Object.entries(cl).forEach(([, label]) => contentParts.push(label));
-                // 日記內容
-                Object.values(df).forEach(v => { if (v) contentParts.push(v); });
-                if (r.sentence) contentParts.push(r.sentence);
+            } else {
+                // 無 row2 篩選：搜尋所有內容
+                if (r.type === 'body') {
+                    if (r.area) contentParts.push(r.area);
+                    if (r.part) contentParts.push(r.part);
+                    (r.sensationData || []).forEach(s => contentParts.push(s.label));
+                    if (r.bodyLanguage) contentParts.push(r.bodyLanguage);
+                    if (r.trueFeeling) contentParts.push(r.trueFeeling);
+                    if (r.timingBefore) contentParts.push(r.timingBefore);
+                    if (r.timingDuring) contentParts.push(r.timingDuring);
+                    if (r.timingAfter) contentParts.push(r.timingAfter);
+                } else if (r.type === 'mood') {
+                    Object.keys(r.moods || {}).forEach(m => contentParts.push(m));
+                    if (r.bodyLanguage) contentParts.push(r.bodyLanguage);
+                    if (r.trueFeeling) contentParts.push(r.trueFeeling);
+                    if (r.timingBefore) contentParts.push(r.timingBefore);
+                    if (r.timingDuring) contentParts.push(r.timingDuring);
+                    if (r.timingAfter) contentParts.push(r.timingAfter);
+                } else if (r.type === 'diary') {
+                    const df = r.diaryFields || {};
+                    const cl = r.customLabels || {};
+                    Object.keys(BUILT_IN_DIARY_LABELS).forEach(k => { if (df[k] !== undefined) contentParts.push(BUILT_IN_DIARY_LABELS[k]); });
+                    Object.entries(cl).forEach(([, label]) => contentParts.push(label));
+                    Object.values(df).forEach(v => { if (v) contentParts.push(v); });
+                    if (r.sentence) contentParts.push(r.sentence);
+                }
+                (r.lab || []).forEach(l => { if (l.action) contentParts.push(l.action); });
             }
-            // 回應對策
-            (r.lab || []).forEach(l => { if (l.action) contentParts.push(l.action); });
 
             return contentParts.some(p => p.toLowerCase().includes(kw));
         };
@@ -2672,19 +2684,19 @@
         return (
             <div className="p-8 space-y-8 animate-fade-in pb-32">
                 <header className="pt-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2.5">
                         <Icon.Calendar />
-                        <h2 className="text-2xl font-light text-[#C8A882] tracking-[0.3em]">調頻月曆</h2>
+                        <h2 className="text-base font-light text-[#C8A882] tracking-[0.3em]">調頻月曆</h2>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <button onClick={() => { setSearchOpen(o => !o); if (searchOpen) { setSearchKeyword(''); setSearchType(''); } }}
-                            className={`w-9 h-9 flex items-center justify-center rounded-full border transition-all ${searchOpen ? 'bg-[#C8A882] border-[#C8A882]' : 'border-[#F3E5D8]'}`}>
-                            <svg className={`w-4 h-4 ${searchOpen ? 'text-white' : 'text-[#C8A882]'}`} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                    <div className="flex items-center gap-2.5">
+                        <input type="month" value={viewMonth} onChange={e => setViewMonth(e.target.value)}
+                            className="bg-transparent text-sm font-medium text-[#C8A882] tracking-widest outline-none text-right" />
+                        <button onClick={() => { setSearchOpen(o => !o); if (searchOpen) { setSearchKeyword(''); setFilterRow1(''); setFilterRow2(''); } }}
+                            className={`w-8 h-8 flex items-center justify-center rounded-full border transition-all shrink-0 ${searchOpen ? 'bg-[#C8A882] border-[#C8A882]' : 'border-[#F3E5D8]'}`}>
+                            <svg className={`w-3.5 h-3.5 ${searchOpen ? 'text-white' : 'text-[#C8A882]'}`} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                             </svg>
                         </button>
-                        <input type="month" value={viewMonth} onChange={e => setViewMonth(e.target.value)}
-                            className="bg-transparent text-base font-medium text-[#C8A882] tracking-widest outline-none text-right" />
                     </div>
                 </header>
 
@@ -2692,37 +2704,63 @@
                 {searchOpen && (
                     <div className="space-y-3 animate-fade-in">
                         {/* 關鍵字輸入 */}
-                        <div className="flex items-center gap-3 px-5 py-3.5 bg-[#FAF7F4] rounded-[2rem] border border-[#F3E5D8]">
-                            <svg className="w-4 h-4 text-[#D1C4B9] shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                        <div className="flex items-center gap-3 px-5 py-3 bg-[#FAF7F4] rounded-[2rem] border border-[#F3E5D8]">
+                            <svg className="w-3.5 h-3.5 text-[#D1C4B9] shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                             </svg>
                             <input
                                 value={searchKeyword}
                                 onChange={e => setSearchKeyword(e.target.value)}
-                                placeholder="搜尋關鍵字：部位、感受、心情、內容..."
+                                placeholder="輸入關鍵字..."
                                 className="flex-1 bg-transparent text-sm outline-none text-[#8D7B6D] placeholder-[#D1C4B9] font-light"
                                 autoFocus
                             />
                             {searchKeyword && (
-                                <button onClick={() => setSearchKeyword('')} className="text-[#D1C4B9] text-lg leading-none shrink-0">×</button>
+                                <button onClick={() => setSearchKeyword('')} className="text-[#D1C4B9] text-base leading-none shrink-0">×</button>
                             )}
                         </div>
-                        {/* 類型篩選（標題層） */}
-                        <div className="flex gap-2 flex-wrap">
-                            <p className="w-full text-[10px] text-[#D1C4B9] tracking-widest pl-1">篩選類型</p>
-                            {[['', '全部'], ['body', '身體覺察'], ['mood', '心情能量'], ['diary', '日記隨想']].map(([val, label]) => (
-                                <button key={val} onClick={() => setSearchType(val)}
-                                    className={`px-4 py-1.5 rounded-full text-xs font-medium tracking-wide transition-all border ${searchType === val ? 'bg-[#C8A882] text-white border-[#C8A882]' : 'border-[#F3E5D8] text-[#A89080]'}`}>
+
+                        {/* 第一排：紀錄類型 */}
+                        <div className="flex gap-1.5">
+                            {[['', '全部'], ['body', '身體'], ['mood', '心情'], ['diary', '日記']].map(([val, label]) => (
+                                <button key={val} onClick={() => { setFilterRow1(val); setFilterRow2(''); }}
+                                    className={`flex-1 py-1.5 rounded-full text-xs font-medium tracking-wide transition-all border ${filterRow1 === val ? 'bg-[#C8A882] text-white border-[#C8A882]' : 'border-[#F3E5D8] text-[#A89080]'}`}>
                                     {label}
                                 </button>
                             ))}
                         </div>
-                        {/* 搜尋結果統計 */}
+
+                        {/* 第二排：內容維度 */}
+                        <div className="flex gap-1.5">
+                            {[
+                                ['', '不限'],
+                                ['part', '部位'],
+                                ['emotion', '情緒'],
+                                ['diary_title', '日記標題'],
+                            ].map(([val, label]) => {
+                                // 根據 row1 決定第二排哪些可選
+                                const disabled =
+                                    (val === 'part' && filterRow1 === 'mood') ||
+                                    (val === 'part' && filterRow1 === 'diary') ||
+                                    (val === 'emotion' && filterRow1 === 'body') ||
+                                    (val === 'emotion' && filterRow1 === 'diary') ||
+                                    (val === 'diary_title' && filterRow1 === 'body') ||
+                                    (val === 'diary_title' && filterRow1 === 'mood');
+                                return (
+                                    <button key={val}
+                                        onClick={() => !disabled && setFilterRow2(val)}
+                                        className={`flex-1 py-1.5 rounded-full text-xs font-medium tracking-wide transition-all border ${filterRow2 === val ? 'bg-[#8D7B6D] text-white border-[#8D7B6D]' : disabled ? 'border-[#F3E5D8] text-[#D1C4B9] cursor-default' : 'border-[#F3E5D8] text-[#A89080]'}`}>
+                                        {label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* 結果統計 */}
                         {isSearching && (
                             <p className="text-[10px] text-[#D1C4B9] tracking-widest pl-1">
-                                找到 {searchResults.length} 筆紀錄
-                                {searchKeyword.trim() && <span>（關鍵字：<span className="text-[#C8A882]">{searchKeyword.trim()}</span>）</span>}
-                                {searchType && <span>（類型：<span className="text-[#C8A882]">{{ body:'身體覺察', mood:'心情能量', diary:'日記隨想' }[searchType]}</span>）</span>}
+                                找到 <span className="text-[#C8A882]">{searchResults.length}</span> 筆
+                                {searchKeyword.trim() && <span> · 「<span className="text-[#C8A882]">{searchKeyword.trim()}</span>」</span>}
                             </p>
                         )}
                     </div>
