@@ -11,8 +11,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BodyPath - 純粹覺察</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -2628,7 +2628,7 @@
                 <header className="pt-4 flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                         <Icon.Calendar />
-                        <h2 className="text-base font-light text-[#C8A882] tracking-[0.3em]">調頻月曆</h2>
+                        <h2 className="text-lg font-light text-[#C8A882] tracking-[0.3em]">調頻月曆</h2>
                     </div>
                     <div className="flex items-center gap-2.5">
                         <input type="month" value={viewMonth} onChange={e => setViewMonth(e.target.value)}
