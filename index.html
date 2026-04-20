@@ -79,7 +79,6 @@
         Body: () => <svg className="w-6 h-6" fill="none" stroke="#C8A882" strokeWidth="1.5" viewBox="0 0 24 24"><path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>,
         Mood: () => <svg className="w-6 h-6" fill="none" stroke="#C8A882" strokeWidth="1.5" viewBox="0 0 24 24"><path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>,
         Diary: () => <svg className="w-6 h-6" fill="none" stroke="#C8A882" strokeWidth="1.5" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18c-2.305 0-4.408.867-6 2.292m0-14.25v14.25" /></svg>,
-        Lab: () => <svg className="w-6 h-6" fill="none" stroke="#C8A882" strokeWidth="1.5" viewBox="0 0 24 24"><path d="M9 3h6M10 3v12a2 2 0 002 2 2 2 0 002-2V3M9 19h6" /></svg>,
         Trend: () => <svg className="w-6 h-6" fill="none" stroke="#C8A882" strokeWidth="1.5" viewBox="0 0 24 24"><path d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg>,
         Calendar: () => <svg className="w-6 h-6" fill="none" stroke="#C8A882" strokeWidth="1.5" viewBox="0 0 24 24"><path d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
     };
@@ -117,6 +116,9 @@
     ];
 
     const WHOLE_BODY_SENSATIONS = [
+        { label: "舒適", sub: "全身處於放鬆舒展的狀態，沒有明顯的緊繃或不適。" },
+        { label: "勞累", sub: "身體用盡了力氣，感覺沉甸甸地需要休息。" },
+        { label: "失眠", sub: "想睡卻睡不著，或容易在半夜醒來難以入睡。" },
         { label: "發燒", sub: "體溫升高，感覺燥熱。" },
         { label: "發冷", sub: "全身發抖或感到寒意，即使環境不冷。" },
         { label: "發抖", sub: "身體不受控制地顫抖。" },
@@ -138,6 +140,7 @@
             { label: "燒灼感", sub: "像是灼熱的火燒感，有時伴隨發熱。" },
         ]},
         { title: "肌肉類", desc: "與肌肉狀態相關的感受。", items: [
+            { label: "放鬆", sub: "肌肉卸下了力氣，像終於鬆開的拳頭。" },
             { label: "痠", sub: "運動後或疲勞累積的深層疲軟感。" },
             { label: "緊繃", sub: "像一根拉太緊的琴弦，肌肉無法放鬆。" },
             { label: "僵硬", sub: "像關節被膠水黏住，活動度受限。" },
@@ -157,19 +160,58 @@
             { label: "冰冷", sub: "即使環境溫暖，該部位依然像冰塊。" },
             { label: "腫脹", sub: "感覺皮膚被撐開，或局部充血腫大。" },
             { label: "發炎感", sub: "紅腫熱痛並存，感覺局部在發炎。" },
+            { label: "耳鳴", sub: "耳朵內出現持續的嗡嗡聲或高頻聲響。" },
         ]},
         { title: "呼吸消化類", desc: "與呼吸或消化系統相關的感受。", items: [
             { label: "悶", sub: "呼吸不順暢，或像有什麼堵在胸口/喉嚨。" },
             { label: "腹脹", sub: "腹部充滿氣體，感覺撐脹不舒服。" },
             { label: "噁心", sub: "胃部翻騰，有想嘔吐的感覺。" },
             { label: "緊縮感", sub: "喉嚨或胃部像被一隻手握住。" },
+            { label: "拉肚子", sub: "腸道蠕動加快，頻繁排出稀便。" },
+            { label: "便祕", sub: "排便困難或次數減少，腹部感到悶脹。" },
         ]},
     ];
 
     const MOOD_GROUPS = [
-        { title: "向內凝聚", desc: "想要安靜、縮小、保護、沉思", items: [{ label: "平靜", sub: "內心像無風的湖面，不需要特別做什麼。" }, { label: "憂鬱", sub: "像沉入深水，安靜但帶有一種沉重的重量感。" }, { label: "疲累", sub: "電力即將耗盡，只想安靜地待在角落休息。" }, { label: "清澈", sub: "看事情變得很透明，能清楚感知當下的存在。" }, { label: "孤獨", sub: "像獨自在空曠的房間，感覺與外界有一層薄薄的隔閡。" }] },
-        { title: "向外擴張", desc: "想要連結、分享、表達、行動", items: [{ label: "喜悅", sub: "內心有微微的暖意在擴散，想分享這份輕盈。" }, { label: "好奇", sub: "像伸出了觸角，對周遭的小事產生了興趣。" }, { label: "憤怒", sub: "像一團燃燒的火，有一股想衝破現狀的力道。" }, { label: "期待", sub: "心跳輕快，像在等待一份即將打開的禮物。" }, { label: "自信", sub: "感覺腳步很紮實，相信自己有能力承接當下。" }] },
-        { title: "起伏波動", desc: "感覺不穩定、混亂", items: [{ label: "焦慮", sub: "像快轉的發條，停不下來卻又不知道往哪去。" }, { label: "困惑", sub: "像走進一場大霧，找不到前進或後退的方向。" }, { label: "矛盾", sub: "內心有兩股力量在拉扯，難以決定落腳點。" }, { label: "多愁善感", sub: "情緒像潮汐頻繁起伏，容易被微小的事物觸動。" }, { label: "麻木", sub: "像隔了一層玻璃看世界，感覺不到冷熱與起伏。" }] }
+        { title: "向內凝聚", desc: "想要安靜、縮小、保護、沉思", items: [
+            { label: "平靜", sub: "整體處於無波瀾的狀態，不需要特別做什麼。" },
+            { label: "放鬆", sub: "可以鬆一口氣的狀態，肩膀終於放了下來。" },
+            { label: "憂鬱", sub: "像沉入深水，安靜但帶有一種沉重的重量感。" },
+            { label: "清澈", sub: "看事情變得很透明，能清楚感知當下的存在。" },
+            { label: "孤獨", sub: "像獨自在空曠的房間，感覺與外界有一層薄薄的隔閡。" },
+            { label: "倦怠", sub: "不只是累，而是對很多事情提不起勁，像電池長期虧電。" },
+            { label: "悲傷", sub: "心裡有什麼東西在隱隱作痛，有時說不清楚為什麼。" },
+        ]},
+        { title: "向外擴張", desc: "想要連結、分享、表達、行動", items: [
+            { label: "喜悅", sub: "內心有微微的暖意在擴散，想分享這份輕盈。" },
+            { label: "好奇", sub: "像伸出了觸角，對周遭的小事產生了興趣。" },
+            { label: "期待", sub: "心跳輕快，像在等待一份即將打開的禮物。" },
+            { label: "自信", sub: "感覺腳步很紮實，相信自己有能力承接當下。" },
+            { label: "興奮", sub: "能量滿溢，有一種想馬上行動、迫不及待的感覺。" },
+            { label: "驚訝", sub: "被出乎意料的事打到，還沒來得及反應。" },
+        ]},
+        { title: "起伏波動", desc: "感覺不穩定、混亂、拉扯", items: [
+            { label: "焦慮", sub: "像快轉的發條，停不下來卻又不知道往哪去。" },
+            { label: "矛盾", sub: "內心有兩股力量在拉扯，難以決定落腳點。" },
+            { label: "多愁善感", sub: "情緒像潮汐頻繁起伏，容易被微小的事物觸動。" },
+            { label: "煩躁", sub: "有一種說不清楚的悶，什麼都覺得不對勁。" },
+            { label: "擔憂", sub: "對某件還沒發生的事反覆想，停不下來。" },
+        ]},
+        { title: "邊界感知", desc: "自我與他人之間的界線感受", items: [
+            { label: "不舒服", sub: "隱約感覺到什麼不對，但還說不清楚是什麼。" },
+            { label: "委屈", sub: "說了yes，但心裡其實想說no。" },
+            { label: "憤怒", sub: "邊界被踩過去之後升起的火，是一種自我保護。" },
+            { label: "恐懼", sub: "怕說不會怎樣，或面對某個威脅時的本能收縮。" },
+            { label: "厭惡", sub: "對某人或某情境產生強烈的排斥，身體想後退。" },
+            { label: "愧疚", sub: "說了不之後的罪惡感，覺得自己是不是太自私了。" },
+            { label: "緊張", sub: "擔心說出真實想法後，對方的反應。" },
+            { label: "解脫", sub: "終於說出口之後，身體像是卸下了一塊石頭。" },
+            { label: "堅定", sub: "清楚自己的位置，知道什麼對自己是重要的。" },
+            { label: "空洞", sub: "給太多之後什麼都沒剩，感覺自己被掏空了。" },
+            { label: "麻木", sub: "感覺不到自己的需求，像是把感知關掉了。" },
+            { label: "迷失", sub: "不知道自己真正想要什麼，找不到自己的位置。" },
+            { label: "疲憊", sub: "一直在配合別人的消耗感，不是身體累，是心累。" },
+        ]},
     ];
 
     // ── 標籤庫 helpers ────────────────────────────────────────────
@@ -721,9 +763,9 @@
                     <main className="flex-1 overflow-y-auto no-scrollbar pb-24">
                         {tab === 'home' && <HomePage switchTab={switchTab} records={records} onDetail={openDetail} />}
                         
-                        {tab === 'body' && <CategoryLog records={records} type="body" onBack={() => switchTab('home')} onDetail={openDetail} onAdd={() => switchTab('body_rec')} onSupplement={(r) => setSupplementRecord(r)} />}
-                        {tab === 'mood' && <CategoryLog records={records} type="mood" onBack={() => switchTab('home')} onDetail={openDetail} onAdd={() => switchTab('mood_rec')} onSupplement={(r) => setSupplementRecord(r)} />}
-                        {tab === 'diary' && <CategoryLog records={records} type="diary" onBack={() => switchTab('home')} onDetail={openDetail} onAdd={() => switchTab('diary_rec')} />}
+                        {tab === 'body' && <CategoryLog records={records} type="body" onDetail={openDetail} onAdd={() => switchTab('body_rec')} onSupplement={(r) => setSupplementRecord(r)} />}
+                        {tab === 'mood' && <CategoryLog records={records} type="mood" onDetail={openDetail} onAdd={() => switchTab('mood_rec')} onSupplement={(r) => setSupplementRecord(r)} />}
+                        {tab === 'diary' && <CategoryLog records={records} type="diary" onDetail={openDetail} onAdd={() => switchTab('diary_rec')} />}
                         {tab === 'body_rec' && <BodyRecorder onSave={addRecord} onCancel={() => switchTab(prevTab === 'body' ? 'body' : 'home')} savedCustomTags={getBodyCustomTags()} onAddCustom={(tag) => { const t = getBodyCustomTags(); if(!t.includes(tag)) saveTags('body',[...t,tag]); }} />}
                         {tab === 'mood_rec' && <MoodRecorder onSave={addRecord} onCancel={() => switchTab(prevTab === 'mood' ? 'mood' : 'home')} savedCustomTags={getMoodCustomTags()} onAddCustom={(tag) => { const t = getMoodCustomTags(); if(!t.includes(tag)) saveTags('mood',[...t,tag]); }} />}
                         {tab === 'diary_rec' && <DiaryRecorder onSave={addRecord} onCancel={() => switchTab(prevTab === 'diary' ? 'diary' : 'home')} />}
@@ -893,8 +935,8 @@
 
                         {/* 日記內容 */}
                         {record.type === 'diary' && (() => {
-                            const BUILT_IN = { f1: '環境的質地', f2: '留白時刻', f3: '對自己的新發現', f4: '內在呼喚', f5: '溫柔回應', f6: '最深刻的一抹色彩' };
-                            const DIARY_PH = { f1: '記下今天所處環境帶給你的感覺', f2: '記下今天把時間留給自己的時刻', f3: '記下過去未曾注意過的自己', f4: '記下今天想被幫忙的時刻', f5: '如果是你最重視的人需要你寫在上方的幫忙，你會如何回應', f6: '記下今天最印象深刻的事情' };
+                            const BUILT_IN = { f1: '夢境故事', f2: '飲食情況', f3: '對自己的新發現', f4: '內在呼喚', f5: '溫柔回應', f6: '最深刻的事', f7: '幸運的事', f8: '今日的加分行為' };
+                            const DIARY_PH = { f1: '記下今晚或最近做的夢，或是腦中浮現的畫面', f2: '記下今天吃了什麼，身體有什麼感受', f3: '記下過去未曾注意過的自己', f4: '記下今天想被幫忙的時刻', f5: '如果是你最重視的人需要你寫在上方的幫忙，你會如何回應', f6: '記下今天最讓你印象深刻的一件事', f7: '記下今天發生的一件幸運或美好的小事', f8: '記下今天做了什麼讓自己更好的事' };
                             const df = edited.diaryFields || record.diaryFields || {};
                             const customLabels = edited.customLabels || record.customLabels || {};
                             // collect all keys that have content, or all when editing
@@ -1135,7 +1177,7 @@
 
             const rangeLabel = from && to ? `${from} 至 ${to}` : from ? `${from} 起` : to ? `至 ${to}` : '全部紀錄';
 
-            const BUILT_IN_LABELS = { f1:'環境的質地', f2:'留白時刻', f3:'對自己的新發現', f4:'內在呼喚', f5:'溫柔回應', f6:'最深刻的一抹色彩' };
+            const BUILT_IN_LABELS = { f1:'夢境故事', f2:'飲食情況', f3:'對自己的新發現', f4:'內在呼喚', f5:'溫柔回應', f6:'最深刻的事', f7:'幸運的事', f8:'今日的加分行為' };
 
             const typeLabel = t => t === 'body' ? '身體覺察' : t === 'mood' ? '心情能量' : '日記隨想';
             const typeColor = t => t === 'body' ? '#C8A882' : t === 'mood' ? '#B8A0C8' : '#A0B8C8';
@@ -1308,8 +1350,19 @@
         };
 
         const exportJSON = () => {
-            const data = localStorage.getItem('bp_v25_all') || '[]';
-            const blob = new Blob([data], { type: 'application/json' });
+            const records = localStorage.getItem('bp_v25_all') || '[]';
+            const backup = {
+                version: 2,
+                exportedAt: new Date().toISOString(),
+                records: JSON.parse(records),
+                tags: {
+                    body: JSON.parse(localStorage.getItem('bp_tags_body') || '[]'),
+                    mood: JSON.parse(localStorage.getItem('bp_tags_mood') || '[]'),
+                    timing: JSON.parse(localStorage.getItem('bp_tags_timing') || 'null'),
+                    diary: JSON.parse(localStorage.getItem('bp_tags_diary') || '[]'),
+                },
+            };
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -1350,10 +1403,28 @@
                 reader.onload = (ev) => {
                     try {
                         const parsed = JSON.parse(ev.target.result);
-                        if (!Array.isArray(parsed)) throw new Error();
-                        if (window.confirm(`即將匯入 ${parsed.length} 筆紀錄，這會覆蓋目前所有資料，確定嗎？`)) {
-                            localStorage.setItem('bp_v25_all', JSON.stringify(parsed));
-                            window.location.reload();
+                        // 新格式：{ version, records, tags }
+                        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && parsed.records) {
+                            const recordCount = parsed.records.length;
+                            const hasTags = parsed.tags && Object.values(parsed.tags).some(v => v && (Array.isArray(v) ? v.length > 0 : Object.keys(v).length > 0));
+                            if (window.confirm(`即將匯入 ${recordCount} 筆紀錄${hasTags ? '（含標籤資料）' : ''}，這會覆蓋目前所有資料，確定嗎？`)) {
+                                localStorage.setItem('bp_v25_all', JSON.stringify(parsed.records));
+                                if (parsed.tags) {
+                                    if (parsed.tags.body) localStorage.setItem('bp_tags_body', JSON.stringify(parsed.tags.body));
+                                    if (parsed.tags.mood) localStorage.setItem('bp_tags_mood', JSON.stringify(parsed.tags.mood));
+                                    if (parsed.tags.timing) localStorage.setItem('bp_tags_timing', JSON.stringify(parsed.tags.timing));
+                                    if (parsed.tags.diary) localStorage.setItem('bp_tags_diary', JSON.stringify(parsed.tags.diary));
+                                }
+                                window.location.reload();
+                            }
+                        // 舊格式：純陣列
+                        } else if (Array.isArray(parsed)) {
+                            if (window.confirm(`即將匯入 ${parsed.length} 筆紀錄，這會覆蓋目前所有資料，確定嗎？`)) {
+                                localStorage.setItem('bp_v25_all', JSON.stringify(parsed));
+                                window.location.reload();
+                            }
+                        } else {
+                            throw new Error();
                         }
                     } catch(err) {
                         alert('檔案格式錯誤，請選擇 BodyPath 匯出的 .json 檔案');
@@ -1539,7 +1610,7 @@
         );
     }
 
-    function CategoryLog({ records, type, onBack, onDetail, onAdd, onSupplement }) {
+    function CategoryLog({ records, type, onDetail, onAdd, onSupplement }) {
         const filtered = records.filter(r => r.type === type);
         const mapTitle = { body: '身體覺察', mood: '心情能量', diary: '日記隨想' };
         const mapIcon = { body: <Icon.Body />, mood: <Icon.Mood />, diary: <Icon.Diary /> };
@@ -1548,7 +1619,7 @@
                 <header className="pt-4 flex justify-between items-center">
                     <div className="flex items-center gap-3">
                         {mapIcon[type]}
-                        <h2 className="text-2xl font-light text-[#C8A882] tracking-[0.3em] uppercase">{mapTitle[type]}</h2>
+                        <h2 className="text-lg font-light text-[#C8A882] tracking-[0.3em] uppercase">{mapTitle[type]}</h2>
                     </div>
                     <button onClick={onAdd} className="px-4 py-2 bg-[#C8A882] text-white rounded-full text-xs font-medium tracking-widest transition-transform active:scale-95">+ 新增</button>
                 </header>
@@ -1588,7 +1659,7 @@
                             ) : (
                                 <div className="space-y-2 pt-3 border-t border-[#F3E5D8]">
                                         {r.diaryFields ? (() => {
-                                            const BUILT_IN_LABELS = { f1:'環境的質地', f2:'留白時刻', f3:'對自己的新發現', f4:'內在呼喚', f5:'溫柔回應', f6:'最深刻的一抹色彩' };
+                                            const BUILT_IN_LABELS = { f1:'夢境故事', f2:'飲食情況', f3:'對自己的新發現', f4:'內在呼喚', f5:'溫柔回應', f6:'最深刻的事', f7:'幸運的事', f8:'今日的加分行為' };
                                             const entries = Object.entries(r.diaryFields).filter(([,v]) => v);
                                             return entries.length > 0 ? entries.map(([k, v]) => (
                                                 <p key={k} className="text-sm leading-relaxed line-clamp-1">
@@ -1977,10 +2048,10 @@
         // FIELD_GROUPS: id is used as a "slot" key for rendering choice
         // type 'pair' means f4+f5 shown together
         const FIELD_GROUPS = [
-            { id: 'f1', label: '環境的質地', type: 'single',
-              fields: [{ key: 'f1', placeholder: '記下今天所處環境帶給你的感覺' }] },
-            { id: 'f2', label: '留白時刻', type: 'single',
-              fields: [{ key: 'f2', placeholder: '記下今天把時間留給自己的時刻' }] },
+            { id: 'f1', label: '夢境故事', type: 'single',
+              fields: [{ key: 'f1', placeholder: '記下今晚或最近做的夢，或是腦中浮現的畫面' }] },
+            { id: 'f2', label: '飲食情況', type: 'single',
+              fields: [{ key: 'f2', placeholder: '記下今天吃了什麼，身體有什麼感受' }] },
             { id: 'f3', label: '對自己的新發現', type: 'single',
               fields: [{ key: 'f3', placeholder: '記下過去未曾注意過的自己' }] },
             { id: 'f45', label: '內在呼喚與溫柔回應', type: 'pair',
@@ -1988,13 +2059,17 @@
                 { key: 'f4', label: '內在呼喚', placeholder: '記下今天想被幫忙的時刻' },
                 { key: 'f5', label: '溫柔回應', placeholder: '如果是你最重視的人需要你寫在上方的幫忙，你會如何回應' },
               ]},
-            { id: 'f6', label: '最深刻的一抹色彩', type: 'single',
-              fields: [{ key: 'f6', placeholder: '記下今天最印象深刻的事情' }] },
+            { id: 'f6', label: '最深刻的事', type: 'single',
+              fields: [{ key: 'f6', placeholder: '記下今天最讓你印象深刻的一件事' }] },
+            { id: 'f7', label: '幸運的事', type: 'single',
+              fields: [{ key: 'f7', placeholder: '記下今天發生的一件幸運或美好的小事' }] },
+            { id: 'f8', label: '今日的加分行為', type: 'single',
+              fields: [{ key: 'f8', placeholder: '記下今天做了什麼讓自己更好的事' }] },
         ];
 
         const [prompt] = useState(() => PROMPTS[Math.floor(Math.random() * PROMPTS.length)]);
         const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-        const [fields, setFields] = useState({ f1: '', f2: '', f3: '', f4: '', f5: '', f6: '' });
+        const [fields, setFields] = useState({ f1: '', f2: '', f3: '', f4: '', f5: '', f6: '', f7: '', f8: '' });
         const [customGroups, setCustomGroups] = useState([]); // [{id, label, key}]
         const [customInput, setCustomInput] = useState('');
         const [selected, setSelected] = useState(null); // null=step1
@@ -2138,9 +2213,6 @@
     function LabDetailModal({ record, onClose, onDeleteLab, onUpdateLab }) {
         const [editingId, setEditingId] = useState(null);
         const [editVal, setEditVal] = useState({ action: '', effect: 0 });
-        const [editLabId, setEditLabId] = React.useState(null);
-        const [editLabText, setEditLabText] = React.useState('');
-        const [editLabEffect, setEditLabEffect] = React.useState(0);
 
         const startEdit = (l) => {
             setEditingId(l.id);
@@ -2184,42 +2256,7 @@
                                             <div className="flex justify-between text-xs font-medium text-[#C8A882] uppercase tracking-widest"><span>回應成效</span><span style={{color: editVal.effect < 0 ? '#A89080' : '#C8A882'}}>{editVal.effect * 10}%</span></div>
                                             <div className="flex items-center gap-2 text-[10px] text-[#D1C4B9]"><span>負面</span><input type="range" min="-10" max="10" step="1" className="flex-1" value={editVal.effect} onChange={e => setEditVal({...editVal, effect: parseInt(e.target.value)})} /><span>正面</span></div>
                                         </div>
-                                        {isEditing && (record.type === 'body' || record.type === 'mood') && (
-                            <div className="border border-[#F3E5D8] rounded-[2rem] overflow-hidden">
-                                <div className="px-5 py-4 space-y-3">
-                                    <p className="text-xs font-medium text-[#A89080] tracking-wide flex items-center gap-1.5">
-                                        <svg className="w-3 h-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" d="M6 8h4M3.5 5.5A2.5 2.5 0 016 8a2.5 2.5 0 01-2.5 2.5M12.5 5.5A2.5 2.5 0 0110 8a2.5 2.5 0 002.5 2.5" /></svg>
-                                        串聯
-                                    </p>
-                                    {(() => {
-                                        const oppositeType = record.type === 'body' ? 'mood' : 'body';
-                                        const currentLinks = edited.links || [];
-                                        const linkable = records.filter(r => r.type === oppositeType && r.id !== record.id).sort((a,b) => new Date(b.date)-new Date(a.date));
-                                        return linkable.length === 0
-                                            ? <p className="text-xs text-[#D1C4B9]">尚無可串聯的紀錄</p>
-                                            : <div className="space-y-2 max-h-48 overflow-y-auto">
-                                                {linkable.map(r => {
-                                                    const linked = currentLinks.includes(r.id);
-                                                    const sum = r.type === 'body'
-                                                        ? `${[r.area, r.part].filter(Boolean).join(' ')}${(r.sensationData||[]).length ? ' · ' + r.sensationData.slice(0,2).map(s=>s.label).join('、') : ''}`
-                                                        : Object.keys(r.moods||{}).slice(0,3).join('、') || '心情記錄';
-                                                    return (
-                                                        <button key={r.id} onClick={() => setEdited({...edited, links: linked ? currentLinks.filter(x=>x!==r.id) : [...currentLinks, r.id]})}
-                                                            className={"w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-left transition-all " + (linked ? 'bg-[#C8A882]/10 border-[#C8A882]' : 'bg-white border-[#F3E5D8]')}>
-                                                            <div>
-                                                                <p className={"text-xs font-medium " + (linked ? 'text-[#C8A882]' : 'text-[#8D7B6D]')}>{sum}</p>
-                                                                <p className="text-[10px] text-[#D1C4B9] mt-0.5">{r.date} · {r.timeSlot}</p>
-                                                            </div>
-                                                            {linked && <svg className="w-3 h-3 text-[#C8A882] shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" d="M6 8h4M3.5 5.5A2.5 2.5 0 016 8a2.5 2.5 0 01-2.5 2.5M12.5 5.5A2.5 2.5 0 0110 8a2.5 2.5 0 002.5 2.5" /></svg>}
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>;
-                                    })()}
-                                </div>
-                            </div>
-                        )}
-                        <div className="flex gap-3">
+                                        <div className="flex gap-3">
                                             <button onClick={() => setEditingId(null)} className="flex-1 py-2 text-xs text-[#A89080] font-medium uppercase tracking-widest">取消</button>
                                             <button onClick={() => saveEdit(l.id)} className="flex-[2] py-2 bg-[#C8A882] text-white rounded-2xl text-xs font-medium tracking-widest">儲存</button>
                                         </div>
@@ -2253,103 +2290,8 @@
         );
     }
 
-        function CalendarPage({ records, setRecords, onDetail }) {
-        const today = new Date().toISOString().slice(0, 10);
-        const [viewMonth, setViewMonth] = useState(today.slice(0, 7));
-        const [labDetail, setLabDetail] = useState(null);
-        const [selectedDate, setSelectedDate] = useState(today);
-        const filtered = records.filter(r => r.date === selectedDate);
-        const daysInMonth = new Date(parseInt(viewMonth.slice(0,4)), parseInt(viewMonth.slice(5,7)), 0).getDate();
-        const mapTitle = { body: '身體覺察', mood: '心情能量', diary: '日記隨想', lab: '實驗對策' };
-        return (
-            <div className="p-8 space-y-10 animate-fade-in pb-32">
-                <header className="pt-4 flex justify-between items-center">
-                    <h2 className="text-2xl font-light text-[#C8A882] tracking-[0.3em] uppercase">Calendar</h2>
-                    <label className="flex flex-col items-end cursor-pointer">
-                        <span className="text-xs text-[#A89080] tracking-widest mb-0.5">切換年月</span>
-                        <input type="month" value={viewMonth} onChange={e => setViewMonth(e.target.value)}
-                            style={{colorScheme:'light', fontSize:'16px'}}
-                            className="bg-transparent text-base font-bold text-[#C8A882] tracking-widest outline-none text-right border-b border-[#C8A882] pb-0.5" />
-                    </label>
-                </header>
-                <div className="grid grid-cols-7 gap-2">
-                    {Array.from({length: daysInMonth}, (_, i) => {
-                        const ds = `${viewMonth}-${String(i+1).padStart(2, '0')}`;
-                        const has = records.some(r => r.date === ds);
-                        const isToday = ds === today;
-                        const isSelected = ds === selectedDate;
-                        return (
-                            <button key={i} onClick={() => setSelectedDate(ds)} className={`aspect-square rounded-xl flex items-center justify-center text-[13px] font-medium transition-all
-                                ${isSelected && !isToday ? 'border-2 border-[#C8A882] text-[#C8A882]' : ''}
-                                ${isToday ? 'bg-[#C8A882] text-white ring-2 ring-[#C8A882] ring-offset-1' : ''}
-                                ${!isToday && !isSelected && has ? 'bg-[#F3E5D8] text-[#C8A882]' : ''}
-                                ${!isToday && !isSelected && !has ? 'bg-[#F3E5D8]/20 text-[#A89080] border border-[#F3E5D8]' : ''}
-                            `}>{i + 1}</button>
-                        );
-                    })}
-                </div>
-                <div className="space-y-10">
-                    <h3 className="text-xs font-bold text-[#C8A882] tracking-[0.2em] border-b border-[#F3E5D8] pb-2 uppercase text-center">{selectedDate} Journey</h3>
-                    {['body', 'mood', 'diary', 'lab'].map(type => {
-                        const items = type === 'lab' ? filtered.filter(f => f.lab && f.lab.length > 0) : filtered.filter(f => f.type === type);
-                        if (items.length === 0) return null;
-                        return (
-                            <div key={type} className="space-y-4 animate-fade-in">
-                                <p className="text-xs font-medium text-[#A89080] tracking-widest uppercase ml-2">— {mapTitle[type]}</p>
-                                {items.map(i => (
-                                    <div key={i.id} onClick={() => type === 'lab' ? setLabDetail(i) : onDetail(i)} className="p-5 border border-[#F3E5D8] rounded-[1.5rem] bg-white hover:bg-[#F3E5D8]/10 cursor-pointer transition-all">
-                                        {type === 'body' && <h3 className="text-sm font-medium text-[#C8A882] truncate tracking-wide">{i.area ? i.area + ' · ' : ''}{i.side ? i.side.join(', ') : ''}{i.part} : {i.sensationData.map(s => s.label).join(', ')}</h3>}
-                                        {type === 'mood' && <h3 className="text-sm font-medium text-[#C8A882]">{Object.keys(i.moods).join(', ')}</h3>}
-                                        {type === 'diary' && <h3 className="text-sm font-medium text-[#C8A882] truncate tracking-wide">"{i.sentence}"</h3>}
-                                        {type === 'lab' && (
-                                            <div className="space-y-3">
-                                                <h3 className="text-sm font-medium text-[#C8A882]">
-                                                    {i.type === 'body'
-                                                        ? `${i.area ? i.area + ' · ' : ''}${i.side?i.side.join(''):''}${i.part} : ${i.sensationData?.map(s=>s.label).join(', ')}`
-                                                        : Object.keys(i.moods||{}).join(', ')}
-                                                </h3>
-                                                <p className="text-xs text-[#A89080] font-medium">對策：{i.lab[0]?.action}{i.lab.length > 1 ? ` 等 ${i.lab.length} 筆` : ''}</p>
-                                            </div>
-                                        )}
-                                        <p className="text-xs text-[#D1C4B9] uppercase mt-1 tracking-widest font-medium">{i.timeSlot}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        );
-                    })}
-                    {filtered.length === 0 && <p className="text-center py-20 text-xs text-[#D1C4B9] uppercase font-medium tracking-widest animate-fade-in">Gently Left Blank.</p>}
-                </div>
-
-                {labDetail && (
-                    <LabDetailModal
-                        record={labDetail}
-                        onClose={() => setLabDetail(null)}
-                        onDeleteLab={(labId, isEmpty) => {
-                            const updatedLab = (labDetail.lab||[]).filter(l => l.id !== labId);
-                            if (isEmpty) {
-                                // 清空 lab 但保留原始身體/心情紀錄
-                                setRecords(records.map(r => r.id === labDetail.id ? { ...r, lab: [] } : r));
-                                setLabDetail(null);
-                            } else {
-                                const updated = { ...labDetail, lab: updatedLab };
-                                setRecords(records.map(r => r.id === labDetail.id ? updated : r));
-                                setLabDetail(updated);
-                            }
-                        }}
-                        onUpdateLab={(labId, updated) => {
-                            const updatedLab = (labDetail.lab||[]).map(l => l.id === labId ? updated : l);
-                            const updatedRecord = { ...labDetail, lab: updatedLab };
-                            setRecords(records.map(r => r.id === labDetail.id ? updatedRecord : r));
-                            setLabDetail(updatedRecord);
-                        }}
-                    />
-                )}
-            </div>
-        );
-    }
-
     function TrendPage({ records }) {
-        const [month, setMonth] = useState('2026-03');
+        const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
         const [trendTab, setTrendTab] = useState('all');
         useEffect(() => {
             const CATEGORIES = ["頭部", "肩頸", "背部", "腰臀", "胸部", "腹部", "手臂", "腿腳"];
@@ -2461,7 +2403,7 @@
                 <header className="pt-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Icon.Trend />
-                        <h2 className="text-2xl font-light text-[#C8A882] tracking-[0.3em]">趨勢圖</h2>
+                        <h2 className="text-lg font-light text-[#C8A882] tracking-[0.3em]">趨勢圖</h2>
                     </div>
                     <input type="month" value={month} onChange={e => setMonth(e.target.value)}
                         className="bg-transparent text-base font-medium tracking-widest text-[#C8A882] outline-none text-right" />
@@ -2578,7 +2520,7 @@
         const monthPrefix = viewMonth; // e.g. "2026-03"
 
         // 搜尋邏輯：跨所有日期
-        const BUILT_IN_DIARY_LABELS = { f1:'環境的質地', f2:'留白時刻', f3:'對自己的新發現', f4:'內在呼喚', f5:'溫柔回應', f6:'最深刻的一抹色彩' };
+        const BUILT_IN_DIARY_LABELS = { f1:'夢境故事', f2:'飲食情況', f3:'對自己的新發現', f4:'內在呼喚', f5:'溫柔回應', f6:'最深刻的事', f7:'幸運的事', f8:'今日的加分行為' };
 
         const matchRecord = (r) => {
             // row1 類型篩選
@@ -2790,7 +2732,7 @@
                                 } else if (r.type === 'diary') {
                                     const df = r.diaryFields || {};
                                     const cl = r.customLabels || {};
-                                    const BUILT_IN = { f1:'環境的質地', f2:'留白時刻', f3:'對自己的新發現', f4:'內在呼喚', f5:'溫柔回應', f6:'最深刻的一抹色彩' };
+                                    const BUILT_IN = { f1:'夢境故事', f2:'飲食情況', f3:'對自己的新發現', f4:'內在呼喚', f5:'溫柔回應', f6:'最深刻的事', f7:'幸運的事', f8:'今日的加分行為' };
                                     const filledEntries = Object.entries(df).filter(([,v])=>v?.trim());
                                     if (filledEntries.length > 0) {
                                         const [k0, v0] = filledEntries[0];
@@ -2808,7 +2750,7 @@
                                         ...(r.timingBefore ? [{ label: '不適出現前', val: r.timingBefore }] : []),
                                         ...(r.timingDuring ? [{ label: '不適發生時', val: r.timingDuring }] : []),
                                         ...(r.timingAfter ? [{ label: '預期事件', val: r.timingAfter }] : []),
-                                        ...(r.type === 'diary' ? Object.entries(r.diaryFields || {}).filter(([,v])=>v?.trim()).map(([k,v]) => ({ label: ({ f1:'環境的質地', f2:'留白時刻', f3:'對自己的新發現', f4:'內在呼喚', f5:'溫柔回應', f6:'最深刻的一抹色彩' })[k] || (r.customLabels||{})[k] || k, val: v })) : []),
+                                        ...(r.type === 'diary' ? Object.entries(r.diaryFields || {}).filter(([,v])=>v?.trim()).map(([k,v]) => ({ label: ({ f1:'夢境故事', f2:'飲食情況', f3:'對自己的新發現', f4:'內在呼喚', f5:'溫柔回應', f6:'最深刻的事', f7:'幸運的事', f8:'今日的加分行為' })[k] || (r.customLabels||{})[k] || k, val: v })) : []),
                                     ];
                                     checks.forEach(({ label, val }) => {
                                         if (val && val.toLowerCase().includes(kw)) {
@@ -2851,6 +2793,12 @@
 
                 {/* 月曆 */}
                 <div className="grid grid-cols-7 gap-2">
+                    {['日','一','二','三','四','五','六'].map(d => (
+                        <div key={d} className="flex items-center justify-center text-[10px] font-medium text-[#D1C4B9] tracking-widest py-1">{d}</div>
+                    ))}
+                    {Array.from({length: new Date(parseInt(monthPrefix.slice(0,4)), parseInt(monthPrefix.slice(5,7))-1, 1).getDay()}, (_, i) => (
+                        <div key={`pad-${i}`} />
+                    ))}
                     {Array.from({length: daysInMonth}, (_, i) => {
                         const ds = `${monthPrefix}-${String(i+1).padStart(2, '0')}`;
                         const has = records.some(r => r.date === ds && r.type !== 'diary');
@@ -2906,7 +2854,7 @@
                                         <div className="space-y-2 mt-1">
                                             <p className="text-sm font-medium text-[#C8A882] tracking-wide">日記隨想</p>
                                             {r.diaryFields && Object.entries(r.diaryFields).filter(([,v])=>v?.trim()).map(([k,v]) => {
-                                                const BL = {f1:'環境的質地',f2:'留白時刻',f3:'對自己的新發現',f4:'內在呼喚',f5:'溫柔回應',f6:'最深刻的一抹色彩'};
+                                                const BL = {f1:'夢境故事',f2:'飲食情況',f3:'對自己的新發現',f4:'內在呼喚',f5:'溫柔回應',f6:'最深刻的事',f7:'幸運的事',f8:'今日的加分行為'};
                                                 const label = BL[k] || (r.customLabels||{})[k] || k;
                                                 return <p key={k} className="text-xs text-[#8D7B6D] leading-relaxed"><span className="text-[#A89080] font-medium">{label}：</span>{v}</p>;
                                             })}
